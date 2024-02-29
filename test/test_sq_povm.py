@@ -1,0 +1,45 @@
+"""Tests for Base POVM utils"""
+
+from unittest import TestCase
+import numpy as np
+from scipy.stats import unitary_group
+
+
+from single_qubit_povm import SingleQubitPOVM
+
+
+class TestSingleQubitPovm(TestCase):
+    """Test that we can create valid single qubit POVM and get warnings if invalid."""
+
+    def test_random_operators(self):
+        """Test """
+
+        ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.j * np.random.uniform(-1, 1, (6, 2, 2))
+
+        while np.abs(ops[0, 0, 0].imag) < 1e-6:
+            ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.j * np.random.uniform(-1, 1, (6, 2, 2))
+
+        with self.assertRaises(ValueError):
+            povm1 = SingleQubitPOVM(povm_ops=ops)
+            povm1.check_validity()
+
+    def test_pauli_decomposition(self):
+        """Test """
+
+        # TODO : select a random POVM ...
+        dim = 2
+        eival = np.random.uniform(low=-5, high=5, size=dim)
+        x = unitary_group.rvs(dim)  # , random_state=seed_obs[i])
+        obs = x @ np.diag(eival) @ x.T.conj()
+
+        _, V = np.linalg.eigh(obs)
+
+        sqpovm = SingleQubitPOVM.from_vectors(V)
+
+        sum = np.zeros(4, dtype=complex)
+        for coef in sqpovm.povm_pauli_decomp:
+            sum += coef
+
+        self.assertTrue(np.allclose(sum, np.array([1., 0., 0., 0.], dtype=complex)))
+
+        # also check that the decomposition is correct TODO
