@@ -1,8 +1,10 @@
+"""TODO."""
+
 import numpy as np
 
 from qiskit.quantum_info import SparsePauliOp
 
-from base_povm import Povm
+from .base_povm import Povm
 
 
 class SingleQubitPOVM(Povm):
@@ -10,7 +12,6 @@ class SingleQubitPOVM(Povm):
 
     def __init__(self, povm_ops: np.ndarray):
         """Initialize from explicit POVM operators."""
-
         super().__init__(povm_ops)
 
         # self.check_validity()
@@ -21,15 +22,35 @@ class SingleQubitPOVM(Povm):
         ]
 
     def check_validity(self):
+        """TODO.
+
+        Returns:
+            TODO.
+
+        Raises:
+            ValueError: TODO.
+        """
         if not self.dimension == 2:
-            raise ValueError(f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}.")
+            raise ValueError(
+                f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}."
+            )
         return Povm.check_validity(self)
 
     @staticmethod
     def pauli_op_to_array(pauli_op: SparsePauliOp):
-        """Convert a single-qubit SparsePauliOp into an array [c0, c1, c2, c3],
-        where the indices represent paulis as {"I": 0, "X": 1, "Y": 2, "Z": 3}."""
+        """Convert a single-qubit SparsePauliOp into an array ``[c0, c1, c2, c3]``.
 
+        In the returned array the indices represent paulis as ``{"I": 0, "X": 1, "Y": 2, "Z": 3}``.
+
+        Args:
+            pauli_op: TODO.
+
+        Returns:
+            TODO.
+
+        Raises:
+            ValueError: TODO.
+        """
         labels = np.zeros(4) + 0j
 
         for pauli_idx, coeff in pauli_op.label_iter():

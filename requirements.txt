@@ -1,3 +1,0 @@
-python
-numpy
-qiskit>=1.0

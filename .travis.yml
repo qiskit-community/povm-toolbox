@@ -1,0 +1,44 @@
+language: python
+
+jobs:
+  include:
+    # Lint tests
+    - python: 3.10
+      env: TOXENV=lint
+      script: tox -e $TOXENV
+
+    # Coverage tests
+    - python: 3.10
+      env: TOXENV=coverage
+      script: tox -e $TOXENV
+
+    # Unit tests (py39)
+    - python: 3.9
+      env: TOXENV=py39
+      script: tox -e $TOXENV
+
+    # Unit tests (py310)
+    - python: 3.10
+      env: TOXENV=py310
+      script: tox -e $TOXENV
+
+    # Unit tests (py311)
+    - python: 3.11
+      env: TOXENV=py311
+      script: tox -e $TOXENV
+
+    # Unit tests (py312)
+    - python: 3.12
+      env: TOXENV=py312
+      script: tox -e $TOXENV
+
+    # Notebook tests
+    - python: 3.10
+      before_install:
+        - sudo apt-get update
+      env: TOXENV=notebook
+      script: tox -e $TOXENV
+
+install:
+  - pip install --upgrade pip
+  - pip install tox

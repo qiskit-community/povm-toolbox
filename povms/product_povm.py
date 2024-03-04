@@ -1,3 +1,5 @@
+"""TODO."""
+
 from typing import List
 
 # from qiskit.quantum_info import DensityMatrix, SparsePauliOp
@@ -19,6 +21,7 @@ class ProductPOVM(Povm):
             self.n_operators += povm.n_outcomes
 
         self.povm_list = povm_list
+
 
 #    def get_prob(self, rho: DensityMatrix):
 #        return get_p_from_paulis(SparsePauliOp.from_operator(rho), self.list_povm).ravel()

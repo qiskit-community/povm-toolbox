@@ -10,12 +10,12 @@ class TestBasePovm(TestCase):
     """Test that we can create valid POVM and get warnings if invalid."""
 
     def test_random_operators(self):
-        """Test """
+        """Test"""
 
-        ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.j * np.random.uniform(-1, 1, (6, 2, 2))
+        ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
 
         while np.abs(ops[0, 0, 0].imag) < 1e-6:
-            ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.j * np.random.uniform(-1, 1, (6, 2, 2))
+            ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
 
         povm1 = Povm(povm_ops=ops)
 

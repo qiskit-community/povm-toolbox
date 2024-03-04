@@ -1,4 +1,3 @@
-# IC-POVM
-Informationally complete POVM 
+# POVMs
 
-This is a first try
+A module for the implementation of positive operator-valued measures (POVMs).

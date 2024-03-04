@@ -1,3 +1,7 @@
+"""TODO."""
+
+from __future__ import annotations
+
 import numpy as np
 
 from qiskit.quantum_info import Operator, DensityMatrix
@@ -6,20 +10,21 @@ from qiskit.quantum_info import Operator, DensityMatrix
 class Povm:
     """Abstract base class that collects all information that any POVM should specifiy."""
 
-    def __init__(self, povm_ops: np.ndarray):
+    def __init__(self, povm_ops: np.ndarray) -> None:
         """Initialize from explicit POVM operators.
 
         Args:
-            povm_operators: np.ndarray that contains the explicit list of POVM operators"""
+            povm_operators: np.ndarray that contains the explicit list of POVM operators.
 
+        Raises:
+            ValueError: TODO.
+        """
         if not (len(povm_ops.shape) == 3 and povm_ops.shape[1] == povm_ops.shape[1]):
-            raise ValueError(
-                f"POVM operators need to be square instead of {povm_ops.shape[1:]}"
-            )
+            raise ValueError(f"POVM operators need to be square instead of {povm_ops.shape[1:]}")
 
-        self.n_outcomes = povm_ops.shape[0]
-        self.dimension = povm_ops.shape[1]
-        self.povm_operators = [Operator(op) for op in povm_ops]
+        self.n_outcomes: int = povm_ops.shape[0]
+        self.dimension: int = povm_ops.shape[1]
+        self.povm_operators: list[Operator] = [Operator(op) for op in povm_ops]
         self.array_ops = None
 
         self.dual_operators = None
@@ -27,20 +32,27 @@ class Povm:
         self.informationlly_complete = None
 
     def check_validity(self) -> bool:
-        """Checks if POVM axioms are fulfilled."""
+        """Check if POVM axioms are fulfilled.
 
-        summed_op = np.zeros((self.dimension, self.dimension), dtype=complex)
+        Returns:
+            TODO.
+
+        Raises:
+            ValueError: TODO.
+        """
+        summed_op: np.ndarray = np.zeros((self.dimension, self.dimension), dtype=complex)
 
         for k in range(len(self)):
-
-            if not np.allclose(self.povm_operators[k].data.conj().T - self.povm_operators[k].data, 0.0, atol=1e-5):
+            if not np.allclose(
+                self.povm_operators[k].data.conj().T - self.povm_operators[k].data,
+                0.0,
+                atol=1e-5,
+            ):
                 raise ValueError(f"POVM operator {k} is not hermitian.")
 
             for eigval in np.linalg.eigvalsh(self.povm_operators[k].data):
                 if eigval.real < -1e-6 or np.abs(eigval.imag) > 1e-5:
-                    raise ValueError(
-                        f"Negative eigenvalue {eigval} in POVM operator {k}."
-                    )
+                    raise ValueError(f"Negative eigenvalue {eigval} in POVM operator {k}.")
 
             summed_op += self.povm_operators[k].data
 
@@ -49,22 +61,41 @@ class Povm:
 
         return True
 
-    def __getitem__(self, index: slice) -> np.ndarray:
+    def __getitem__(self, index: slice) -> Operator:
         """Return a povm operator or a list of povm operators."""
         return self.povm_operators[index]
-    
-    def __len__(self):
+
+    def __len__(self) -> int:
+        """TODO."""
         return len(self.povm_operators)
 
     def get_prob(self, rho: DensityMatrix) -> np.ndarray:
-        return np.array([
-            np.real(np.trace(rho.data @ povm_op.data))
-            for povm_op in self.povm_operators])
+        """TODO.
+
+        Args:
+            rho: TODO.
+
+        Returns:
+            TODO.
+        """
+        return np.array(
+            [np.real(np.trace(rho.data @ povm_op.data)) for povm_op in self.povm_operators]
+        )
 
     @classmethod
-    def from_vectors(cls, povm_vectors: np.ndarray):
-        """Initialize a POVM from the bloch vectors |psi> (not normalized!) such that Pi = |psi><psi|."""
-        povm_operators = np.zeros((povm_vectors.shape[0], povm_vectors.shape[1], povm_vectors.shape[1]), dtype=complex)
+    def from_vectors(cls, povm_vectors: np.ndarray) -> Povm:
+        """Initialize a POVM from the bloch vectors |psi> (not normalized!) such that Pi = |psi><psi|.
+
+        Args:
+            povm_vectors: TODO.
+
+        Returns:
+            TODO.
+        """
+        povm_operators: np.ndarray = np.zeros(
+            (povm_vectors.shape[0], povm_vectors.shape[1], povm_vectors.shape[1]),
+            dtype=complex,
+        )
         for i, vec in enumerate(povm_vectors):
             povm_operators[i] = np.outer(vec, vec.conj())
         return cls(povm_operators)

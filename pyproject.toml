@@ -1,0 +1,84 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "povms"
+version = "0.0.0"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+
+requires-python = ">=3.9"
+
+dependencies = [
+    "numpy>=1.23",
+    "qiskit>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "povms[test,nbtest,lint]",
+]
+basetest = [
+    "pytest>=8.0",
+]
+test = [
+    "povms[basetest]",
+]
+nbtest = [
+    "povms[basetest]",
+    "nbmake>=1.5.0",
+]
+style = [
+    "autoflake==2.2.1",
+    "ruff>=0.3.0",
+    "nbqa>=1.7.1",
+]
+lint = [
+    "povms[style]",
+    "pydocstyle==6.3.0",
+    "mypy==1.8.0",
+    "pylint==3.0.3",
+    "toml",
+]
+notebook-dependencies = [
+    "povms",
+]
+
+[tool.autoflake]
+remove-unused-variables = true
+remove-all-unused-imports = true
+
+[tool.hatch.build.targets.wheel]
+only-include = [
+    "povms",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.mypy]
+python_version = 3.8
+show_error_codes = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore:::.*qiskit.opflow*"]
+testpaths = ["./povms/", "./test/"]
+
+[tool.ruff]
+line-length = 100
+src = ["povms", "test"]
+target-version = "py39"
+
+[tool.ruff.lint]
+ignore = [
+    "E501",
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"notebooks/*" = [
+    "E402", # module level import not at top of file
+]
