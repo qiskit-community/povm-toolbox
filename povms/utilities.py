@@ -7,7 +7,7 @@ from numba import jit
 
 from qiskit.quantum_info import SparsePauliOp
 
-from single_qubit_povm import SingleQubitPOVM
+from .single_qubit_povm import SingleQubitPOVM
 
 
 
@@ -17,9 +17,10 @@ def jit_decompose_operator(
     op_coeffs: np.ndarray,
     pauli_decomp: np.ndarray,
     omega_init: np.ndarray,
-):
-    r"""Decompose an operator in Pauli representation into the linear combination of a basis frame
-    (could be dual or actual povm operators).
+) -> np.ndarray:
+    r"""Decompose an operator in Pauli representation into the linear combination of a basis frame.
+    
+    Note: could be dual or actual povm operators.
 
     Args:
         op_labels: np.array that contains the labels of the Pauli strings "IXYI" converted to integers
@@ -45,7 +46,7 @@ def jit_decompose_operator(
     return omega_init
 
 
-def get_p_from_paulis(rho: SparsePauliOp, povm: List[SingleQubitPOVM]):
+def get_p_from_paulis(rho: SparsePauliOp, povm: List[SingleQubitPOVM]) -> np.ndarray:
     r"""Get the measurement probabilities 'p' of a state over a given POVM."""
     n_qubits = rho.num_qubits
 

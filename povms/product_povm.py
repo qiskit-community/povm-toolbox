@@ -2,10 +2,12 @@
 
 from typing import List
 
-from qiskit.quantum_info import DensityMatrix, SparsePauliOp
+import numpy as np
 
-from base_povm import Povm
-from utilities import get_p_from_paulis
+from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Operator
+
+from .base_povm import Povm
+from .utilities import get_p_from_paulis
 
 
 class ProductPOVM(Povm):
@@ -23,7 +25,8 @@ class ProductPOVM(Povm):
 
         self.povm_list = povm_list
 
-    def __getitem__(self, index : tuple[slice]):
+    def __getitem__(self, index : tuple[slice]) ->  Operator | list[Operator]:
+        """TODO."""
         if isinstance(index, tuple):
             try:
                 idx_povm, idx_outcome = index
@@ -36,7 +39,15 @@ class ProductPOVM(Povm):
         else:
             return self[index,:]
 
-    def get_prob(self, rho: DensityMatrix):
+    def get_prob(self, rho: DensityMatrix) -> np.ndarray:
+        """TODO.
+
+        Args:
+            rho: TODO.
+
+        Returns:
+            TODO.
+        """
         return get_p_from_paulis(SparsePauliOp.from_operator(rho), self.povm_list).ravel()
 
 #    def plot_bloch_sphere(self, dual=False, colors=None):

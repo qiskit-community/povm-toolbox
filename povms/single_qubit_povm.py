@@ -21,7 +21,7 @@ class SingleQubitPOVM(Povm):
             SingleQubitPOVM.pauli_op_to_array(pauli_op) for pauli_op in self.povm_pauli_ops
         ]
 
-    def check_validity(self):
+    def check_validity(self) -> bool:
         """TODO.
 
         Returns:
@@ -37,7 +37,7 @@ class SingleQubitPOVM(Povm):
         return Povm.check_validity(self)
 
     @staticmethod
-    def pauli_op_to_array(pauli_op: SparsePauliOp):
+    def pauli_op_to_array(pauli_op: SparsePauliOp) -> np.ndarray:
         """Convert a single-qubit SparsePauliOp into an array ``[c0, c1, c2, c3]``.
 
         In the returned array the indices represent paulis as ``{"I": 0, "X": 1, "Y": 2, "Z": 3}``.

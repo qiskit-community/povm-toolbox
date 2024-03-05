@@ -3,8 +3,8 @@
 from unittest import TestCase
 import numpy as np
 
-from povm_implementation import ProductPVMSimPOVMImplementation
-from single_qubit_povm import SingleQubitPOVM
+from povms.povm_implementation import ProductPVMSimPOVMImplementation
+from povms.single_qubit_povm import SingleQubitPOVM
 
 
 class TestProductPVMSimPOVMImplementation(TestCase):

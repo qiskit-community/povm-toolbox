@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import unitary_group
 
 
-from single_qubit_povm import SingleQubitPOVM
+from povms.single_qubit_povm import SingleQubitPOVM
 
 
 class TestSingleQubitPovm(TestCase):

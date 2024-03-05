@@ -3,7 +3,7 @@
 from unittest import TestCase
 import numpy as np
 
-from base_povm import Povm
+from povms.base_povm import Povm
 
 
 class TestBasePovm(TestCase):

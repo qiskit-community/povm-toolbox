@@ -21,6 +21,7 @@ dev = [
     "povms[test,nbtest,lint]",
 ]
 basetest = [
+    "tox>=4.0",
     "pytest>=8.0",
 ]
 test = [
@@ -31,7 +32,6 @@ nbtest = [
     "nbmake>=1.5.0",
 ]
 style = [
-    "autoflake==2.2.1",
     "ruff>=0.3.0",
     "nbqa>=1.7.1",
 ]
