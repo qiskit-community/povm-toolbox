@@ -4,24 +4,22 @@ import numpy as np
 
 from qiskit.quantum_info import SparsePauliOp
 
-from .base_povm import Povm
+from .multi_qubit_povm import MultiQubitPOVM
 
 
-class SingleQubitPOVM(Povm):
+class SingleQubitPOVM(MultiQubitPOVM):
     """Class to represent a set of IC single-qubit POVM operators."""
 
     def __init__(self, povm_ops: np.ndarray):
         """Initialize from explicit POVM operators."""
         super().__init__(povm_ops)
 
-        # self.check_validity()
-
         self.povm_pauli_ops = [SparsePauliOp.from_operator(op) for op in self.povm_operators]
         self.povm_pauli_decomp = [
             SingleQubitPOVM.pauli_op_to_array(pauli_op) for pauli_op in self.povm_pauli_ops
         ]
 
-    def check_validity(self) -> bool:
+    def _check_validity(self) -> bool:
         """TODO.
 
         Returns:
@@ -31,10 +29,8 @@ class SingleQubitPOVM(Povm):
             ValueError: TODO.
         """
         if not self.dimension == 2:
-            raise ValueError(
-                f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}."
-            )
-        return Povm.check_validity(self)
+            raise ValueError(f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}.")
+        return super()._check_validity()
 
     @staticmethod
     def pauli_op_to_array(pauli_op: SparsePauliOp) -> np.ndarray:

@@ -72,7 +72,7 @@ def get_p_from_paulis(rho: SparsePauliOp, povm: List[SingleQubitPOVM]) -> np.nda
 
     p = jit_decompose_operator(op_labels, op_coeffs, duals_pauli_decomp, p_init)
 
-    return p
+    return np.array(p)
 
 
 # Gram-Schmidt

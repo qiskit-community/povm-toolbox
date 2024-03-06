@@ -3,11 +3,11 @@
 from unittest import TestCase
 import numpy as np
 
-from povms.povm_implementation import ProductPVMSimPOVMImplementation
+from povms.pm_sim_implementation import PMSimImplementation
 from povms.single_qubit_povm import SingleQubitPOVM
 
 
-class TestProductPVMSimPOVMImplementation(TestCase):
+class TestPMSimImplementation(TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
 
@@ -46,15 +46,15 @@ class TestProductPVMSimPOVMImplementation(TestCase):
             parameters = np.array(
                 n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 1, 1]
             )
-            cs_implementation = ProductPVMSimPOVMImplementation(
+            cs_implementation = PMSimImplementation(
                 n_qubit=n_qubit, parameters=parameters
             )
             self.assertEqual(n_qubit, cs_implementation.n_qubit)
             cs_povm = cs_implementation.to_povm()
             for i in range(n_qubit):
-                self.assertEqual(cs_povm.povm_list[i].n_outcomes, sqpovm.n_outcomes)
+                self.assertEqual(cs_povm._povm_list[i].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
-                    self.assertAlmostEqual(cs_povm.povm_list[i][k], sqpovm[k])
+                    self.assertAlmostEqual(cs_povm._povm_list[i][k], sqpovm[k])
 
     def test_LBCS_build(self):
         """Test if we can build a LB Classical Shadow POVM from the generic class"""
@@ -70,7 +70,7 @@ class TestProductPVMSimPOVMImplementation(TestCase):
                 parameters[i * 8 + 6] = q[i, 0] / q[i, 2]
                 parameters[i * 8 + 7] = q[i, 1] / q[i, 2]
 
-            cs_implementation = ProductPVMSimPOVMImplementation(
+            cs_implementation = PMSimImplementation(
                 n_qubit=n_qubit, parameters=parameters
             )
             self.assertEqual(n_qubit, cs_implementation.n_qubit)
@@ -88,6 +88,6 @@ class TestProductPVMSimPOVMImplementation(TestCase):
                         ]
                     )
                 )
-                self.assertEqual(cs_povm.povm_list[i].n_outcomes, sqpovm.n_outcomes)
+                self.assertEqual(cs_povm._povm_list[i].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
-                    self.assertTrue(np.allclose(cs_povm.povm_list[i][k], sqpovm[k]))
+                    self.assertTrue(np.allclose(cs_povm._povm_list[i][k], sqpovm[k]))
