@@ -1,4 +1,4 @@
-"""Tests for Base POVM utils"""
+"""Tests for the SingleQubitPOVM class."""
 
 from unittest import TestCase
 import numpy as np
@@ -43,3 +43,8 @@ class TestSingleQubitPovm(TestCase):
         self.assertTrue(np.allclose(summed, np.array([1.0, 0.0, 0.0, 0.0], dtype=complex)))
 
         # also check that the decomposition is correct TODO
+
+    # TODO: write a unittest for each public method of SingleQubitPOVM
+
+    # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
+    # errors are raised properly)

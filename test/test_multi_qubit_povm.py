@@ -1,4 +1,4 @@
-"""Tests for Base POVM utils"""
+"""Tests for the MultiQubitPOVM class."""
 
 from unittest import TestCase
 import numpy as np
@@ -25,3 +25,8 @@ class TestMultiQubitPOVM(TestCase):
     def test_build_from_vectors(self):
         if True:
             self.assertTrue(True)
+
+    # TODO: write a unittest for each public method of MultiQubitPOVM
+
+    # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
+    # errors are raised properly)

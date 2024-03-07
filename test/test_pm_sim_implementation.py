@@ -1,4 +1,4 @@
-"""Tests for POVM implementations"""
+"""Tests for the PMSimImplementation class."""
 
 from unittest import TestCase
 import numpy as np
@@ -87,3 +87,8 @@ class TestPMSimImplementation(TestCase):
                 self.assertEqual(cs_povm._povm_list[i].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
                     self.assertTrue(np.allclose(cs_povm._povm_list[i][k], sqpovm[k]))
+
+    # TODO: write a unittest for each public method of PMSimImplementation
+
+    # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
+    # errors are raised properly)
