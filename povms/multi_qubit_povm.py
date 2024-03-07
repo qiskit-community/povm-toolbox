@@ -32,6 +32,7 @@ class MultiQubitPOVM(BasePOVM):
         self.dual_operators = None
         self.frame_superop = None
         self.informationlly_complete = None
+        # TODO: should all of the public attributes above become part of the BasePOVM interface?
 
         self._check_validity()
 
@@ -56,21 +57,17 @@ class MultiQubitPOVM(BasePOVM):
         """
         summed_op: np.ndarray = np.zeros((self.dimension, self.dimension), dtype=complex)
 
-        for k in range(len(self)):
-            if not np.allclose(
-                self.povm_operators[k].data.conj().T - self.povm_operators[k].data,
-                0.0,
-                atol=1e-5,
-            ):
+        for k, op in enumerate(self.povm_operators):
+            if not np.allclose(op, op.adjoint(), atol=1e-5):
                 raise ValueError(f"POVM operator {k} is not hermitian.")
 
-            for eigval in np.linalg.eigvalsh(self.povm_operators[k].data):
+            for eigval in np.linalg.eigvalsh(op.data):
                 if eigval.real < -1e-6 or np.abs(eigval.imag) > 1e-5:
                     raise ValueError(f"Negative eigenvalue {eigval} in POVM operator {k}.")
 
-            summed_op += self.povm_operators[k].data
+            summed_op += op.data
 
-        if not np.allclose(summed_op - np.identity(self.dimension, dtype=complex), 0.0, atol=1e-5):
+        if not np.allclose(summed_op, np.identity(self.dimension, dtype=complex), atol=1e-5):
             raise ValueError(f"POVM operators not summing up to the identity : \n{summed_op}")
 
         return True
@@ -82,7 +79,6 @@ class MultiQubitPOVM(BasePOVM):
             TODO.
         """
         k1 = 0
-        n_del = 0
 
         while k1 < len(self):
             k2 = k1 + 1
@@ -96,7 +92,6 @@ class MultiQubitPOVM(BasePOVM):
                     )
                     self.povm_operators.pop(k2)
                     self._n_outcomes -= 1
-                    n_del += 1
                     k2 -= 1
                 k2 += 1
             k1 += 1
@@ -119,7 +114,7 @@ class MultiQubitPOVM(BasePOVM):
 
     def __len__(self) -> int:
         """TODO."""
-        return len(self.povm_operators)
+        return self.n_outcomes
 
     def get_prob(self, rho: DensityMatrix) -> np.ndarray:
         """TODO.
@@ -164,69 +159,64 @@ class MultiQubitPOVM(BasePOVM):
             povm_operators[i] = np.outer(vec, vec.conj())
         return cls(povm_operators)
 
-
-'''
-    @classmethod
-    def from_dilation_unitary(cls, U, dim):
-        """Initialize a POVM from dilation unitary"""
-        return cls.from_vectors(U[:,0:dim].conj())
-
-    @classmethod
-    def from_param(cls, param_raw: np.ndarray, dim: int):
-        """Initialize a POVM from the list of parameters"""
-
-        assert (
-            (len(param_raw)+dim**2)%(2*dim-1) == 0
-        ), f"size of the parameters ({len(param_raw)}) does not match expectation."
-
-        n_out = (len(param_raw)+dim**2)//(2*dim-1)
-
-        param = []
-        param.append(param_raw[0:(n_out-1)])
-        count = n_out-1
-        for i in range(1,dim):
-            l = 2*(n_out-i)-1
-            param.append(param_raw[count:count+l])
-            count += l
-
-        u = np.zeros((n_out,n_out), dtype=complex)
-
-        k=0
-        u[:,k] = n_sphere(param[k])
-        u_gs = gs(u) #Gram-Schmidt
-
-        for k in range(1,dim):
-            x=n_sphere(param[k])
-            # construct k'th vector of u
-            for i in range(len(x)//2):
-                u[:,k] += (x[2*i] + x[2*i+1]*1j) * u_gs[:,k+i]
-            u_gs = gs(u)
-
-        for i in range(len(param)):
-            u_gs[:,i] *= np.sign(u[0,i])*np.sign(u_gs[0,i])
-
-        return cls.from_dilation_unitary(u_gs, dim)
-'''
-
-
-'''
-    #def __getitem__(self, index:slice) -> np.ndarray:
-    #    """Return a numpy array of shape (n_outcomes, d, d) that includes all povm operators."""
-    #    if isinstance(index, int) :
-    #        return self.povm_operators[index].data
-    #    elif isinstance(index, slice) :
-    #        return np.array([op.data for op in self.povm_operators[index]])
-    #    else:
-    #        raise TypeError("Invalid Argument Type")
-
-        def get_ops(self, idx:slice=...) -> np.ndarray:
-        """Return a numpy array of shape (n_outcomes, d, d) that includes all povm operators."""
-
-        if self.array_ops is None:
-            self.array_ops = np.zeros((self.n_outcomes, self.dimension, self.dimension), dtype=complex)
-            for k, op in enumerate(self.povm_operators):
-                self.array_ops[k] = op.data
-
-        return self.array_ops[idx]
-
-'''
+    # @classmethod
+    # def from_dilation_unitary(cls, U, dim):
+    #     """Initialize a POVM from dilation unitary"""
+    #     return cls.from_vectors(U[:,0:dim].conj())
+    #
+    # @classmethod
+    # def from_param(cls, param_raw: np.ndarray, dim: int):
+    #     """Initialize a POVM from the list of parameters"""
+    #
+    #     assert (
+    #         (len(param_raw)+dim**2)%(2*dim-1) == 0
+    #     ), f"size of the parameters ({len(param_raw)}) does not match expectation."
+    #
+    #     n_out = (len(param_raw)+dim**2)//(2*dim-1)
+    #
+    #     param = []
+    #     param.append(param_raw[0:(n_out-1)])
+    #     count = n_out-1
+    #     for i in range(1,dim):
+    #         l = 2*(n_out-i)-1
+    #         param.append(param_raw[count:count+l])
+    #         count += l
+    #
+    #     u = np.zeros((n_out,n_out), dtype=complex)
+    #
+    #     k=0
+    #     u[:,k] = n_sphere(param[k])
+    #     u_gs = gs(u) #Gram-Schmidt
+    #
+    #     for k in range(1,dim):
+    #         x=n_sphere(param[k])
+    #         # construct k'th vector of u
+    #         for i in range(len(x)//2):
+    #             u[:,k] += (x[2*i] + x[2*i+1]*1j) * u_gs[:,k+i]
+    #         u_gs = gs(u)
+    #
+    #     for i in range(len(param)):
+    #         u_gs[:,i] *= np.sign(u[0,i])*np.sign(u_gs[0,i])
+    #
+    #     return cls.from_dilation_unitary(u_gs, dim)
+    #
+    #
+    # #def __getitem__(self, index:slice) -> np.ndarray:
+    # #    """Return a numpy array of shape (n_outcomes, d, d) that includes all povm operators."""
+    # #    if isinstance(index, int) :
+    # #        return self.povm_operators[index].data
+    # #    elif isinstance(index, slice) :
+    # #        return np.array([op.data for op in self.povm_operators[index]])
+    # #    else:
+    # #        raise TypeError("Invalid Argument Type")
+    #
+    #     def get_ops(self, idx:slice=...) -> np.ndarray:
+    #     """Return a numpy array of shape (n_outcomes, d, d) that includes all povm operators."""
+    #
+    #     if self.array_ops is None:
+    #         self.array_ops = np.zeros((self.n_outcomes, self.dimension, self.dimension), dtype=complex)
+    #         for k, op in enumerate(self.povm_operators):
+    #             self.array_ops[k] = op.data
+    #
+    #     return self.array_ops[idx]
+    #

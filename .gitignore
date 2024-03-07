@@ -131,7 +131,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# test Jupyter Noetbook
-notebooks/test.ipynb
+# untracked local files
+local_files/
 
 .DS_STORE

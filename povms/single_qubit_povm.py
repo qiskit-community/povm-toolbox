@@ -14,6 +14,8 @@ class SingleQubitPOVM(MultiQubitPOVM):
         """Initialize from explicit POVM operators."""
         super().__init__(povm_ops)
 
+        # TODO: why does SingleQubitPOVM have these attributes but neither MultiQubitPOVM nor
+        # BasePOVM have them?
         self.povm_pauli_ops = [SparsePauliOp.from_operator(op) for op in self.povm_operators]
         self.povm_pauli_decomp = [
             SingleQubitPOVM.pauli_op_to_array(pauli_op) for pauli_op in self.povm_pauli_ops
@@ -49,7 +51,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
         Raises:
             ValueError: TODO.
         """
-        labels = np.zeros(4) + 0j
+        labels: np.ndarray = np.zeros(4, dtype=complex)
 
         for pauli_idx, coeff in pauli_op.label_iter():
             if pauli_idx == "I":

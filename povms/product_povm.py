@@ -16,6 +16,7 @@ class ProductPOVM(BasePOVM):
 
     def __init__(self, povm_list: list[SingleQubitPOVM]):
         """Initialize from explicit list of POVMs."""
+        # TODO: change list[SingleQubitPOVM] to list[MultiQubitPOVM]
         self._dimension = 1
         self._n_outcomes = 1
         self._n_operators = 0
@@ -29,25 +30,17 @@ class ProductPOVM(BasePOVM):
     @property
     def dimension(self) -> int:
         """Give the dimension of the Hilbert space on which the effects act."""
-        self._dimension = 1
-        for povm in self._povm_list:
-            self._dimension *= povm.dimension
         return self._dimension
 
     @property
     def n_outcomes(self) -> int:
         """Give the number of outcomes of the POVM."""
-        self._n_outcomes = 1
-        for povm in self._povm_list:
-            self._n_outcomes *= povm.n_outcomes
+        # TODO: check behaviour when a MultiQubitPOVM in the list is cleaned
         return self._n_outcomes
 
     @property
     def n_operators(self) -> int:
         """Give the number of single-qubit operators forming the POVM."""
-        self._n_operators = 0
-        for povm in self._povm_list:
-            self._n_operators += povm.n_outcomes
         return self._n_operators
 
     def _check_validity(self) -> bool:
