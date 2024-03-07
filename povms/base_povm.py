@@ -8,6 +8,7 @@ import numpy as np
 
 from qiskit.quantum_info import Operator, DensityMatrix
 
+
 class BasePOVM(ABC):
     """Abstract base class that contains all methods that any specific POVM subclass should implement."""
 
@@ -32,7 +33,7 @@ class BasePOVM(ABC):
     @abstractmethod
     def __getitem__(self, index: slice) -> Operator | list[Operator]:
         """Return a povm operator or a list of povm operators."""
-    
+
     @abstractmethod
     def __len__(self) -> int:
         """Return the number of outcomes of the POVM."""

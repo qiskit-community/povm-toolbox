@@ -46,9 +46,7 @@ class TestPMSimImplementation(TestCase):
             parameters = np.array(
                 n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 1, 1]
             )
-            cs_implementation = PMSimImplementation(
-                n_qubit=n_qubit, parameters=parameters
-            )
+            cs_implementation = PMSimImplementation(n_qubit=n_qubit, parameters=parameters)
             self.assertEqual(n_qubit, cs_implementation.n_qubit)
             cs_povm = cs_implementation.to_povm()
             for i in range(n_qubit):
@@ -70,9 +68,7 @@ class TestPMSimImplementation(TestCase):
                 parameters[i * 8 + 6] = q[i, 0] / q[i, 2]
                 parameters[i * 8 + 7] = q[i, 1] / q[i, 2]
 
-            cs_implementation = PMSimImplementation(
-                n_qubit=n_qubit, parameters=parameters
-            )
+            cs_implementation = PMSimImplementation(n_qubit=n_qubit, parameters=parameters)
             self.assertEqual(n_qubit, cs_implementation.n_qubit)
             cs_povm = cs_implementation.to_povm()
             for i in range(n_qubit):

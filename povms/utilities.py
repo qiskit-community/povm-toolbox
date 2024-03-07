@@ -10,7 +10,6 @@ from qiskit.quantum_info import SparsePauliOp
 from .single_qubit_povm import SingleQubitPOVM
 
 
-
 @jit(nopython=True)
 def jit_decompose_operator(
     op_labels: np.ndarray,
@@ -19,7 +18,7 @@ def jit_decompose_operator(
     omega_init: np.ndarray,
 ) -> np.ndarray:
     r"""Decompose an operator in Pauli representation into the linear combination of a basis frame.
-    
+
     Note: could be dual or actual povm operators.
 
     Args:
@@ -52,8 +51,8 @@ def get_p_from_paulis(rho: SparsePauliOp, povm: List[SingleQubitPOVM]) -> np.nda
 
     n_outcomes = povm[0].n_outcomes
 
-    assert (
-        n_qubits == len(povm)
+    assert n_qubits == len(
+        povm
     ), f"size of the operator {n_qubits} does not match the size of the povm {len(povm)}."
 
     conversion = {"I": 0, "X": 1, "Y": 2, "Z": 3}

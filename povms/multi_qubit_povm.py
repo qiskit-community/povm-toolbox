@@ -8,6 +8,7 @@ from qiskit.quantum_info import Operator, DensityMatrix
 
 from .base_povm import BasePOVM
 
+
 class MultiQubitPOVM(BasePOVM):
     """Class that collects all information that any MultiQubit POVM should specifiy."""
 
@@ -73,30 +74,41 @@ class MultiQubitPOVM(BasePOVM):
             raise ValueError(f"POVM operators not summing up to the identity : \n{summed_op}")
 
         return True
-    
+
     def _clean_povm(self) -> bool:
         """Merge effects thats are proportionnal to each other and reorder effects in a standard way.
 
         Returns:
             TODO.
         """
-        k1=0
+        k1 = 0
         n_del = 0
 
         while k1 < len(self):
-            k2 = k1+1
+            k2 = k1 + 1
             while k2 < len(self):
-                if np.allclose(self.povm_operators[k1] / np.trace(self.povm_operators[k1]), self.povm_operators[k2] / np.trace(self.povm_operators[k2])):
-                    self.povm_operators[k1] = Operator(self.povm_operators[k1]+self.povm_operators[k2])
+                if np.allclose(
+                    self.povm_operators[k1] / np.trace(self.povm_operators[k1]),
+                    self.povm_operators[k2] / np.trace(self.povm_operators[k2]),
+                ):
+                    self.povm_operators[k1] = Operator(
+                        self.povm_operators[k1] + self.povm_operators[k2]
+                    )
                     self.povm_operators.pop(k2)
-                    self._n_outcomes-=1
-                    n_del+=1
-                    k2-=1
-                k2+=1
-            k1+=1
+                    self._n_outcomes -= 1
+                    n_del += 1
+                    k2 -= 1
+                k2 += 1
+            k1 += 1
 
-        sorting_values = np.array([(np.trace(op.data), np.max(np.linalg.eigvalsh(op.data)), op.data[0,0]) for op in self.povm_operators], dtype=[('tr', 'float'), ('ev', 'float'), ('m00', 'float')])
-        idx_sort = np.argsort(sorting_values, order=('tr','ev','m00'))[::-1]
+        sorting_values = np.array(
+            [
+                (np.trace(op.data), np.max(np.linalg.eigvalsh(op.data)), op.data[0, 0])
+                for op in self.povm_operators
+            ],
+            dtype=[("tr", "float"), ("ev", "float"), ("m00", "float")],
+        )
+        idx_sort = np.argsort(sorting_values, order=("tr", "ev", "m00"))[::-1]
         self.povm_operators = [self[idx] for idx in idx_sort]
 
         return self._check_validity()
@@ -121,7 +133,7 @@ class MultiQubitPOVM(BasePOVM):
         return np.array(
             [np.real(np.trace(rho.data @ povm_op.data)) for povm_op in self.povm_operators]
         )
-    
+
     def get_omegas(self, obs: np.ndarray):
         """Return the decomposition weights of obserservable `obs` into the POVM effects.
 
