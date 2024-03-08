@@ -160,8 +160,9 @@ class TestProductPOVM(TestCase):
         1.03622341e-02, 1.11265333e-02, 1.72188532e-02, 1.91848823e-02]]
         # fmt: on
 
+        seed = 14
         for n_qubit in range(1, 4):
-            rng = np.random.RandomState(14)
+            rng = np.random.RandomState(seed)
             q = rng.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
@@ -181,11 +182,9 @@ class TestProductPOVM(TestCase):
                 )
 
             prod_povm = ProductPOVM(povm_list=povm_list)
-            rho = random_density_matrix(dims=2**n_qubit, seed=14)
+            rho = random_density_matrix(dims=2**n_qubit, seed=seed)
             p = prod_povm.get_prob(rho)
             self.assertTrue(np.allclose(a=np.array(checks[n_qubit - 1]), b=np.array(p)))
-
-        np.random.seed()
 
     # TODO
     def test_build_from_vectors(self):
