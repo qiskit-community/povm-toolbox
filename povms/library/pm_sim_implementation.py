@@ -7,9 +7,9 @@ from collections import Counter
 import numpy as np
 from qiskit.circuit import ParameterVector, QuantumCircuit
 
+from ..quantum_info.product_povm import ProductPOVM
+from ..quantum_info.single_qubit_povm import SingleQubitPOVM
 from .povm_implementation import POVMImplementation
-from .product_povm import ProductPOVM
-from .single_qubit_povm import SingleQubitPOVM
 
 
 class PMSimImplementation(POVMImplementation):

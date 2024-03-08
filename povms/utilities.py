@@ -6,7 +6,7 @@ import numpy as np
 from numba import jit
 from qiskit.quantum_info import SparsePauliOp
 
-from .single_qubit_povm import SingleQubitPOVM
+from .quantum_info.single_qubit_povm import SingleQubitPOVM
 
 
 @jit(nopython=True)

@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp
 
+from ..utilities import get_p_from_paulis
 from .base_povm import BasePOVM
 from .single_qubit_povm import SingleQubitPOVM
-from .utilities import get_p_from_paulis
 
 
 class ProductPOVM(BasePOVM):

@@ -3,8 +3,8 @@
 from unittest import TestCase
 
 import numpy as np
-from povms.pm_sim_implementation import PMSimImplementation
-from povms.single_qubit_povm import SingleQubitPOVM
+from povms.library.pm_sim_implementation import PMSimImplementation
+from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator
 
 
