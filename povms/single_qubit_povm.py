@@ -1,7 +1,9 @@
 """TODO."""
 
+from __future__ import annotations
+
 import numpy as np
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .multi_qubit_povm import MultiQubitPOVM
 
@@ -9,7 +11,7 @@ from .multi_qubit_povm import MultiQubitPOVM
 class SingleQubitPOVM(MultiQubitPOVM):
     """Class to represent a set of IC single-qubit POVM operators."""
 
-    def __init__(self, povm_ops: np.ndarray):
+    def __init__(self, povm_ops: list[Operator]):
         """Initialize from explicit POVM operators."""
         super().__init__(povm_ops)
 

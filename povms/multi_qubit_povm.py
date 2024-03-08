@@ -2,30 +2,38 @@
 
 from __future__ import annotations
 
+import copy
+from typing import TypeVar
+
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, Operator
 
 from .base_povm import BasePOVM
 
+# Create a generic variable that can be 'MultiQubitPOVM', or any subclass.
+T = TypeVar("T", bound="MultiQubitPOVM")
+
 
 class MultiQubitPOVM(BasePOVM):
     """Class that collects all information that any MultiQubit POVM should specifiy."""
 
-    def __init__(self, povm_ops: np.ndarray) -> None:
+    def __init__(self, povm_ops: list[Operator]) -> None:
         """Initialize from explicit POVM operators.
 
         Args:
-            povm_operators: np.ndarray that contains the explicit list of POVM operators.
+            povm_operators: list that contains the explicit POVM operators.
 
         Raises:
             ValueError: TODO.
         """
-        if not (len(povm_ops.shape) == 3 and povm_ops.shape[1] == povm_ops.shape[2]):
-            raise ValueError(f"POVM operators need to be square instead of {povm_ops.shape[1:]}")
-
-        self._n_outcomes: int = povm_ops.shape[0]
-        self._dimension: int = povm_ops.shape[1]
-        self.povm_operators: list[Operator] = [Operator(op) for op in povm_ops]
+        self._n_outcomes: int = len(povm_ops)
+        self._dimension: int = povm_ops[0].dim[0]
+        for op in povm_ops:
+            if not (self._dimension == op.dim[0] and self._dimension == op.dim[1]):
+                raise ValueError(
+                    f"POVM operators need to be square ({op.dim[0]},{op.dim[1]}) and all of the same dimension."
+                )
+        self.povm_operators: list[Operator] = povm_ops
         self.array_ops = None
 
         self.dual_operators = None
@@ -71,41 +79,43 @@ class MultiQubitPOVM(BasePOVM):
 
         return True
 
-    def _clean_povm(self) -> bool:
+    @classmethod
+    def clean_povm_operators(cls: type[T], povm: T) -> T:
         """Merge effects thats are proportionnal to each other and reorder effects in a standard way.
 
         Returns:
             TODO.
         """
+        povm_ops = copy.deepcopy(povm.povm_operators)
         k1 = 0
 
-        while k1 < len(self):
+        while k1 < len(povm_ops):
             k2 = k1 + 1
-            while k2 < len(self):
+            while k2 < len(povm_ops):
                 if np.allclose(
-                    self.povm_operators[k1] / np.trace(self.povm_operators[k1]),
-                    self.povm_operators[k2] / np.trace(self.povm_operators[k2]),
+                    povm_ops[k1] / np.trace(povm_ops[k1]),
+                    povm_ops[k2] / np.trace(povm_ops[k2]),
                 ):
-                    self.povm_operators[k1] = Operator(
-                        self.povm_operators[k1] + self.povm_operators[k2]
-                    )
-                    self.povm_operators.pop(k2)
-                    self._n_outcomes -= 1
+                    povm_ops[k1] = Operator(povm_ops[k1] + povm_ops[k2])
+                    povm_ops.pop(k2)
+
                     k2 -= 1
                 k2 += 1
             k1 += 1
 
         sorting_values = np.array(
             [
-                (np.trace(op.data), np.max(np.linalg.eigvalsh(op.data)), op.data[0, 0])
-                for op in self.povm_operators
+                (
+                    np.real(np.trace(op.data)),
+                    np.max(np.linalg.eigvalsh(op.data)),
+                    np.real(op.data[0, 0]),
+                )
+                for op in povm_ops
             ],
             dtype=[("tr", "float"), ("ev", "float"), ("m00", "float")],
         )
         idx_sort = np.argsort(sorting_values, order=("tr", "ev", "m00"))[::-1]
-        self.povm_operators = [self[idx] for idx in idx_sort]
-
-        return self._check_validity()
+        return cls([povm_ops[idx] for idx in idx_sort])
 
     def __getitem__(self, index: slice) -> Operator | list[Operator]:
         """Return a povm operator or a list of povm operators."""
@@ -150,12 +160,9 @@ class MultiQubitPOVM(BasePOVM):
         Returns:
             TODO.
         """
-        povm_operators: np.ndarray = np.zeros(
-            (povm_vectors.shape[0], povm_vectors.shape[1], povm_vectors.shape[1]),
-            dtype=complex,
-        )
-        for i, vec in enumerate(povm_vectors):
-            povm_operators[i] = np.outer(vec, vec.conj())
+        povm_operators = []
+        for vec in povm_vectors:
+            povm_operators.append(Operator(np.outer(vec, vec.conj())))
         return cls(povm_operators)
 
     # @classmethod

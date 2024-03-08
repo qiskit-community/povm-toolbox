@@ -26,10 +26,6 @@ class BasePOVM(ABC):
         """Check if POVM axioms are fulfilled."""
 
     @abstractmethod
-    def _clean_povm(self) -> bool:
-        """Merge effects thats are proportionnal to each other and reorder effects in a standard way."""
-
-    @abstractmethod
     def __getitem__(self, index: slice) -> Operator | list[Operator]:
         """Return a povm operator or a list of povm operators."""
 

@@ -4,6 +4,7 @@ from unittest import TestCase
 
 import numpy as np
 from povms.single_qubit_povm import SingleQubitPOVM
+from qiskit.quantum_info import Operator
 from scipy.stats import unitary_group
 
 
@@ -19,7 +20,7 @@ class TestSingleQubitPovm(TestCase):
             ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
 
         with self.assertRaises(ValueError):
-            povm1 = SingleQubitPOVM(povm_ops=ops)
+            povm1 = SingleQubitPOVM(povm_ops=[Operator(op) for op in ops])
             povm1.check_validity()
 
     def test_pauli_decomposition(self):

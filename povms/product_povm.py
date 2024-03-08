@@ -26,6 +26,8 @@ class ProductPOVM(BasePOVM):
 
         self._povm_list = povm_list
 
+        self._check_validity()
+
     @property
     def dimension(self) -> int:
         """Give the dimension of the Hilbert space on which the effects act."""
@@ -50,19 +52,21 @@ class ProductPOVM(BasePOVM):
         """
         return all(povm._check_validity() for povm in self._povm_list)
 
-    def _clean_povm(self) -> bool:
+    @staticmethod
+    def clean_povm_operators(prod_povm: ProductPOVM) -> ProductPOVM:
         """Merge effects thats are proportionnal to each other and reorder effects in a standard way.
 
         Returns:
             TODO.
         """
-        self._n_outcomes = 1
-        self._n_operators = 0
-        for povm in self._povm_list:
-            povm._clean_povm()
-            self._n_outcomes *= povm.n_outcomes
-            self._n_operators += povm.n_outcomes
-        return self._check_validity()
+        n_outcomes = 1
+        n_operators = 0
+        povm_list = []
+        for povm in prod_povm._povm_list:
+            povm_list.append(SingleQubitPOVM.clean_povm_operators(povm))
+            n_outcomes *= povm_list[-1].n_outcomes
+            n_operators += povm_list[-1].n_outcomes
+        return ProductPOVM(povm_list)
 
     def __getitem__(self, index: slice | tuple[slice, slice]) -> Operator | list[Operator]:
         """Return a povm operator or a list of povm operators.

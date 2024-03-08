@@ -49,6 +49,7 @@ class PMSimImplementation(POVMImplementation):
                 "The number of parameters per qubit is expected to be of the form 3*n_PVM-1"
             )
 
+        # TODO: move this to the __init__ method
         self.n_PVM = int((len(parameters) // self.n_qubit + 1) // 3)
         parameters = parameters.reshape((self.n_qubit, self.n_PVM * 3 - 1))
         self.angles = parameters[:, : 2 * self.n_PVM].reshape((self.n_qubit, self.n_PVM, 2))
@@ -78,7 +79,7 @@ class PMSimImplementation(POVMImplementation):
 
         return qc
 
-    def get_parameter_and_shot(self, shot: int) -> QuantumCircuit:
+    def get_parameter_and_shot(self, shot: int) -> list[tuple[np.ndarray, int]]:
         """Return a list with concrete parameter values and associated number of shots.
 
         Args:
@@ -95,15 +96,16 @@ class PMSimImplementation(POVMImplementation):
             )
         counts = Counter(tuple(x) for x in PVM_idx)
 
-        return [
-            tuple(
-                (
-                    [self.angles[i, combination[i]] for i in range(self.n_qubit)],
-                    counts[combination],
-                )
-            )
-            for combination in counts
+        param = np.zeros((len(counts), self.n_qubit, 2))
+        for i, combination in enumerate(counts):
+            for j in range(self.n_qubit):
+                param[i, j] = self.angles[j, combination[j]]
+
+        list_param_shot: list[tuple[np.ndarray, int]] = [
+            tuple((param[i], counts[combination])) for i, combination in enumerate(counts)
         ]
+
+        return list_param_shot
 
     def to_povm(self) -> ProductPOVM:
         """TODO.
