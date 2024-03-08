@@ -1,8 +1,8 @@
 """Tests for the PMSimImplementation class."""
 
 from unittest import TestCase
-import numpy as np
 
+import numpy as np
 from povms.pm_sim_implementation import PMSimImplementation
 from povms.single_qubit_povm import SingleQubitPOVM
 

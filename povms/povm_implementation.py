@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from qiskit.circuit import QuantumCircuit
+
 from .base_povm import BasePOVM
 
 

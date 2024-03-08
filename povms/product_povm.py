@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-
-from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Operator
+from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp
 
 from .base_povm import BasePOVM
 from .single_qubit_povm import SingleQubitPOVM
@@ -49,10 +48,7 @@ class ProductPOVM(BasePOVM):
         Returns:
             TODO.
         """
-        for povm in self._povm_list:
-            if not povm._check_validity():
-                return False
-        return True
+        return all(povm._check_validity() for povm in self._povm_list)
 
     def _clean_povm(self) -> bool:
         """Merge effects thats are proportionnal to each other and reorder effects in a standard way.
@@ -120,7 +116,7 @@ class ProductPOVM(BasePOVM):
             TODO.
         """
         # TODO
-        return np.empty((self.n_outcomes))
+        return np.empty(self.n_outcomes)
 
 
 #    def plot_bloch_sphere(self, dual=False, colors=None):

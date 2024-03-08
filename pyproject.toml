@@ -65,6 +65,23 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 
+[tool.pylint.main]
+py-version = "3.9"
+
+[tool.pylint."messages control"]
+disable = ["all"]
+enable = [
+    "reimported",
+    "no-self-use",
+    "no-else-raise",
+    "redefined-argument-from-local",
+    "redefined-builtin",
+    "raise-missing-from",
+    "cyclic-import",
+    "unused-argument",
+    "attribute-defined-outside-init",
+]
+
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:::.*qiskit.opflow*"]
 testpaths = ["./povms/", "./test/"]
@@ -75,8 +92,21 @@ src = ["povms", "test"]
 target-version = "py39"
 
 [tool.ruff.lint]
+select = [
+    "I",   # isort
+    "E",   # pycodestyle
+    "W",   # pycodestyle
+    "F",   # pyflakes
+    "PL",  # pylint
+    "RUF", # ruff
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+]
 ignore = [
     "E501",
+    "PLR2004",
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]

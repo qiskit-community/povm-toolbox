@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-import numpy as np
 from collections import Counter
-from qiskit.circuit import QuantumCircuit, ParameterVector
+
+import numpy as np
+from qiskit.circuit import ParameterVector, QuantumCircuit
+
 from .povm_implementation import POVMImplementation
-from .single_qubit_povm import SingleQubitPOVM
 from .product_povm import ProductPOVM
+from .single_qubit_povm import SingleQubitPOVM
 
 
 class PMSimImplementation(POVMImplementation):

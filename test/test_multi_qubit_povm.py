@@ -1,8 +1,8 @@
 """Tests for the MultiQubitPOVM class."""
 
 from unittest import TestCase
-import numpy as np
 
+import numpy as np
 from povms.multi_qubit_povm import MultiQubitPOVM
 
 

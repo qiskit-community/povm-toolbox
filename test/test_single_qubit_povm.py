@@ -1,11 +1,10 @@
 """Tests for the SingleQubitPOVM class."""
 
 from unittest import TestCase
+
 import numpy as np
-from scipy.stats import unitary_group
-
-
 from povms.single_qubit_povm import SingleQubitPOVM
+from scipy.stats import unitary_group
 
 
 class TestSingleQubitPovm(TestCase):

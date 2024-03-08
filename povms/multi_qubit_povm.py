@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-
-from qiskit.quantum_info import Operator, DensityMatrix
+from qiskit.quantum_info import DensityMatrix, Operator
 
 from .base_povm import BasePOVM
 
@@ -139,7 +138,7 @@ class MultiQubitPOVM(BasePOVM):
             TODO.
         """
         # TODO
-        return np.empty((self.n_outcomes))
+        return np.empty(self.n_outcomes)
 
     @classmethod
     def from_vectors(cls, povm_vectors: np.ndarray):

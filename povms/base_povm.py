@@ -5,8 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import numpy as np
-
-from qiskit.quantum_info import Operator, DensityMatrix
+from qiskit.quantum_info import DensityMatrix, Operator
 
 
 class BasePOVM(ABC):
