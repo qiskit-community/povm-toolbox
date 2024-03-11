@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix, Operator
+from qiskit.quantum_info import DensityMatrix
 
 
 class BasePOVM(ABC):
@@ -17,6 +17,14 @@ class BasePOVM(ABC):
         """Give the dimension of the Hilbert space on which the effects act."""
 
     @property
+    def n_subsystems(self) -> int:
+        """Return the number of subsystems which the effects act on.
+
+        For qubits, this is always :math:`log2(self.dimension)`.
+        """
+        return int(np.log2(self.dimension))
+
+    @property
     @abstractmethod
     def n_outcomes(self) -> int:
         """Give the number of outcomes of the POVM."""
@@ -24,10 +32,6 @@ class BasePOVM(ABC):
     @abstractmethod
     def _check_validity(self) -> bool:
         """Check if POVM axioms are fulfilled."""
-
-    @abstractmethod
-    def __getitem__(self, index: slice) -> Operator | list[Operator]:
-        """Return a povm operator or a list of povm operators."""
 
     @abstractmethod
     def __len__(self) -> int:

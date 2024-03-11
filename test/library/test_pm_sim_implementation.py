@@ -49,9 +49,9 @@ class TestPMSimImplementation(TestCase):
             self.assertEqual(n_qubit, cs_implementation.n_qubit)
             cs_povm = cs_implementation.to_povm()
             for i in range(n_qubit):
-                self.assertEqual(cs_povm._povm_list[i].n_outcomes, sqpovm.n_outcomes)
+                self.assertEqual(cs_povm._povms[(i,)].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
-                    self.assertAlmostEqual(cs_povm[i, k], sqpovm[k])
+                    self.assertAlmostEqual(cs_povm._povms[(i,)][k], sqpovm[k])
 
     def test_LBCS_build(self):
         """Test if we can build a LB Classical Shadow POVM from the generic class"""
@@ -81,9 +81,9 @@ class TestPMSimImplementation(TestCase):
                         q[i, 2] * Operator.from_label("l"),
                     ]
                 )
-                self.assertEqual(cs_povm._povm_list[i].n_outcomes, sqpovm.n_outcomes)
+                self.assertEqual(cs_povm._povms[(i,)].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
-                    self.assertTrue(np.allclose(cs_povm._povm_list[i][k], sqpovm[k]))
+                    self.assertTrue(np.allclose(cs_povm._povms[(i,)][k], sqpovm[k]))
 
     def test_qc_build(self):
         """Test if we can build a QunatumCircuit."""

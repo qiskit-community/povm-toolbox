@@ -3,6 +3,7 @@
 from unittest import TestCase
 
 import numpy as np
+from povms.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from povms.quantum_info.product_povm import ProductPOVM
 from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator, random_density_matrix
@@ -40,9 +41,70 @@ class TestProductPOVM(TestCase):
 
     # TODO
     def test_init(self):
-        """Test"""
-        if True:
-            self.assertTrue(True)
+        """Test the ``ProductPOVM.__init__`` method."""
+        sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+        mqp = MultiQubitPOVM(
+            [
+                Operator.from_label("00"),
+                Operator.from_label("01"),
+                Operator.from_label("10"),
+                Operator.from_label("11"),
+            ]
+        )
+        with self.subTest("SingleQubitPOVM objects"):
+            povms = {(0,): sqp, (1,): sqp, (2,): sqp}
+            product = ProductPOVM(povms)
+            self.assertEqual(product.dimension, 8)
+            self.assertEqual(product.n_outcomes, 8)
+            self.assertEqual(product.n_operators, 6)
+        with self.subTest("MultiQubitPOVM objects"):
+            povms = {(0, 1): mqp, (2, 3): mqp}
+            product = ProductPOVM(povms)
+            self.assertEqual(product.dimension, 16)
+            self.assertEqual(product.n_outcomes, 16)
+            self.assertEqual(product.n_operators, 8)
+        with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects"):
+            povms = {(0,): sqp, (1,): sqp, (2, 3): mqp}
+            product = ProductPOVM(povms)
+            self.assertEqual(product.dimension, 16)
+            self.assertEqual(product.n_outcomes, 16)
+            self.assertEqual(product.n_operators, 8)
+        with self.subTest("Invalid POVM subsystem indices"), self.assertRaises(ValueError):
+            _ = ProductPOVM({(0, 0): mqp})
+        with self.subTest("Duplicate POVM subsystem indices"), self.assertRaises(ValueError):
+            _ = ProductPOVM({(0,): sqp, (0, 1): mqp})
+        with self.subTest("Mismatching POVM size: SingleQubitPOVM"), self.assertRaises(ValueError):
+            _ = ProductPOVM({(0, 1): sqp})
+        with self.subTest("Mismatching POVM size: MultiQubitPOVM"), self.assertRaises(ValueError):
+            _ = ProductPOVM({(0,): mqp})
+
+    def test_from_list(self):
+        """Test the ``ProductPOVM.from_list`` constructor method."""
+        sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+        mqp = MultiQubitPOVM(
+            [
+                Operator.from_label("00"),
+                Operator.from_label("01"),
+                Operator.from_label("10"),
+                Operator.from_label("11"),
+            ]
+        )
+        with self.subTest("SingleQubitPOVM objects"):
+            expected = {(0,): sqp, (1,): sqp}
+            product = ProductPOVM.from_list([sqp, sqp])
+            self.assertEqual(expected, product._povms)
+        with self.subTest("MultiQubitPOVM objects"):
+            expected = {(0, 1): mqp, (2, 3): mqp}
+            product = ProductPOVM.from_list([mqp, mqp])
+            self.assertEqual(expected, product._povms)
+        with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects"):
+            expected = {(0,): sqp, (1,): sqp, (2, 3): mqp}
+            product = ProductPOVM.from_list([sqp, sqp, mqp])
+            self.assertEqual(expected, product._povms)
+        with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects - interleaved"):
+            expected = {(0,): sqp, (1, 2): mqp, (3,): sqp}
+            product = ProductPOVM.from_list([sqp, mqp, sqp])
+            self.assertEqual(expected, product._povms)
 
     # TODO
     def test_clean_povm(self):
@@ -55,7 +117,8 @@ class TestProductPOVM(TestCase):
 
         In particular, if we construct a ProductPOVM with a LocalPOVM that is subsequently cleaned,
         the ProductPOVM is also cleaned. We check that the number of outcomes of the ProductPOVM is updated.
-        (Is this really what we want ? Or should the product POVM have a copy of the local POVM ?)"""
+        (Is this really what we want ? Or should the product POVM have a copy of the local POVM ?)
+        """
 
         q = [0.51, 0.1, 0.2, 0.2]
         ops = [
@@ -77,7 +140,7 @@ class TestProductPOVM(TestCase):
         sqpovm = SingleQubitPOVM(ops)
         self.assertEqual(sqpovm.n_outcomes, n_ops)
 
-        prod_povm = ProductPOVM(5 * [sqpovm])
+        prod_povm = ProductPOVM.from_list(5 * [sqpovm])
         self.assertEqual(prod_povm.n_outcomes, n_ops**5)
         self.assertEqual(len(prod_povm), n_ops**5)
 
@@ -87,7 +150,7 @@ class TestProductPOVM(TestCase):
         self.assertEqual(len(sqpovm), 6)
 
         n_outcome_check = 1
-        for povm in prod_povm._povm_list:
+        for povm in prod_povm._povms.values():
             n_outcome_check *= povm.n_outcomes
 
         self.assertEqual(prod_povm.n_outcomes, n_outcome_check)
@@ -181,7 +244,7 @@ class TestProductPOVM(TestCase):
                     )
                 )
 
-            prod_povm = ProductPOVM(povm_list=povm_list)
+            prod_povm = ProductPOVM.from_list(povm_list)
             rho = random_density_matrix(dims=2**n_qubit, seed=seed)
             p = prod_povm.get_prob(rho)
             self.assertTrue(np.allclose(a=np.array(checks[n_qubit - 1]), b=np.array(p)))

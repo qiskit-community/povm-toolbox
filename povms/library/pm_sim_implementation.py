@@ -129,4 +129,4 @@ class PMSimImplementation(POVMImplementation):
         for vecs in stabilizers:
             sq_povms.append(SingleQubitPOVM.from_vectors(vecs))
 
-        return ProductPOVM(sq_povms)
+        return ProductPOVM.from_list(sq_povms)
