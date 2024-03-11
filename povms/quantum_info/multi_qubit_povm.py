@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import copy
+from functools import lru_cache
 from typing import TypeVar
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix, Operator
+from qiskit.exceptions import QiskitError
+from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp
 
 from .base_povm import BasePOVM
 
@@ -52,6 +54,23 @@ class MultiQubitPOVM(BasePOVM):
     def n_outcomes(self) -> int:
         """Give the number of outcomes of the POVM."""
         return self._n_outcomes
+
+    @property
+    @lru_cache(maxsize=64)  # noqa: B019
+    def pauli_operators(self) -> list[dict[str, complex]]:
+        """Convert the internal POVM operators to Pauli form.
+
+        This method will cache its returned data to avoid re-computation.
+
+        Raises:
+            ValueError: when the POVM operators are not N-qubit operators.
+        """
+        try:
+            return [
+                dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.povm_operators
+            ]
+        except QiskitError as exc:
+            raise ValueError("Failed to convert POVM operators to Pauli form.") from exc
 
     def _check_validity(self) -> bool:
         """Check if POVM axioms are fulfilled.

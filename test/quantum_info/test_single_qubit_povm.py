@@ -1,5 +1,6 @@
 """Tests for the SingleQubitPOVM class."""
 
+from collections import defaultdict
 from unittest import TestCase
 
 import numpy as np
@@ -36,11 +37,19 @@ class TestSingleQubitPovm(TestCase):
 
         sqpovm = SingleQubitPOVM.from_vectors(V)
 
-        summed = np.zeros(4, dtype=complex)
-        for coef in sqpovm.povm_pauli_decomp:
-            summed += coef
+        summed = defaultdict(complex)
+        for pauli_op in sqpovm.pauli_operators:
+            for pauli, coeff in pauli_op.items():
+                summed[pauli] += coeff
 
-        self.assertTrue(np.allclose(summed, np.array([1.0, 0.0, 0.0, 0.0], dtype=complex)))
+        with self.subTest("I"):
+            self.assertAlmostEqual(summed["I"], 1.0)
+        with self.subTest("X"):
+            self.assertAlmostEqual(summed["X"], 0.0)
+        with self.subTest("Y"):
+            self.assertAlmostEqual(summed["Y"], 0.0)
+        with self.subTest("Z"):
+            self.assertAlmostEqual(summed["Z"], 0.0)
 
         # also check that the decomposition is correct TODO
 

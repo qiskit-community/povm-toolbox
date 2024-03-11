@@ -7,19 +7,20 @@ from collections.abc import Sequence
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp
 
-from ..utilities import get_p_from_paulis
 from .base_povm import BasePOVM
+from .multi_qubit_povm import MultiQubitPOVM
 from .single_qubit_povm import SingleQubitPOVM
 
 
 class ProductPOVM(BasePOVM):
     """Class to represent a set of product POVM operators."""
 
-    def __init__(self, povms: dict[tuple[int, ...], BasePOVM]):
+    def __init__(self, povms: dict[tuple[int, ...], MultiQubitPOVM]):
         """Initialize a ``ProductPOVM`` instance.
 
         Args:
-            povms: a dictionary mapping from a tuple of subsystem indices to a ``BasePOVM`` object.
+            povms: a dictionary mapping from a tuple of subsystem indices to a ``MultiQubitPOVM``
+                object.
 
         Raises:
             ValueError: if any key in ``povms`` is not a tuple consisting of unique integers. In
@@ -29,7 +30,7 @@ class ProductPOVM(BasePOVM):
                 words, all POVMs must act on mutually exclusive subsystem indices.
             ValueError: if any key in ``povms`` does not specify the number of subsystem indices,
                 which matches the number of systems acted upon by that POVM
-                (:meth:`BasePOVM.n_subsystems`).
+                (:meth:`MultiQubitPOVM.n_subsystems`).
         """
         subsystem_indices = set()
         self._dimension = 1
@@ -63,8 +64,8 @@ class ProductPOVM(BasePOVM):
         self._check_validity()
 
     @classmethod
-    def from_list(cls, povms: Sequence[BasePOVM]) -> ProductPOVM:
-        """Construct a ``ProductPOVM`` from a list of ``BasePOVM`` objects.
+    def from_list(cls, povms: Sequence[MultiQubitPOVM]) -> ProductPOVM:
+        """Construct a ``ProductPOVM`` from a list of ``MultiQubitPOVM`` objects.
 
         This is a convenience method to simplify the construction of a ``ProductPOVM`` for the cases
         in which the POVM objects act on a sequential order of subsystems. In other words, this
@@ -101,7 +102,7 @@ class ProductPOVM(BasePOVM):
         ```
 
         Args:
-            povms: a sequence of ``BasePOVM`` objects.
+            povms: a sequence of ``MultiQubitPOVM`` objects.
 
         Returns:
             A new ``ProductPOVM`` instance.
@@ -166,15 +167,68 @@ class ProductPOVM(BasePOVM):
         """Return the outcome probabilities given a state rho.
 
         Args:
-            rho: TODO.
+            rho: the input state over which to compute the outcome probabilities.
 
         Returns:
-            TODO.
+            A flattened array of probabilities. Its original shape was a high-dimensional array for
+            one dimension per local POVM stored inside this ``ProductPOVM``. The length of each
+            dimension is given by the number of outcomes of the POVM encoded along that axis.
+
+        Raises:
+            ValueError: when the provided state ``rho`` does not act on the same number of qubits as
+                this ``ProductPOVM``.
         """
-        return get_p_from_paulis(
-            SparsePauliOp.from_operator(rho),
-            list(self._povms.values()),  # type: ignore[arg-type]
-        ).ravel()
+        # Convert the provided state to a Pauli operator.
+        rho = SparsePauliOp.from_operator(rho)
+
+        # Assert matching operator and POVM sizes.
+        if rho.num_qubits != self.n_subsystems:
+            raise ValueError(
+                f"se of the operator {rho.n_qubits} does not match the size of the povm {len(self)}."
+            )
+
+        # Extract the number of outcomes for each local POVM.
+        n_outcomes = [povm.n_outcomes for povm in self._povms.values()]
+
+        # Create the output probability array as a high-dimensional matrix. This matrix will have
+        # its number of dimensions equal to the number of POVMs stored inside the ProductPOVM. The
+        # length of each dimension is given by the number of outcomes of the POVM encoded along it.
+        p_init: np.ndarray = np.zeros(n_outcomes, dtype=complex)
+
+        # First, we iterate over all the positions of `p_init`. This corresponds to the different
+        # probabilities for the different outcomes whose probability we want to compute.
+        #   - `m` is the multi-dimensional index into the high-dimensional `p_init` array.
+        for m, _ in np.ndenumerate(p_init):
+            # Second, we iterate over our input state, `rho`.
+            for label, rho_coeff in rho.label_iter():
+                summand = rho_coeff
+                # Third, we iterate over the POVMs stored inside the ProductPOVM.
+                #   - `j` is the index of the POVM inside the `ProductPOVM`. This encodes the axis
+                #     of the high-dimensional array `p_init` along which this local POVM is encoded.
+                #   - `idx` are the qubit indices on which this local POVM acts.
+                #   - `povm` is the actual local POVM object.
+                for j, (idx, povm) in enumerate(self._povms.items()):
+                    # Extract the local Pauli term on the qubit indices of this local POVM.
+                    sublabel = "".join(label[i] for i in idx)
+                    # Try to obtain the coefficient of the local POVM for this local Pauli term.
+                    try:
+                        coeff = povm.pauli_operators[m[j]][sublabel]
+                    except KeyError:
+                        # If it does not exist, the current summand becomes 0 because it would be
+                        # multiplied by 0.
+                        summand = 0.0
+                        # In this case we can break the iteration over the remaining local POVMs.
+                        break
+                    else:
+                        # If the label does exist, we multiply the coefficient into our summand.
+                        # The factor 2*N_qubit comes from Tr[(P_1...P_N)^2] = 2*N.
+                        summand *= coeff * 2 * povm.n_subsystems
+
+                # Once we have finished computing our summand, we add it into `p_init`.
+                p_init[m] += summand
+
+        # Return the flattened `p_init` array.
+        return np.real_if_close(p_init).ravel()
 
     def get_omegas(self, obs: np.ndarray):
         """Return the decomposition weights of obserservable `obs` into the POVM effects.
