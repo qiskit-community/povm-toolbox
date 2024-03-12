@@ -170,9 +170,9 @@ class ProductPOVM(BasePOVM):
             rho: the input state over which to compute the outcome probabilities.
 
         Returns:
-            A flattened array of probabilities. Its original shape was a high-dimensional array for
-            one dimension per local POVM stored inside this ``ProductPOVM``. The length of each
-            dimension is given by the number of outcomes of the POVM encoded along that axis.
+            An array of probabilities. Its shape is a high-dimensional array with one dimension
+            per local POVM stored inside this ``ProductPOVM``. The length of each dimension is
+            given by the number of outcomes of the POVM encoded along that axis.
 
         Raises:
             ValueError: when the provided state ``rho`` does not act on the same number of qubits as
@@ -228,7 +228,7 @@ class ProductPOVM(BasePOVM):
                 p_init[m] += summand
 
         # Return the flattened `p_init` array.
-        return np.real_if_close(p_init).ravel()
+        return np.real_if_close(p_init)
 
     def get_omegas(self, obs: np.ndarray):
         """Return the decomposition weights of obserservable `obs` into the POVM effects.

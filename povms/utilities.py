@@ -37,8 +37,3 @@ def n_sphere(param: np.ndarray) -> np.ndarray:
     x[-1] *= np.sin(2 * np.pi * param[-1])
 
     return x
-
-
-def povms_union():
-    """TODO."""
-    return None
