@@ -10,16 +10,16 @@ from povms.quantum_info.base_povm import BasePOVM
 
 
 class POVMImplementation(ABC):
-    """TODO."""
+    """Abstract base class that contains all methods that any specific POVMImplementation subclass should implement."""
 
     def __init__(
         self,
         n_qubit: int,
     ) -> None:
-        """TODO.
+        """Initialize the POVMImplementation.
 
         Args:
-            n_qubit: TODO.
+            n_qubit: number of logical qubits in the system.
         """
         super().__init__()
         self.n_qubit = n_qubit
@@ -27,12 +27,12 @@ class POVMImplementation(ABC):
 
     @abstractmethod
     def _build_qc(self) -> QuantumCircuit:
-        """TODO."""
+        """Return the parametetrized quantum circuit to implement the POVM."""
 
     @abstractmethod
     def get_parameter_and_shot(self, shot: int) -> QuantumCircuit:
-        """TODO."""
+        """TODO: change, relevant for randomized measurements only."""
 
     @abstractmethod
     def to_povm(self) -> BasePOVM:
-        """TODO."""
+        """Return the corresponding POVM."""

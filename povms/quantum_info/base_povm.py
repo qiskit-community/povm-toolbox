@@ -30,7 +30,7 @@ class BasePOVM(ABC):
         """Give the number of outcomes of the POVM."""
 
     @abstractmethod
-    def _check_validity(self) -> bool:
+    def _check_validity(self) -> None:
         """Check if POVM axioms are fulfilled."""
 
     @abstractmethod

@@ -109,56 +109,6 @@ class TestProductPOVM(TestCase):
             product = ProductPOVM.from_list([sqp, mqp, sqp])
             self.assertEqual(expected, product._povms)
 
-    # TODO
-    def test_clean_povm(self):
-        """Test"""
-        if True:
-            self.assertTrue(True)
-
-    def test_dimension_after_clean_povm(self):
-        """Test the number of outcomes is updated after a cleaning process.
-
-        In particular, if we construct a ProductPOVM with a LocalPOVM that is subsequently cleaned,
-        the ProductPOVM is also cleaned. We check that the number of outcomes of the ProductPOVM is updated.
-        (Is this really what we want ? Or should the product POVM have a copy of the local POVM ?)
-        """
-
-        q = [0.51, 0.1, 0.2, 0.2]
-        ops = [
-            0.15 * Operator.from_label("+"),
-            q[0] * Operator.from_label("0"),
-            q[0] * Operator.from_label("1"),
-            0.01 * Operator.from_label("+"),
-            0.08 * Operator.from_label("+"),
-            0.01 * Operator.from_label("l"),
-            0.29 * Operator.from_label("-"),
-            q[2] * Operator.from_label("r"),
-            0.09 * Operator.from_label("l"),
-            0.05 * Operator.from_label("+"),
-            0.05 * Operator.from_label("l"),
-            0.05 * Operator.from_label("l"),
-        ]
-        n_ops = len(ops)
-
-        sqpovm = SingleQubitPOVM(ops)
-        self.assertEqual(sqpovm.n_outcomes, n_ops)
-
-        prod_povm = ProductPOVM.from_list(5 * [sqpovm])
-        self.assertEqual(prod_povm.n_outcomes, n_ops**5)
-        self.assertEqual(len(prod_povm), n_ops**5)
-
-        sqpovm = SingleQubitPOVM.clean_povm_operators(sqpovm)
-
-        self.assertEqual(sqpovm.n_outcomes, 6)
-        self.assertEqual(len(sqpovm), 6)
-
-        n_outcome_check = 1
-        for povm in prod_povm._povms.values():
-            n_outcome_check *= povm.n_outcomes
-
-        self.assertEqual(prod_povm.n_outcomes, n_outcome_check)
-        self.assertEqual(len(prod_povm), n_outcome_check)
-
     def test_get_prob(self):
         """Test if we can build a LB Classical Shadow POVM from the generic class"""
 

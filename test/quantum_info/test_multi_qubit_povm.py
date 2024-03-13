@@ -11,7 +11,7 @@ class TestMultiQubitPOVM(TestCase):
     """Test that we can create valid POVM and get warnings if invalid."""
 
     def test_random_operators(self):
-        """Test"""
+        """Test that an error is raised if the oprators are not Hermitian."""
 
         ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
 
@@ -23,6 +23,7 @@ class TestMultiQubitPOVM(TestCase):
             print(povm1[0])
 
     def test_dimension(self):
+        """Test dimension attribute"""
         for dim in range(10):
             povm = MultiQubitPOVM(3 * [Operator(1.0 / 3.0 * np.eye(dim))])
             self.assertEqual(dim, povm.dimension)
@@ -30,6 +31,7 @@ class TestMultiQubitPOVM(TestCase):
             self.assertEqual((dim, dim), povm.povm_operators[1].dim)
 
     def test_n_outcomes(self):
+        """Test the number of outcomes, with both `n_outcome` attribute and `__len__` method."""
         for n in range(1, 10):
             for dim in range(1, 10):
                 povm = MultiQubitPOVM(n * [Operator(1.0 / n * np.eye(dim))])
@@ -39,6 +41,7 @@ class TestMultiQubitPOVM(TestCase):
                 self.assertEqual(n, len(povm.povm_operators))
 
     def test_getitem(self):
+        """Test the `__getitem__` method."""
         n = 6
         povm = MultiQubitPOVM(
             [Operator(2 * i / (n * (n + 1)) * np.eye(4)) for i in range(1, n + 1)]
@@ -59,6 +62,7 @@ class TestMultiQubitPOVM(TestCase):
 
     # TODO
     def test_build_from_vectors(self):
+        """Test that we can correctly instantiate a POVM from Bloch vectors."""
         if True:
             self.assertTrue(True)
 

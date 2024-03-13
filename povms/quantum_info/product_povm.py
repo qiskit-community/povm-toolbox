@@ -9,11 +9,16 @@ from qiskit.quantum_info import DensityMatrix, SparsePauliOp
 
 from .base_povm import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
-from .single_qubit_povm import SingleQubitPOVM
 
 
 class ProductPOVM(BasePOVM):
-    """Class to represent a set of product POVM operators."""
+    r"""Class to represent a set of product POVM operators.
+
+    A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting
+    on respective subsystems. Each global effect can be written as the tensor
+    product of local effects,
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
+    """
 
     def __init__(self, povms: dict[tuple[int, ...], MultiQubitPOVM]):
         """Initialize a ``ProductPOVM`` instance.
@@ -131,36 +136,17 @@ class ProductPOVM(BasePOVM):
         """Give the number of single-qubit operators forming the POVM."""
         return self._n_operators
 
-    def _check_validity(self) -> bool:
+    def _check_validity(self) -> None:
         """Check if POVM axioms are fulfilled.
 
-        Returns:
+        Raises:
             TODO.
         """
-        return all(povm._check_validity() for povm in self._povms.values())
-
-    @staticmethod
-    def clean_povm_operators(prod_povm: ProductPOVM) -> ProductPOVM:
-        """Merge effects thats are proportionnal to each other and reorder effects in a standard way.
-
-        Returns:
-            TODO.
-        """
-        n_outcomes = 1
-        n_operators = 0
-        povm_list = []
-        for povm in prod_povm._povms.values():
-            povm_list.append(SingleQubitPOVM.clean_povm_operators(povm))  # type: ignore[arg-type]
-            n_outcomes *= povm_list[-1].n_outcomes
-            n_operators += povm_list[-1].n_outcomes
-        return ProductPOVM.from_list(povm_list)
+        for povm in self._povms.values():
+            povm._check_validity()
 
     def __len__(self) -> int:
-        """Return the number of outcomes of the POVM.
-
-        Returns:
-            TODO.
-        """
+        """Return the number of outcomes of the POVM."""
         return self.n_outcomes
 
     def get_prob(self, rho: DensityMatrix) -> np.ndarray:
@@ -241,10 +227,3 @@ class ProductPOVM(BasePOVM):
         """
         # TODO
         return np.empty(self.n_outcomes)
-
-
-#    def plot_bloch_sphere(self, dual=False, colors=None):
-#        list_fig = []
-#        for sqpovm in self.list_povm:
-#            list_fig.append(sqpovm.plot_bloch_sphere(dual, colors))
-#        return list_fig

@@ -26,20 +26,18 @@ class PMSimImplementation(POVMImplementation):
         Args:
             n_qubit: TODO.
             parameters: TODO.
-        """
-        super().__init__(n_qubit)
-        if parameters is not None:
-            self._set_parameters(parameters)
-
-    def _set_parameters(self, parameters: np.ndarray) -> None:
-        """TODO.
-
-        Args:
-            parameters: TODO.
 
         Raises:
             ValueError: TODO.
         """
+        super().__init__(n_qubit)
+
+        # TODO: document
+        if parameters is None:
+            parameters = np.array(
+                n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 1.0, 1.0]
+            ).flatten()
+
         # n_param = n_qubit*(3*self.n_PVM-1)
         if len(parameters) % self.n_qubit != 0:
             raise ValueError(
@@ -83,11 +81,16 @@ class PMSimImplementation(POVMImplementation):
     def get_parameter_and_shot(self, shot: int) -> list[tuple[np.ndarray, int]]:
         """Return a list with concrete parameter values and associated number of shots.
 
+        Each set of parameter values correspond to a specific PVM to be performed. In the
+        case of PM-simulable POVMs, each time we perfom a measurement we pick a random
+        projective measurement among a given set of PVMS, i.e., we pick a random set of
+        parameter values among the pre-defined list of sets.
+
         Args:
-            shot: TODO.
+            shot: total number of shots to be performed.
 
         Returns:
-            TODO.
+            The distribution of the shots among the different sets of parameter values.
         """
         PVM_idx: np.ndarray = np.zeros((shot, self.n_qubit), dtype=int)
 
@@ -108,12 +111,9 @@ class PMSimImplementation(POVMImplementation):
 
         return list_param_shot
 
+    # TODO: find a better name
     def to_povm(self) -> ProductPOVM:
-        """TODO.
-
-        Returns:
-            TODO.
-        """
+        """Return the POVM corresponding to this implementation."""
         stabilizers: np.ndarray = np.zeros((self.n_qubit, self.n_PVM, 2, 2), dtype=complex)
 
         stabilizers[:, :, 0, 0] = np.cos(self.angles[:, :, 0] / 2.0)

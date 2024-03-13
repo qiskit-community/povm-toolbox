@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import copy
 from functools import lru_cache
 from typing import TypeVar
 
@@ -17,16 +16,24 @@ T = TypeVar("T", bound="MultiQubitPOVM")
 
 
 class MultiQubitPOVM(BasePOVM):
-    """Class that collects all information that any MultiQubit POVM should specifiy."""
+    """Class that collects all information that any MultiQubit POVM should specifiy.
+
+    This is a representation of a positive operator-valued measure (POVM). The effects are
+    sepcified as a list of :class:`~qiskit.quantum_info.Operator`.
+    """
 
     def __init__(self, povm_ops: list[Operator]) -> None:
-        """Initialize from explicit POVM operators.
+        r"""Initialize from explicit POVM operators.
 
         Args:
-            povm_operators: list that contains the explicit POVM operators.
+            povm_operators: list that contains the explicit POVM operators. Each Operator
+                in the list corresponds to a POVM effect. The length of the list is
+                the number of outcomes of the POVM.
+
 
         Raises:
-            ValueError: TODO.
+            ValueError: if the POVM operators do not have a correct shape. They should all
+                be square and of the same dimension.
         """
         self._n_outcomes: int = len(povm_ops)
         self._dimension: int = povm_ops[0].dim[0]
@@ -72,14 +79,13 @@ class MultiQubitPOVM(BasePOVM):
         except QiskitError as exc:
             raise ValueError("Failed to convert POVM operators to Pauli form.") from exc
 
-    def _check_validity(self) -> bool:
-        """Check if POVM axioms are fulfilled.
-
-        Returns:
-            TODO.
+    def _check_validity(self) -> None:
+        r"""Check if POVM axioms are fulfilled.
 
         Raises:
-            ValueError: TODO.
+            ValueError: if any of the POVM operators is not hermitian.
+            ValueError: if any of the POVM operators has a negative eigenvalue.
+            ValueError: if all POVM operators do not sum to the identity.
         """
         summed_op: np.ndarray = np.zeros((self.dimension, self.dimension), dtype=complex)
 
@@ -96,152 +102,68 @@ class MultiQubitPOVM(BasePOVM):
         if not np.allclose(summed_op, np.identity(self.dimension, dtype=complex), atol=1e-5):
             raise ValueError(f"POVM operators not summing up to the identity : \n{summed_op}")
 
-        return True
+    def __getitem__(self, index: slice) -> Operator | list[Operator]:
+        r"""Return a povm operator or a list of povm operators.
 
-    @classmethod
-    def clean_povm_operators(cls: type[T], povm: T) -> T:
-        """Merge effects thats are proportionnal to each other and reorder effects in a standard way.
+        Args:
+            index: indicate the operator(s) to be returned.
 
         Returns:
-            TODO.
+            The operator or list of operators corresponding to the index.
         """
-        povm_ops = copy.deepcopy(povm.povm_operators)
-        k1 = 0
-
-        while k1 < len(povm_ops):
-            k2 = k1 + 1
-            while k2 < len(povm_ops):
-                if np.allclose(
-                    povm_ops[k1] / np.trace(povm_ops[k1]),
-                    povm_ops[k2] / np.trace(povm_ops[k2]),
-                ):
-                    povm_ops[k1] = Operator(povm_ops[k1] + povm_ops[k2])
-                    povm_ops.pop(k2)
-
-                    k2 -= 1
-                k2 += 1
-            k1 += 1
-
-        sorting_values = np.array(
-            [
-                (
-                    np.real(np.trace(op.data)),
-                    np.max(np.linalg.eigvalsh(op.data)),
-                    np.real(op.data[0, 0]),
-                )
-                for op in povm_ops
-            ],
-            dtype=[("tr", "float"), ("ev", "float"), ("m00", "float")],
-        )
-        idx_sort = np.argsort(sorting_values, order=("tr", "ev", "m00"))[::-1]
-        return cls([povm_ops[idx] for idx in idx_sort])
-
-    def __getitem__(self, index: slice) -> Operator | list[Operator]:
-        """Return a povm operator or a list of povm operators."""
         return self.povm_operators[index]
 
     def __len__(self) -> int:
-        """TODO."""
+        """Return the number of outcomes of the POVM."""
         return self.n_outcomes
 
     def get_prob(self, rho: DensityMatrix) -> np.ndarray:
-        """TODO.
+        r"""Return the outcome probablities given a state ``rho``.
+
+        Each outcome :math:`k` is associated with an effect :math:`M_k` of the POVM. The probability of obtaining
+        the outcome :math:`k` when measuring a state ``rho`` is given by :math:`p_k = Tr[M_k \rho]`.
 
         Args:
-            rho: TODO.
+            rho: the input state over which to compute the outcome probabilities.
 
         Returns:
-            TODO.
+            An array of probabilities. The length of the array is given by the number of outcomes of the POVM.
         """
         return np.array(
             [np.real(np.trace(rho.data @ povm_op.data)) for povm_op in self.povm_operators]
         )
 
-    def get_omegas(self, obs: np.ndarray):
-        """Return the decomposition weights of obserservable `obs` into the POVM effects.
+    def get_omegas(self, obs: np.ndarray) -> np.ndarray:
+        r"""Return the decomposition weights of observable ``obs`` into the POVM effects.
+
+        Given an obseravble :math:`O` which is in the span of the POVM, one can write the
+        observable :math:`O` as the weighted sum of the POVM effects, :math:`O = \sum_k w_k M_k`
+        for real weights :math:`w_k`. There might be infinitely many valid sets of weight.
+        This method returns a possible set of weights.
 
         Args:
-            obs: TODO.
+            obs: the observable to be decomposed into the POVM effects.
 
         Returns:
-            TODO.
+            An array of decomposition weights.
         """
         # TODO
         return np.empty(self.n_outcomes)
 
     @classmethod
-    def from_vectors(cls, povm_vectors: np.ndarray):
-        """Initialize a POVM from the bloch vectors |psi> (not normalized!) such that Pi = |psi><psi|.
+    def from_vectors(cls: type[T], povm_vectors: np.ndarray) -> T:
+        r"""Initialize a POVM from non-normalized bloch vectors :math:``|psi>``.
 
         Args:
-            povm_vectors: TODO.
+            povm_vectors: list of vectors :math:``|psi>``. The length of the list corresponds to
+                the number of outcomes of the POVM. Each vector is of shape ``(dim,)`` where ``dim``
+                is the dimension of the Hilbert space on which the POVM acts. The resulting POVM
+                effects :math:``Pi = |psi><psi|`` are of shape ``(dim, dim)`` as expected.
 
         Returns:
-            TODO.
+            The POVM corresponding to the vectors.
         """
         povm_operators = []
         for vec in povm_vectors:
             povm_operators.append(Operator(np.outer(vec, vec.conj())))
         return cls(povm_operators)
-
-    # @classmethod
-    # def from_dilation_unitary(cls, U, dim):
-    #     """Initialize a POVM from dilation unitary"""
-    #     return cls.from_vectors(U[:,0:dim].conj())
-    #
-    # @classmethod
-    # def from_param(cls, param_raw: np.ndarray, dim: int):
-    #     """Initialize a POVM from the list of parameters"""
-    #
-    #     assert (
-    #         (len(param_raw)+dim**2)%(2*dim-1) == 0
-    #     ), f"size of the parameters ({len(param_raw)}) does not match expectation."
-    #
-    #     n_out = (len(param_raw)+dim**2)//(2*dim-1)
-    #
-    #     param = []
-    #     param.append(param_raw[0:(n_out-1)])
-    #     count = n_out-1
-    #     for i in range(1,dim):
-    #         l = 2*(n_out-i)-1
-    #         param.append(param_raw[count:count+l])
-    #         count += l
-    #
-    #     u = np.zeros((n_out,n_out), dtype=complex)
-    #
-    #     k=0
-    #     u[:,k] = n_sphere(param[k])
-    #     u_gs = gs(u) #Gram-Schmidt
-    #
-    #     for k in range(1,dim):
-    #         x=n_sphere(param[k])
-    #         # construct k'th vector of u
-    #         for i in range(len(x)//2):
-    #             u[:,k] += (x[2*i] + x[2*i+1]*1j) * u_gs[:,k+i]
-    #         u_gs = gs(u)
-    #
-    #     for i in range(len(param)):
-    #         u_gs[:,i] *= np.sign(u[0,i])*np.sign(u_gs[0,i])
-    #
-    #     return cls.from_dilation_unitary(u_gs, dim)
-    #
-    #
-    # #def __getitem__(self, index:slice) -> np.ndarray:
-    # #    """Return a numpy array of shape (n_outcomes, d, d) that includes all povm operators."""
-    # #    if isinstance(index, int) :
-    # #        return self.povm_operators[index].data
-    # #    elif isinstance(index, slice) :
-    # #        return np.array([op.data for op in self.povm_operators[index]])
-    # #    else:
-    # #        raise TypeError("Invalid Argument Type")
-    #
-    #     def get_ops(self, idx:slice=...) -> np.ndarray:
-    #     """Return a numpy array of shape (n_outcomes, d, d) that includes all povm operators."""
-    #
-    #     if self.array_ops is None:
-    #         self.array_ops = np.zeros((self.n_outcomes, self.dimension, self.dimension), dtype=complex)
-    #         for k, op in enumerate(self.povm_operators):
-    #             self.array_ops[k] = op.data
-    #
-    #     return self.array_ops[idx]
-    #
