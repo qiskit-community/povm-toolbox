@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 from qiskit.circuit import QuantumCircuit
 
-from ..quantum_info.base_povm import BasePOVM
+from povms.quantum_info.base_povm import BasePOVM
 
 
 class POVMImplementation(ABC):
