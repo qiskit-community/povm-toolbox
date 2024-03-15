@@ -80,6 +80,7 @@ enable = [
     "cyclic-import",
     "unused-argument",
     "attribute-defined-outside-init",
+    "no-else-return",
 ]
 
 [tool.pytest.ini_options]

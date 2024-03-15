@@ -117,7 +117,9 @@ class MultiQubitPOVM(BasePOVM):
         """Return the number of outcomes of the POVM."""
         return self.n_outcomes
 
-    def get_prob(self, rho: DensityMatrix) -> np.ndarray:
+    def get_prob(
+        self, rho: DensityMatrix, outcome_idx: int | set[int] | None = None
+    ) -> float | dict[int, float] | np.ndarray:
         r"""Return the outcome probablities given a state ``rho``.
 
         Each outcome :math:`k` is associated with an effect :math:`M_k` of the POVM. The probability of obtaining
@@ -125,15 +127,30 @@ class MultiQubitPOVM(BasePOVM):
 
         Args:
             rho: the input state over which to compute the outcome probabilities.
+            outcome_idx: TODO.
 
         Returns:
             An array of probabilities. The length of the array is given by the number of outcomes of the POVM.
+
+        Raises:
+            TypeError: TODO.
         """
-        return np.array(
-            [np.real(np.trace(rho.data @ povm_op.data)) for povm_op in self.povm_operators]
+        if isinstance(outcome_idx, int):
+            return float(np.real(np.trace(rho.data @ self.povm_operators[outcome_idx].data)))
+        if isinstance(outcome_idx, set):
+            return {
+                idx: float(np.real(np.trace(rho.data @ self.povm_operators[idx].data)))
+                for idx in outcome_idx
+            }
+        if outcome_idx is None:
+            return np.array(
+                [np.real(np.trace(rho.data @ povm_op.data)) for povm_op in self.povm_operators]
+            )
+        raise TypeError(
+            f"The optional ``outcome_idx`` can either be a single or sequence of integers, not a {type(outcome_idx)}."
         )
 
-    def get_omegas(self, obs: np.ndarray) -> np.ndarray:
+    def get_omegas(self, obs: Operator, outcome_idx: int | set[int] | None = None) -> np.ndarray:
         r"""Return the decomposition weights of observable ``obs`` into the POVM effects.
 
         Given an obseravble :math:`O` which is in the span of the POVM, one can write the
@@ -148,6 +165,8 @@ class MultiQubitPOVM(BasePOVM):
             An array of decomposition weights.
         """
         # TODO
+        if outcome_idx is not None:
+            raise NotImplementedError
         return np.empty(self.n_outcomes)
 
     @classmethod

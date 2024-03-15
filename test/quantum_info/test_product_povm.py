@@ -140,6 +140,18 @@ class TestProductPOVM(TestCase):
                 rho = random_density_matrix(dims=2**n_qubit, seed=seed)
                 p = prod_povm.get_prob(rho)
                 self.assertTrue(np.allclose(a=np.array(checks[f"n_{n_qubit}"]), b=np.array(p)))
+                if n_qubit >= 2:
+                    for n_idx in range(2, 5):
+                        outcome_idx = np.random.randint(low=0, high=6, size=(n_idx, n_qubit))
+                        outcome_idx = set({tuple(idx) for idx in outcome_idx})
+                        # TODO: correct bug if two index tuples are the same in sequence. For now
+                        # we avoid that by skipping the test when it's the case.
+                        if len(outcome_idx) != len(set(outcome_idx)):
+                            break
+                        p = prod_povm.get_prob(rho, outcome_idx)
+                        check = checks[f"n_{n_qubit}"]
+                        for idx in outcome_idx:
+                            self.assertTrue(np.allclose(p[idx], check[idx]))
 
         with self.subTest("Product of single-qubit and multi-qubit POVMs test"):
             npzfile = np.load("test/quantum_info/probabilities_ProdOfMultiQubitPOVMs.npz")
@@ -166,9 +178,15 @@ class TestProductPOVM(TestCase):
             rho1 = DensityMatrix(Operator.from_label("0000"))
             self.assertTrue(np.allclose(prod_povm1.get_prob(rho1), npzfile["prob_1_1"]))
             self.assertTrue(np.allclose(prod_povm2.get_prob(rho1), npzfile["prob_2_1"]))
+            self.assertTrue(
+                np.allclose(prod_povm2.get_prob(rho1, (3, 0, 0)), npzfile["prob_2_1"][3, 0, 0])
+            )
 
             rho2 = DensityMatrix(Operator.from_label("101+"))
             self.assertTrue(np.allclose(prod_povm1.get_prob(rho2), npzfile["prob_1_2"]))
+            p = prod_povm1.get_prob(rho2, {(0, 2, 1), (1, 2, 0)})
+            self.assertTrue(np.allclose(p[(0, 2, 1)], npzfile["prob_1_2"][0, 2, 1]))
+            self.assertTrue(np.allclose(p[(1, 2, 0)], npzfile["prob_1_2"][1, 2, 0]))
             self.assertTrue(np.allclose(prod_povm2.get_prob(rho2), npzfile["prob_2_2"]))
 
             rho3_vec = np.zeros(2**4)

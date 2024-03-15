@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix
+from qiskit.quantum_info import DensityMatrix, Operator
 
 
 class BasePOVM(ABC):
@@ -38,9 +39,17 @@ class BasePOVM(ABC):
         """Return the number of outcomes of the POVM."""
 
     @abstractmethod
-    def get_prob(self, rho: DensityMatrix) -> np.ndarray:
+    def get_prob(
+        self,
+        rho: DensityMatrix,
+        outcome_idx: Any | set[Any] | None = None,
+    ) -> float | dict[Any, float] | np.ndarray:
         """Return the outcome probabilities given a state rho."""
 
     @abstractmethod
-    def get_omegas(self, obs: np.ndarray):
+    def get_omegas(
+        self,
+        obs: Operator,
+        outcome_idx: Any | set[Any] | None = None,
+    ) -> float | dict[Any, float] | np.ndarray:
         """Return the decomposition weights of obserservable `obs` into the POVM effects."""
