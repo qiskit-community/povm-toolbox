@@ -1,14 +1,14 @@
-"""Tests for the PMSimImplementation class."""
+"""Tests for the RandomizedPMs class."""
 
 from unittest import TestCase
 
 import numpy as np
-from povms.library.pm_sim_implementation import PMSimImplementation
+from povms.library.pm_sim_implementation import ClassicalShadows, LocallyBiased, RandomizedPMs
 from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator
 
 
-class TestPMSimImplementation(TestCase):
+class TestRandomizedPMs(TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
 
@@ -42,10 +42,7 @@ class TestPMSimImplementation(TestCase):
         )
 
         for n_qubit in range(1, 11):
-            parameters = np.array(
-                n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 1, 1]
-            )
-            cs_implementation = PMSimImplementation(n_qubit=n_qubit, parameters=parameters)
+            cs_implementation = ClassicalShadows(n_qubit=n_qubit)
             self.assertEqual(n_qubit, cs_implementation.n_qubit)
             cs_povm = cs_implementation.to_povm()
             for i in range(n_qubit):
@@ -60,14 +57,7 @@ class TestPMSimImplementation(TestCase):
             q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
-            parameters = np.array(
-                n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 1, 1]
-            )
-            for i in range(n_qubit):
-                parameters[i * 8 + 6] = q[i, 0] / q[i, 2]
-                parameters[i * 8 + 7] = q[i, 1] / q[i, 2]
-
-            cs_implementation = PMSimImplementation(n_qubit=n_qubit, parameters=parameters)
+            cs_implementation = LocallyBiased(n_qubit=n_qubit, bias=q)
             self.assertEqual(n_qubit, cs_implementation.n_qubit)
             cs_povm = cs_implementation.to_povm()
             for i in range(n_qubit):
@@ -92,14 +82,9 @@ class TestPMSimImplementation(TestCase):
             q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
-            parameters = np.array(
-                n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 1, 1]
-            )
-            for i in range(n_qubit):
-                parameters[i * 8 + 6] = q[i, 0] / q[i, 2]
-                parameters[i * 8 + 7] = q[i, 1] / q[i, 2]
+            angles = np.array(n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
 
-            cs_implementation = PMSimImplementation(n_qubit=n_qubit, parameters=parameters)
+            cs_implementation = RandomizedPMs(n_qubit=n_qubit, bias=q, angles=angles)
 
             qc = cs_implementation._build_qc()
 
@@ -112,14 +97,9 @@ class TestPMSimImplementation(TestCase):
             q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
-            parameters = np.array(
-                n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 1, 1]
-            )
-            for i in range(n_qubit):
-                parameters[i * 8 + 6] = q[i, 0] / q[i, 2]
-                parameters[i * 8 + 7] = q[i, 1] / q[i, 2]
+            angles = np.array(n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
 
-            cs_implementation = PMSimImplementation(n_qubit=n_qubit, parameters=parameters)
+            cs_implementation = RandomizedPMs(n_qubit=n_qubit, bias=q, angles=angles)
 
             summed_shots = 0
             for _, shots in cs_implementation.get_parameter_and_shot(1000):
@@ -127,7 +107,7 @@ class TestPMSimImplementation(TestCase):
 
             self.assertEqual(summed_shots, 1000)
 
-    # TODO: write a unittest for each public method of PMSimImplementation
+    # TODO: write a unittest for each public method of RandomizedPMs
 
     # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
     # errors are raised properly)

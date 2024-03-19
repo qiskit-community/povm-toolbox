@@ -7,7 +7,9 @@ from typing import TypeVar
 
 import numpy as np
 from qiskit.exceptions import QiskitError
-from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp
+from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, SuperOp
+
+from povms.utilities import double_ket_to_matrix, matrix_to_double_ket
 
 from .base_povm import BasePOVM
 
@@ -45,9 +47,11 @@ class MultiQubitPOVM(BasePOVM):
         self.povm_operators: list[Operator] = povm_ops
         self.array_ops = None
 
-        self.dual_operators = None
-        self.frame_superop = None
-        self.informationlly_complete = None
+        self._alphas = np.array([np.trace(povm_op.data) for povm_op in self.povm_operators])
+
+        self._informationlly_complete: bool
+        self._frame_superop: SuperOp | None = None
+        self._dual_operators: list[Operator] | None = None
         # TODO: should all of the public attributes above become part of the BasePOVM interface?
 
         self._check_validity()
@@ -63,21 +67,78 @@ class MultiQubitPOVM(BasePOVM):
         return self._n_outcomes
 
     @property
+    def alphas(self) -> np.ndarray:
+        """Paremeters of the dual frame."""
+        return self._alphas
+
+    @alphas.setter
+    def alphas(self, var: np.ndarray) -> None:
+        self._alphas = var
+        self._frame_superop = None
+        self._dual_operators = None
+
+    @property
+    def frame_superop(self) -> SuperOp:
+        """Give the frame superoperator of the POVM.
+
+        CAREFUL: if the frame superoperator is not already computed, this will be computationally heavy.
+        TODO: use admonition.
+        """
+        if self._frame_superop is None:
+            mat: np.ndarray = np.zeros((self.dimension**2, self.dimension**2), dtype=complex)
+            for k, povm_op in enumerate(self.povm_operators):
+                double_ket = matrix_to_double_ket(povm_op.data)
+                mat += np.outer(double_ket, double_ket.conjugate()) / self.alphas[k]
+            self._frame_superop = SuperOp(mat)
+        return self._frame_superop
+
+    @property
+    def dual_operators(self) -> list[Operator]:
+        """Give the dual operators of the POVM.
+
+        CAREFUL: if the duals are not already computed, this will be computationally heavy.
+        """
+        if self._dual_operators is None:
+            self._dual_operators = [
+                Operator(
+                    double_ket_to_matrix(
+                        np.linalg.solve(
+                            self.frame_superop.data,
+                            matrix_to_double_ket(povm_op.data) / self.alphas[k],
+                        )
+                    )
+                )
+                for k, povm_op in enumerate(self.povm_operators)
+            ]
+        return self._dual_operators
+
+    # TODO: cleaner implementation that does not trigger B019
     @lru_cache(maxsize=64)  # noqa: B019
-    def pauli_operators(self) -> list[dict[str, complex]]:
+    def pauli_operators(self, dual: bool = False) -> list[dict[str, complex]]:
         """Convert the internal POVM operators to Pauli form.
 
         This method will cache its returned data to avoid re-computation.
 
+        Args:
+            dual: False if the pauli decomposistion of the effects should be returned.
+                True if the pauli decomposistion of the dual operators should be returned.
+
         Raises:
             ValueError: when the POVM operators are not N-qubit operators.
         """
+        if not dual:
+            try:
+                return [
+                    dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.povm_operators
+                ]
+            except QiskitError as exc:
+                raise ValueError("Failed to convert POVM operators to Pauli form.") from exc
         try:
             return [
-                dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.povm_operators
+                dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.dual_operators
             ]
         except QiskitError as exc:
-            raise ValueError("Failed to convert POVM operators to Pauli form.") from exc
+            raise ValueError("Failed to convert dual operators to Pauli form.") from exc
 
     def _check_validity(self) -> None:
         r"""Check if POVM axioms are fulfilled.
@@ -150,7 +211,9 @@ class MultiQubitPOVM(BasePOVM):
             f"The optional ``outcome_idx`` can either be a single or sequence of integers, not a {type(outcome_idx)}."
         )
 
-    def get_omegas(self, obs: Operator, outcome_idx: int | set[int] | None = None) -> np.ndarray:
+    def get_omegas(
+        self, obs: Operator, outcome_idx: int | set[int] | None = None
+    ) -> float | dict[int, float] | np.ndarray:
         r"""Return the decomposition weights of observable ``obs`` into the POVM effects.
 
         Given an obseravble :math:`O` which is in the span of the POVM, one can write the
@@ -164,10 +227,20 @@ class MultiQubitPOVM(BasePOVM):
         Returns:
             An array of decomposition weights.
         """
-        # TODO
-        if outcome_idx is not None:
-            raise NotImplementedError
-        return np.empty(self.n_outcomes)
+        if isinstance(outcome_idx, int):
+            return float(np.real(np.trace(obs.data @ self.dual_operators[outcome_idx].data)))
+        if isinstance(outcome_idx, set):
+            return {
+                idx: float(np.real(np.trace(obs.data @ self.dual_operators[idx].data)))
+                for idx in outcome_idx
+            }
+        if outcome_idx is None:
+            return np.array(
+                [np.real(np.trace(obs.data @ dual_op.data)) for dual_op in self.dual_operators]
+            )
+        raise TypeError(
+            f"The optional ``outcome_idx`` can either be a single or sequence of integers, not a {type(outcome_idx)}."
+        )
 
     @classmethod
     def from_vectors(cls: type[T], povm_vectors: np.ndarray) -> T:

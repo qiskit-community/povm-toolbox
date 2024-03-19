@@ -4,7 +4,7 @@ from unittest import TestCase
 
 import numpy as np
 from povms.quantum_info.multi_qubit_povm import MultiQubitPOVM
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import Operator, random_hermitian
 
 
 class TestMultiQubitPOVM(TestCase):
@@ -65,6 +65,54 @@ class TestMultiQubitPOVM(TestCase):
         """Test that we can correctly instantiate a POVM from Bloch vectors."""
         if True:
             self.assertTrue(True)
+
+    def test_get_omegas(self):
+        with self.subTest("Single-qubit case"):
+            povm = MultiQubitPOVM(
+                [
+                    1.0 / 2 * Operator.from_label("0"),
+                    1.0 / 2 * Operator.from_label("1"),
+                    1.0 / 3 * Operator.from_label("+"),
+                    1.0 / 3 * Operator.from_label("-"),
+                    1.0 / 6 * Operator.from_label("r"),
+                    1.0 / 6 * Operator.from_label("l"),
+                ]
+            )
+            obs = random_hermitian(dims=2**1)
+            omegas = povm.get_omegas(obs)
+            dec = np.zeros((2, 2), dtype=complex)
+            for k in range(povm.n_outcomes):
+                dec += omegas[k] * povm[k].data
+            self.assertTrue(np.allclose(obs, dec))
+
+        # TODO
+        with self.subTest("Multi-qubit case"):
+            self.assertTrue(True)
+
+    def test_set_alphas(self):
+        povm = MultiQubitPOVM(
+            [
+                1.0 / 2 * Operator.from_label("0"),
+                1.0 / 2 * Operator.from_label("1"),
+                1.0 / 3 * Operator.from_label("+"),
+                1.0 / 3 * Operator.from_label("-"),
+                1.0 / 6 * Operator.from_label("r"),
+                1.0 / 6 * Operator.from_label("l"),
+            ]
+        )
+        obs = random_hermitian(dims=2**1)
+        omegas1 = povm.get_omegas(obs)
+        dec = np.zeros((2, 2), dtype=complex)
+        for k in range(povm.n_outcomes):
+            dec += omegas1[k] * povm[k].data
+        self.assertTrue(np.allclose(obs, dec))
+        povm.alphas = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        omegas2 = povm.get_omegas(obs)
+        self.assertFalse(np.allclose(omegas1, omegas2))
+        dec = np.zeros((2, 2), dtype=complex)
+        for k in range(povm.n_outcomes):
+            dec += omegas2[k] * povm[k].data
+        self.assertTrue(np.allclose(obs, dec))
 
     # TODO: write a unittest for each public method of MultiQubitPOVM
 

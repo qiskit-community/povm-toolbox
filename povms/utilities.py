@@ -5,6 +5,33 @@ from __future__ import annotations
 import numpy as np
 
 
+def matrix_to_double_ket(op_matrix):
+    """Return the double-ket represenation of an operator.
+
+    Args:
+        op: an operator in matrix representation.
+
+    Returns:
+        The double-ket represenattion of the operator ``op``.
+    """
+    return op_matrix.ravel(
+        order="F"
+    )  # order='F' option to stack the columns instead of the (by default) rows
+
+
+def double_ket_to_matrix(op_ket):
+    """Return the matrix represenation of an operator.
+
+    Args:
+        op: an operator in the double-ket represention.
+
+    Returns:
+        The matrix represenattion of the operator ``op``.
+    """
+    dim = int(np.sqrt(len(op_ket)))
+    return op_ket.reshape((dim, dim), order="F")
+
+
 # Gram-Schmidt
 def gs(X: np.ndarray) -> np.ndarray:
     """Return the orthonormal basis resulting from Gram-Schmidt process of X.
