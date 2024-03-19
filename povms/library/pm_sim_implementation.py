@@ -14,7 +14,7 @@ from .povm_implementation import POVMImplementation
 
 
 class RandomizedPMs(POVMImplementation):
-    """TODO."""
+    """Class to represent the implementation of randomized projective measurements."""
 
     def __init__(
         self,
@@ -22,31 +22,48 @@ class RandomizedPMs(POVMImplementation):
         bias: np.ndarray,
         angles: np.ndarray,
     ) -> None:
-        """Construct the most generalized version.
+        """Implement a product POVM through the randomization of single-qubit projective measurement.
 
-        If we extend this interface to support different effects for each qubit in the future, we
-        may need to move away from np.ndarray input types to sequences of sequences.
+        If we extend this interface to support different number of effects for each qubit in the
+        future, we may need to move away from np.ndarray input types to sequences of sequences.
 
         Args:
             n_qubits: the number of qubits.
             bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
-                for measuring in each of the effects. I.e. its length equals the number of effects.
+                for measuring in each of the PVMs. I.e., its length equals the number of PVMs.
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
             angles: can be either 1D or 2D. If 1D, it should contain float values to indicate the
                 different angles of each effect. I.e. its length equals two times the number of
                 effects (since we have 2 angles per effect). If 2D, it will have a new set of angles
                 for each qubit.
+
+        Raises:
+            ValueError: TODO.
         """
         super().__init__(n_qubit)
 
-        self.n_PVM = len(bias[0])  # assert == len(angles) / 2
-        self.angles = angles.reshape((n_qubit, self.n_PVM, 2))
-        self.bias = bias
-        if np.any(self.bias < 0.0):
+        if 2 * bias.shape[-1] != angles.shape[-1]:
+            raise ValueError(f"TODO: error message. {bias.shape[-1]}, {angles.shape[-1]}.")
+        self._n_PVMs = bias.shape[-1]
+
+        if bias.ndim == 1:
+            bias = np.tile(bias, (self.n_qubit, 1))
+        elif (bias.ndim == 2 and bias.shape[0] != self.n_qubit) or bias.ndim > 2:
+            raise ValueError("TODO: error message.")
+        if np.any(bias < 0.0):
             raise ValueError(
                 "There should not be any negative values in the probability distribution parameters."
             )
+        if not np.allclose(np.sum(bias, axis=-1), 1.0):
+            raise ValueError("The probability distribution parameters should sum up to one.")
+        self.bias = bias
+
+        if angles.ndim == 1:
+            angles = np.tile(angles, (self.n_qubit, 1))
+        elif (angles.ndim == 2 and angles.shape[0] != self.n_qubit) or angles.ndim > 2:
+            raise ValueError("TODO: error message.")
+        self.angles = angles.reshape((self.n_qubit, self._n_PVMs, 2))
 
     def _build_qc(self) -> QuantumCircuit:
         """TODO.
@@ -80,7 +97,7 @@ class RandomizedPMs(POVMImplementation):
         PVM_idx: np.ndarray = np.zeros((shot, self.n_qubit), dtype=int)
 
         for i in range(self.n_qubit):
-            PVM_idx[:, i] = np.random.choice(self.n_PVM, size=shot, replace=True, p=self.bias[i])
+            PVM_idx[:, i] = np.random.choice(self._n_PVMs, size=shot, replace=True, p=self.bias[i])
         counts = Counter(tuple(x) for x in PVM_idx)
 
         param = np.zeros((len(counts), self.n_qubit, 2))
@@ -97,7 +114,7 @@ class RandomizedPMs(POVMImplementation):
     # TODO: find a better name
     def to_povm(self) -> ProductPOVM:
         """Return the POVM corresponding to this implementation."""
-        stabilizers: np.ndarray = np.zeros((self.n_qubit, self.n_PVM, 2, 2), dtype=complex)
+        stabilizers: np.ndarray = np.zeros((self.n_qubit, self._n_PVMs, 2, 2), dtype=complex)
 
         stabilizers[:, :, 0, 0] = np.cos(self.angles[:, :, 0] / 2.0)
         stabilizers[:, :, 0, 1] = (
@@ -107,7 +124,7 @@ class RandomizedPMs(POVMImplementation):
         stabilizers[:, :, 1, 1] = -stabilizers[:, :, 0, 0]
 
         stabilizers = np.multiply(stabilizers.T, np.sqrt(self.bias).T).T
-        stabilizers = stabilizers.reshape((self.n_qubit, 2 * self.n_PVM, 2))
+        stabilizers = stabilizers.reshape((self.n_qubit, 2 * self._n_PVMs, 2))
 
         sq_povms = []
         for vecs in stabilizers:
@@ -126,10 +143,10 @@ class LocallyBiased(RandomizedPMs):
     ):
         """Construct a locally-biased classical shadow POVM.
 
-        The same as above, but the angles are hard-coded to be X/Y/Z for all qubits.
+        TODO: The same as above, but the angles are hard-coded to be X/Y/Z for all qubits.
         """
-        angles = np.array(n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
-        assert bias.shape == (n_qubit, 3)
+        angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
+        assert bias.shape[-1] == 3
         super().__init__(n_qubit=n_qubit, bias=bias, angles=angles)
 
 
@@ -142,7 +159,7 @@ class ClassicalShadows(LocallyBiased):
     ):
         """Construct a classical shadow POVM.
 
-        The same as above, but also hard-coding the biases to be equally distributed.
+        TODO: The same as above, but also hard-coding the biases to be equally distributed.
         """
-        bias = 1.0 / 3.0 * np.ones((n_qubit, 3))
+        bias = 1.0 / 3.0 * np.ones(3)
         super().__init__(n_qubit=n_qubit, bias=bias)

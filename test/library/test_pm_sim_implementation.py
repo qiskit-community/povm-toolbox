@@ -82,7 +82,7 @@ class TestRandomizedPMs(TestCase):
             q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
-            angles = np.array(n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
+            angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
 
             cs_implementation = RandomizedPMs(n_qubit=n_qubit, bias=q, angles=angles)
 
@@ -97,7 +97,7 @@ class TestRandomizedPMs(TestCase):
             q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
-            angles = np.array(n_qubit * [0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
+            angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
 
             cs_implementation = RandomizedPMs(n_qubit=n_qubit, bias=q, angles=angles)
 
