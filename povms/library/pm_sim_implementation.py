@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import Counter
 
 import numpy as np
-from qiskit.circuit import ParameterVector, QuantumCircuit
+from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
 
 from povms.quantum_info.product_povm import ProductPOVM
 from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
@@ -35,7 +35,7 @@ class RandomizedPMs(POVMImplementation):
                 qubit.
             angles: can be either 1D or 2D. If 1D, it should contain float values to indicate the
                 different angles of each effect. I.e. its length equals two times the number of
-                effects (since we have 2 angles per effect). If 2D, it will have a new set of angles
+                PVMs (since we have 2 angles per PVMs). If 2D, it will have a new set of angles
                 for each qubit.
 
         Raises:
@@ -66,50 +66,90 @@ class RandomizedPMs(POVMImplementation):
         self.angles = angles.reshape((self.n_qubit, self._n_PVMs, 2))
 
     def _build_qc(self) -> QuantumCircuit:
-        """TODO.
+        """Build the quantum circuit that implements the measurement.
+
+        In the case of randomized projective measurements (PMs), we choose for each shot a PM at random to perform the
+        measurement. Any PM on single qubits can be described by two orthogonal projectors :math:``M_0 = |pi><pi|``
+        and :math:``M_1 = |pi_orth><pi_orth|``. The vector :math:``|pi> = U(theta, phi, 0) |0>`` can be defined by the
+        first two usual Euler angles. The third Euler angles defines the global phase, which is irrelevant here.
+        We then have :math:``|pi_orth> = U(theta, phi, 0) |1>`` up to another irrelvant global phase. To implement
+        this measurement, we use the fact that :math:``p_i = Tr[rho M_i] = Tr[rho U|i><i|U_dag] = Tr[U_dag rho U |i><i|]``.
+        In other words, we can first let the state evolve under :math:``U_dag`` ands then perform a computational basis
+        measurement. Note that we have :math:``U(theta, phi, lambda)_dag = U(-theta, -lambda, -phi)``.
 
         Returns:
-            TODO.
+            Paramnetrized quantum circuit that can implement any product of single-qubit projective measurements.
         """
         theta = ParameterVector("theta", length=self.n_qubit)
         phi = ParameterVector("phi", length=self.n_qubit)
 
-        qc = QuantumCircuit(self.n_qubit)
+        qr = QuantumRegister(self.n_qubit, name="povm_qr")
+        cr = ClassicalRegister(self.n_qubit, name="povm_meas")
+        qc = QuantumCircuit(qr, cr, name="msmt_qc")
         for i in range(self.n_qubit):
-            qc.u(theta=theta[i], phi=phi[i], lam=0, qubit=i)
+            # We apply ``U_dag``, where ``U`` is the unitary operation to go from the computational basis
+            # to the new measurement basis.
+            qc.u(theta=-theta[i], phi=0.0, lam=-phi[i], qubit=i)
+
+        qc.measure(qr, cr)
 
         return qc
 
-    def get_parameter_and_shot(self, shot: int) -> list[tuple[np.ndarray, int]]:
-        """Return a list with concrete parameter values and associated number of shots.
+    def distribute_shots(self, shots: int) -> Counter[tuple]:
+        """Return a list with PVM label and associated number of shots.
 
-        Each set of parameter values correspond to a specific PVM to be performed. In the
-        case of PM-simulable POVMs, each time we perfom a measurement we pick a random
-        projective measurement among a given set of PVMS, i.e., we pick a random set of
-        parameter values among the pre-defined list of sets.
+        In the case of PM-simulable POVMs, each time we perfom a measurement we pick a
+        random projective measurement among a given set of PVMs.
 
         Args:
-            shot: total number of shots to be performed.
+            shots: total number of shots to be performed.
 
         Returns:
-            The distribution of the shots among the different sets of parameter values.
+            The distribution of the shots among the different sets PVMs.
         """
-        PVM_idx: np.ndarray = np.zeros((shot, self.n_qubit), dtype=int)
+        PVM_idx: np.ndarray = np.zeros((shots, self.n_qubit), dtype=int)
 
         for i in range(self.n_qubit):
-            PVM_idx[:, i] = np.random.choice(self._n_PVMs, size=shot, replace=True, p=self.bias[i])
+            PVM_idx[:, i] = np.random.choice(self._n_PVMs, size=shots, replace=True, p=self.bias[i])
         counts = Counter(tuple(x) for x in PVM_idx)
 
-        param = np.zeros((len(counts), self.n_qubit, 2))
-        for i, combination in enumerate(counts):
-            for j in range(self.n_qubit):
-                param[i, j] = self.angles[j, combination[j]]
+        return counts
 
-        list_param_shot: list[tuple[np.ndarray, int]] = [
-            tuple((param[i], counts[combination])) for i, combination in enumerate(counts)
-        ]
+    def get_pvm_parameter(self, pvm_idx: tuple[int, ...]) -> np.ndarray:
+        """Return the concrete parameter values associated to a PVM label.
 
-        return list_param_shot
+        Args:
+            pvm_idx: qubit-wise index indicating which PVM was used to perform the measurement.
+
+        Returns:
+            Parameter values for the specified PVM.
+        """
+        param: np.ndarray = np.zeros((2, self.n_qubit))
+
+        for i in range(self.n_qubit):
+            # Axes ordering and reverse indexing because of the alphabetical order of the parameters
+            # when submitting pubs to the sampler.
+            # TODO: find a cleaner and more general way to deal with this
+            param[0, i] = self.angles[i, pvm_idx[i], 1]
+            param[1, i] = self.angles[i, pvm_idx[i], 0]
+
+        return param.flatten()
+
+    def get_outcome_label(
+        self, pvm_idx: tuple[int, ...], bitstring_outcome: str
+    ) -> tuple[int, ...]:
+        """Transform a PVM index and a bitstring outcome to a POVM outcome.
+
+        Args:
+            pvm_idx: qubit-wise index indicating which PVM was used to perform the measurement.
+            bitstring_outcomes: the outcome of the measurements performed with the PVM label
+                by ``pvm_idx``. The order of qubit is assumed to be reversed.
+
+        Returns:
+            A tuple of indices indicating the POVM outcomes on each qubit. For each qubit,
+            the index goes from :math:``0`` to :math:``2 * self.n_PVM - 1``.
+        """
+        return tuple(pvm_idx[i] * 2 + int(bit) for i, bit in enumerate(bitstring_outcome[::-1]))
 
     # TODO: find a better name
     def to_povm(self) -> ProductPOVM:
@@ -120,8 +160,10 @@ class RandomizedPMs(POVMImplementation):
         stabilizers[:, :, 0, 1] = (
             np.cos(self.angles[:, :, 1]) + 1.0j * np.sin(self.angles[:, :, 1])
         ) * np.sin(self.angles[:, :, 0] / 2.0)
-        stabilizers[:, :, 1, 0] = stabilizers[:, :, 0, 1].conjugate()
-        stabilizers[:, :, 1, 1] = -stabilizers[:, :, 0, 0]
+        stabilizers[:, :, 1, 0] = -stabilizers[
+            :, :, 0, 1
+        ].conjugate()  # up to irrelevant global phase e^(i phi)
+        stabilizers[:, :, 1, 1] = stabilizers[:, :, 0, 0]  # up to irrelevant global phase e^(i phi)
 
         stabilizers = np.multiply(stabilizers.T, np.sqrt(self.bias).T).T
         stabilizers = stabilizers.reshape((self.n_qubit, 2 * self._n_PVMs, 2))

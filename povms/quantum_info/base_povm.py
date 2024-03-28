@@ -30,6 +30,16 @@ class BasePOVM(ABC):
     def n_outcomes(self) -> int:
         """Give the number of outcomes of the POVM."""
 
+    @property
+    @abstractmethod
+    def alphas(self) -> np.ndarray | list[np.ndarray]:
+        """Paremeters of the dual frame."""
+
+    @alphas.setter
+    @abstractmethod
+    def alphas(self, var: np.ndarray | list[np.ndarray]) -> None:
+        """Set paremeters of the dual frame."""
+
     @abstractmethod
     def _check_validity(self) -> None:
         """Check if POVM axioms are fulfilled."""

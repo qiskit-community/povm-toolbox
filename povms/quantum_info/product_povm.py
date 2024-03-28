@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 
 import numpy as np
@@ -136,6 +137,18 @@ class ProductPOVM(BasePOVM):
         """Give the number of single-qubit operators forming the POVM."""
         return self._n_operators
 
+    @property
+    def alphas(self) -> list[np.ndarray]:
+        """Paremeters of the dual frames of each local POVM."""
+        return [povm._alphas for povm in self._povms.values()]
+
+    @alphas.setter
+    def alphas(self, var: list[np.ndarray]) -> None:
+        for i, povm in enumerate(self._povms.values()):
+            povm._alphas = var[i]
+            povm._frame_superop = None
+            povm._dual_operators = None
+
     def _check_validity(self) -> None:
         """Check if POVM axioms are fulfilled.
 
@@ -182,7 +195,7 @@ class ProductPOVM(BasePOVM):
             #   - `povm` is the actual local POVM object.
             for j, (idx, povm) in enumerate(self._povms.items()):
                 # Extract the local Pauli term on the qubit indices of this local POVM.
-                sublabel = "".join(label[i] for i in idx)
+                sublabel = "".join(label[-(i + 1)] for i in idx)
                 # Try to obtain the coefficient of the local POVM for this local Pauli term.
                 try:
                     coeff = povm.pauli_operators(dual)[outcome_idx[j]][sublabel]
@@ -211,8 +224,8 @@ class ProductPOVM(BasePOVM):
 
             # Once we have finished computing our summand, we add it into `p_init`.
             p_idx += summand
-        if abs(p_idx.imag) > 1e-15:
-            raise ValueError(f"Expected a real number, instead got {p_idx}.")
+        if abs(p_idx.imag) > operator.atol:
+            warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
         return float(p_idx.real)
 
     def _decompose_op(

@@ -102,7 +102,7 @@ class TestRandomizedPMs(TestCase):
             cs_implementation = RandomizedPMs(n_qubit=n_qubit, bias=q, angles=angles)
 
             summed_shots = 0
-            for _, shots in cs_implementation.get_parameter_and_shot(1000):
+            for shots in cs_implementation.distribute_shots(1000).values():
                 summed_shots += shots
 
             self.assertEqual(summed_shots, 1000)
