@@ -25,6 +25,7 @@ class POVMImplementation(ABC):
         """
         super().__init__()
         self.n_qubit = n_qubit
+        self.msmt_qc: QuantumCircuit
 
     @abstractmethod
     def _build_qc(self) -> QuantumCircuit:
@@ -57,12 +58,11 @@ class POVMImplementation(ABC):
             Parameter values for the specified POVM.
         """
 
-    # specific to randomized measurements
     @abstractmethod
     def get_outcome_label(
         self, pvm_idx: tuple[int, ...], bitstring_outcome: str
     ) -> tuple[int, ...]:
-        """Transform a POVM label and a bitstring outcome to a POVM outcome."""
+        """Convert a PVM label and a bitsring outcome obtained with it to a POVM outcome."""
 
     @abstractmethod
     def to_povm(self) -> BasePOVM:

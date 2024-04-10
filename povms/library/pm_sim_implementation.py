@@ -65,6 +65,8 @@ class RandomizedPMs(POVMImplementation):
             raise ValueError("TODO: error message.")
         self.angles = angles.reshape((self.n_qubit, self._n_PVMs, 2))
 
+        self.msmt_qc = self._build_qc()
+
     def _build_qc(self) -> QuantumCircuit:
         """Build the quantum circuit that implements the measurement.
 

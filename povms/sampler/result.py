@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from qiskit.primitives import BasePrimitiveJob
+from qiskit.primitives import PrimitiveResult
 
 from povms.library.povm_implementation import POVMImplementation
 
@@ -13,25 +13,36 @@ class POVMSamplerResult:
     def __init__(
         self,
         povm: POVMImplementation,
-        raw_job: BasePrimitiveJob,
+        result: PrimitiveResult,  # TODO: check type of result objects for V2 primitves, see issue #40
         pvm_keys: list[tuple[int, ...]],
     ) -> None:
         """Initialize the result object.
 
         Args:
-            job: the job from which to exctract the result.
+            povm: The POVM that was used to collect the samples.
+            result: The raw primitive result object that contains a list of
+                the pub results.
+            pvm_keys: A list of indices indicating which pvm from the
+                randomized ``povm`` was used for each pub result. The length
+                of the list should be the same as the length of ``result``.
         """
         self.povm = povm
-        self.job = raw_job
+        self.result = result
         self.pvm_keys = pvm_keys
 
-    def get_counts(self):
-        """Get the histogram data of an experiment."""
+    def get_counts(self, loc: int | tuple[int, ...] | None = None) -> dict[tuple[int, ...], int]:
+        """Get the histogram data of an experiment.
+
+        Args:
+            loc: Which entry of the ``BitArray`` to return a dictionary for.
+                If a ``BindingsArray`` was originally passed to the `POVMSampler``,
+                ``loc`` indicates the set of parameter values for which counts are
+                to be obtained.
+        """
         counts_dict = {}
-        split_result = self.job.result()
         for i, pvm_idx in enumerate(self.pvm_keys):
-            pub_result = split_result[i]
-            pub_counts = pub_result.data.povm_meas.get_counts()
+            pub_result = self.result[i]
+            pub_counts = pub_result.data.povm_meas.get_counts(loc)
             # TODO: be aware this attribute name depends on the classical register label
             for pvm_outcome in pub_counts:
                 povm_outcome = self.povm.get_outcome_label(pvm_idx, pvm_outcome)

@@ -23,19 +23,17 @@ class TestPOVMSamplerJob(TestCase):
         povm_sampler = POVMSampler(sampler=self.sampler)
         n_qubit = 2
         qc_random = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
-        qc_random.draw()
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
         cs_shots = 4096
-        cs_job = povm_sampler.run(cs_implementation, qc_random, shots=cs_shots)
+        cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
         self.assertIsInstance(cs_job, POVMSamplerJob)
 
     def test_result(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         n_qubit = 2
         qc_random = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
-        qc_random.draw()
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
         cs_shots = 4096
-        cs_job = povm_sampler.run(cs_implementation, qc_random, shots=cs_shots)
-        result = cs_job.result()
+        cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
+        result = cs_job.result()[0]
         self.assertIsInstance(result, POVMSamplerResult)

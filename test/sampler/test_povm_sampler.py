@@ -2,7 +2,8 @@
 
 from unittest import TestCase
 
-from povms.library.pm_sim_implementation import ClassicalShadows
+import numpy as np
+from povms.library.pm_sim_implementation import ClassicalShadows, LocallyBiased
 from povms.sampler.job import POVMSamplerJob
 from povms.sampler.povm_sampler import POVMSampler
 from qiskit.circuit.random import random_circuit
@@ -26,9 +27,33 @@ class TestPOVMSampler(TestCase):
     def test_run(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         n_qubit = 2
-        qc_random = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
-        qc_random.draw()
+        qc_random1 = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
+        qc_random2 = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
+        lbcs_implementation = LocallyBiased(
+            n_qubit=n_qubit, bias=np.array([[0.2, 0.3, 0.5], [0.8, 0.1, 0.1]])
+        )
         cs_shots = 4096
-        cs_job = povm_sampler.run(cs_implementation, qc_random, shots=cs_shots)
-        self.assertIsInstance(cs_job, POVMSamplerJob)
+        lbcs_shots = 2048
+        cs_job1 = povm_sampler.run(
+            [
+                (qc_random1, None, None, cs_implementation),
+                (qc_random1, None, None, lbcs_implementation),
+            ],
+            shots=cs_shots,
+        )
+        self.assertIsInstance(cs_job1, POVMSamplerJob)
+        cs_job2 = povm_sampler.run(
+            [qc_random1, (qc_random2, None, lbcs_shots, lbcs_implementation)],
+            povm=cs_implementation,
+            shots=cs_shots,
+        )
+        self.assertIsInstance(cs_job2, POVMSamplerJob)
+        cs_job3 = povm_sampler.run(
+            [qc_random1, (qc_random2, None, lbcs_shots, lbcs_implementation)],
+            povm=cs_implementation,
+            shots=cs_shots,
+            multi_job=True,
+        )
+        self.assertIsInstance(cs_job3, list)
+        self.assertIsInstance(cs_job3[0], POVMSamplerJob)

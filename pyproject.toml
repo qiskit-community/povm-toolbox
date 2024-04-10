@@ -61,7 +61,7 @@ only-include = [
 allow-direct-references = true
 
 [tool.mypy]
-python_version = 3.8
+python_version = 3.9
 show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
