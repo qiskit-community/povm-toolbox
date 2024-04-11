@@ -112,6 +112,9 @@ ignore = [
     "PLR2004",
 ]
 
+[tool.ruff.lint.pylint]
+max-args = 6
+
 [tool.ruff.lint.extend-per-file-ignores]
 "notebooks/*" = [
     "E402", # module level import not at top of file
