@@ -22,7 +22,7 @@ class TestPOVMSamplerJob(TestCase):
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         n_qubit = 2
-        qc_random = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
+        qc_random = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
         cs_shots = 4096
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
@@ -31,7 +31,7 @@ class TestPOVMSamplerJob(TestCase):
     def test_result(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         n_qubit = 2
-        qc_random = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
+        qc_random = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
         cs_shots = 4096
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)

@@ -27,8 +27,8 @@ class TestPOVMSampler(TestCase):
     def test_run(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         n_qubit = 2
-        qc_random1 = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
-        qc_random2 = random_circuit(num_qubits=n_qubit, depth=3, measure=False)
+        qc_random1 = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
+        qc_random2 = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
         lbcs_implementation = LocallyBiased(
             n_qubit=n_qubit, bias=np.array([[0.2, 0.3, 0.5], [0.8, 0.1, 0.1]])
