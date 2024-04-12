@@ -2,35 +2,40 @@
 
 from __future__ import annotations
 
-from qiskit.primitives import PrimitiveResult
+from collections import Counter
+from typing import Any
+
+from qiskit.primitives.containers import DataBin, PubResult
 
 from povms.library.povm_implementation import POVMImplementation
 
 
-class POVMSamplerResult:
+class POVMPubResult(PubResult):
     """Base class to gather all relevant result information."""
 
     def __init__(
         self,
+        data: DataBin,
         povm: POVMImplementation,
-        result: PrimitiveResult,  # TODO: check type of result objects for V2 primitves, see issue #40
         pvm_keys: list[tuple[int, ...]],
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the result object.
 
         Args:
+            data: The raw data bin object that contains raw measurement
+                bitstrings. Each bitstring has to be associated with the
+                corresponding pvm_key to produce a meaningful POVM outcvome.
             povm: The POVM that was used to collect the samples.
-            result: The raw primitive result object that contains a list of
-                the pub results.
             pvm_keys: A list of indices indicating which pvm from the
-                randomized ``povm`` was used for each pub result. The length
-                of the list should be the same as the length of ``result``.
+                randomized ``povm`` was used for each shot. The length
+                of the list should be the same as the number of shots.
         """
+        super().__init__(data, metadata)
         self.povm = povm
-        self.result = result
         self.pvm_keys = pvm_keys
 
-    def get_counts(self, loc: int | tuple[int, ...] | None = None) -> dict[tuple[int, ...], int]:
+    def get_counts(self, loc: int | tuple[int, ...] | None = None):
         """Get the histogram data of an experiment.
 
         Args:
@@ -39,12 +44,21 @@ class POVMSamplerResult:
                 ``loc`` indicates the set of parameter values for which counts are
                 to be obtained.
         """
-        counts_dict = {}
-        for i, pvm_idx in enumerate(self.pvm_keys):
-            pub_result = self.result[i]
-            pub_counts = pub_result.data.povm_meas.get_counts(loc)
-            # TODO: be aware this attribute name depends on the classical register label
-            for pvm_outcome in pub_counts:
-                povm_outcome = self.povm.get_outcome_label(pvm_idx, pvm_outcome)
-                counts_dict[povm_outcome] = pub_counts[pvm_outcome]
-        return counts_dict
+        povm_outcomes = []
+        # TODO : improve performance. Currently we loop over all shots and get the
+        # outcome label each time. There's probably a way to group equivalent outcomes
+        # earlier or do it in a smarter way.
+
+        # TODO : be careful with ``loc``, try to really separate the enduser's parameters
+        # locations and the PVM parameter locations !
+        if loc is not None:
+            raise NotImplementedError("The use of the argument ``loc`` is not yet supported.")
+
+        for i, raw_bitsring in enumerate(self.data.povm_meas.get_bitstrings(loc)):
+            povm_outcomes.append(
+                self.povm.get_outcome_label(
+                    pvm_idx=self.pvm_keys[i], bitstring_outcome=raw_bitsring
+                )
+            )
+
+        return Counter(povm_outcomes)

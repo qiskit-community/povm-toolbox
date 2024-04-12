@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any
 
 from qiskit.primitives import BaseSamplerV2
 from qiskit.primitives.containers import SamplerPubLike
@@ -20,7 +19,7 @@ class POVMSampler:
     def __init__(
         self,
         sampler: BaseSamplerV2,
-    ):
+    ) -> None:
         """Initialize the POVM Sampler.
 
         Args:
@@ -34,8 +33,7 @@ class POVMSampler:
         *,
         shots: int | None = None,
         povm: POVMImplementation | None = None,
-        multi_job: bool = False,
-    ) -> Any:
+    ) -> POVMSamplerJob:
         """Run and collect samples from each pub.
 
         Args:
@@ -47,38 +45,24 @@ class POVMSampler:
             povm: A POVM implementation that defines the measurement to perform
                 for each pub that does not specify it own POVM. If ``None``, each pub
                 has to specify its own POVM.
-            multi_job: If ``True``, create a job for each pub. Otherwise, run all pubs
-                in one job.
 
         Returns:
-            The job object of POVMSampler's result.
+            The POVM sampler job object.
         """
         # TODO: we need to revisit this as part part of issue #37
         pm = generate_preset_pass_manager(optimization_level=1, backend=self.sampler._backend)
 
+        # Run all the pubs in one job
+        # Flatten the list of pubs and keep track of the corresponding slices
         coerced_povms: list[POVMImplementation] = []
-        coerced_pubs: list[list[SamplerPubLike]] = []
+        coerced_sampler_pubs: list[SamplerPubLike] = []
         pvm_keys: list[list[tuple[int, ...]]] = []
         for pub in pubs:
             povm_sampler_pub = POVMSamplerPub.coerce(pub=pub, shots=shots, povm=povm)
-            sub_pubs, keys = povm_sampler_pub.compose_circuits(pass_manager=pm)
+            composed_pub, keys = povm_sampler_pub.compose_circuits(pass_manager=pm)
             coerced_povms.append(povm_sampler_pub.povm)
-            coerced_pubs.append(sub_pubs)
+            coerced_sampler_pubs.append(composed_pub)
             pvm_keys.append(keys)
 
-        if multi_job:
-            job_list = []
-            for i, p in enumerate(coerced_pubs):
-                job = self.sampler.run(p)
-                job_list.append(POVMSamplerJob([coerced_povms[i]], job, [pvm_keys[i]], [len(p)]))
-            return job_list
-
-        # Run all the pubs in one job
-        # Flatten the list of pubs and keep track of the corresponding slices
-        concat_pubs: list[SamplerPubLike] = []
-        book_keeping: list[int] = []
-        for p in coerced_pubs:
-            book_keeping.append(len(p))
-            concat_pubs += p
-        job = self.sampler.run(concat_pubs)
-        return POVMSamplerJob(coerced_povms, job, pvm_keys, book_keeping)
+        job = self.sampler.run(coerced_sampler_pubs)
+        return POVMSamplerJob(coerced_povms, job, pvm_keys)

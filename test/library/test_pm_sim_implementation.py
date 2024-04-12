@@ -101,11 +101,7 @@ class TestRandomizedPMs(TestCase):
 
             cs_implementation = RandomizedPMs(n_qubit=n_qubit, bias=q, angles=angles)
 
-            summed_shots = 0
-            for shots in cs_implementation.distribute_shots(1000).values():
-                summed_shots += shots
-
-            self.assertEqual(summed_shots, 1000)
+            self.assertEqual(len(cs_implementation.distribute_shots(1000)), 1000)
 
     # TODO: write a unittest for each public method of RandomizedPMs
 

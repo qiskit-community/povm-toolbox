@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-from povms.sampler.result import POVMSamplerResult
+from povms.sampler.result import POVMPubResult
 
 
 class POVMPostprocessor:
@@ -13,7 +13,7 @@ class POVMPostprocessor:
 
     def __init__(
         self,
-        povm_sample: POVMSamplerResult,
+        povm_sample: POVMPubResult,
         alphas: np.ndarray | None = None,
     ) -> None:
         """Initialize the POVM post-processor.

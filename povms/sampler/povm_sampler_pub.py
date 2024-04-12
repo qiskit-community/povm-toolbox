@@ -220,13 +220,13 @@ class POVMSamplerPub(ShapedMixin):
     def compose_circuits(
         self,
         pass_manager: StagedPassManager,
-    ) -> tuple[list[SamplerPubLike], list[tuple[int, ...]]]:
+    ) -> tuple[SamplerPubLike, list[tuple[int, ...]]]:
         """Compose the pub circuit with measurement circuit(s).
 
         Compose the internal quantum circuit with the measurement circuits of the
-        internal POVM. If a randomized POVM is used, sevral ``SamplerPubLike``
-        object are returned, one for each random measurement with its associated
-        number of shots.
+        internal POVM. If a randomized POVM is used, the enduser's parameters have
+        to be concantenated with the sampled POVM parameters. The POVM parameters
+        are a 2-D (TODO: update docstrings in next PR, which will change this method anyways)
 
         Args:
             pass_manager: A staged pass manger to compile composed circuits.
@@ -236,7 +236,7 @@ class POVMSamplerPub(ShapedMixin):
                 circuit is passed as an argument in the pub-like object.
 
         Returns:
-            A tuple of a list of sampler pubs and a list of keys indicating which random
+            (TODO update in next PR) A tuple of a list of sampler pubs and a list of keys indicating which random
             measurement is used for each pub.
         """
         # TODO: assert circuit qubit routing and stuff
@@ -247,20 +247,15 @@ class POVMSamplerPub(ShapedMixin):
         composed_circuit = self.circuit.compose(self.povm.msmt_qc)
         composed_isa_circuit = pass_manager.run(composed_circuit)
 
-        pvm_shots = self.povm.distribute_shots(shots=self.shots)
+        pvm_keys = self.povm.distribute_shots(shots=self.shots)
+
+        parameters = list(map(self.povm.get_pvm_parameter, pvm_keys))
 
         if self.parameter_values.num_parameters > 0:
             raise NotImplementedError(
                 "Not yet able to pass parametric circuits and binding values as arguments."
             )
 
-        sub_pubs = [
-            (
-                composed_isa_circuit,
-                self.povm.get_pvm_parameter(pvm_idx),
-                pvm_shots[pvm_idx],
-            )
-            for pvm_idx in pvm_shots
-        ]
+        pub = (composed_isa_circuit, parameters, 1)
 
-        return (sub_pubs, list(pvm_shots.keys()))
+        return (pub, pvm_keys)

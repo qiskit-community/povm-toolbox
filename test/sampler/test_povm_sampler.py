@@ -49,11 +49,3 @@ class TestPOVMSampler(TestCase):
             shots=cs_shots,
         )
         self.assertIsInstance(cs_job2, POVMSamplerJob)
-        cs_job3 = povm_sampler.run(
-            [qc_random1, (qc_random2, None, lbcs_shots, lbcs_implementation)],
-            povm=cs_implementation,
-            shots=cs_shots,
-            multi_job=True,
-        )
-        self.assertIsInstance(cs_job3, list)
-        self.assertIsInstance(cs_job3[0], POVMSamplerJob)

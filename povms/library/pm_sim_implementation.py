@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections import Counter
-
 import numpy as np
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
 
@@ -97,25 +95,25 @@ class RandomizedPMs(POVMImplementation):
 
         return qc
 
-    def distribute_shots(self, shots: int) -> Counter[tuple]:
-        """Return a list with PVM label and associated number of shots.
+    def distribute_shots(self, shots: int) -> list[tuple[int, ...]]:
+        """Return a list of sampled PVM labels.
 
         In the case of PM-simulable POVMs, each time we perfom a measurement we pick a
-        random projective measurement among a given set of PVMs.
+        random projective measurement among a given set of PVMs. This method return a
+        list of length :math:``shots``.
 
         Args:
             shots: total number of shots to be performed.
 
         Returns:
-            The distribution of the shots among the different sets PVMs.
+            The labels of the :math:``shots`` sampled PVMs.
         """
-        PVM_idx: np.ndarray = np.zeros((shots, self.n_qubit), dtype=int)
+        pvm_idx: np.ndarray = np.zeros((shots, self.n_qubit), dtype=int)
 
         for i in range(self.n_qubit):
-            PVM_idx[:, i] = np.random.choice(self._n_PVMs, size=shots, replace=True, p=self.bias[i])
-        counts = Counter(tuple(x) for x in PVM_idx)
+            pvm_idx[:, i] = np.random.choice(self._n_PVMs, size=shots, replace=True, p=self.bias[i])
 
-        return counts
+        return list(map(tuple, pvm_idx))
 
     def get_pvm_parameter(self, pvm_idx: tuple[int, ...]) -> np.ndarray:
         """Return the concrete parameter values associated to a PVM label.

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections import Counter
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit
@@ -33,17 +32,18 @@ class POVMImplementation(ABC):
 
     # specific to randomized measurements
     @abstractmethod
-    def distribute_shots(self, shots: int) -> Counter[tuple]:
-        """Return a list with POVM label and associated number of shots.
+    def distribute_shots(self, shots: int) -> list[tuple[int, ...]]:
+        """Return a list of sampled PVM labels.
 
-        This method can be used in the case of randomized measurements. Otherwise, it should
-        allocate all the shots to the single fixed measurement.
+        In the case of PM-simulable POVMs, each time we perfom a measurement we pick a
+        random projective measurement among a given set of PVMs. This method return a
+        list of labels of length :math:``shots``.
 
         Args:
             shots: total number of shots to be performed.
 
         Returns:
-            The distribution of the shots among the different POVMs constituting the overall POVM.
+            The labels of the :math:``shots`` sampled PVMs.
         """
 
     # specific to randomized measurements

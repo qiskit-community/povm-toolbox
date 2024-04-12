@@ -2,62 +2,90 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import uuid
 
-from qiskit.primitives import BasePrimitiveJob
+from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
+from qiskit.providers import JobStatus
 
 from povms.library.povm_implementation import POVMImplementation
-from povms.sampler.result import POVMSamplerResult
+from povms.sampler.result import POVMPubResult
 
 
-@dataclass
-class POVMSamplerJob:
-    """Job class for the :class:`POVMSampler`.
+class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
+    """Job class for the :class:`POVMSampler`."""
 
-    Several pubs can be submitted in a single job. Each of these original pubs
-    specifies its POVM and shot budget. The budget is divided between the various
-    random measurements composing the POVM. So, for each original pub, several
-    `utility pubs' were created. This class retrieves the job of all the `utility
-    pubs' that were concatenated together and then groups the results in relation
-    to the original pubs.
+    def __init__(
+        self,
+        povms: list[POVMImplementation],
+        base_job: BasePrimitiveJob,
+        pvm_keys: list[list[tuple[int, ...]]],
+    ) -> None:
+        """Initialize the job.
 
-    Args:
-        povm: The list of POVMs that were submitted for each original pub.
-        base_job: The raw job from which to extract results. The raw results
-            of the job are a flattened list of all the results of the `utility
-            pubs' that were concatenated together.
-        pvm_keys: The length of the list is equal to the number of original
-            pubs. Each element of the list is a list of tuples, where each
-            tuple indicates which PVM from the randomized ``povm`` was used
-            for a specific `utility pub' result. The flattened list of lists
-            would be the same length of the raw job results.
-        book_keeping: A list of slices to retrieve the `utility pubs'
-            correspopnding to each original pubs. The length of the list
-            is equal to the number of original pubs.
-    """
+        Args:
+            povm: The list of POVMs that were submitted for each pub.
+            base_job: The raw job from which to extract results.
+            pvm_keys: The length of the list is equal to the number of pubs that
+                were submited. Each element of the list is a list of tuples, where
+                each tuple indicates which PVM from the randomized ``povm`` was
+                used for a specific shot. The length of each nested list is equal
+                the number of shots associated with the corresponding pub.
+        """
+        super().__init__(job_id=str(uuid.uuid4()))
 
-    povms: list[POVMImplementation]
-    base_job: BasePrimitiveJob
-    pvm_keys: list[list[tuple[int, ...]]]
-    book_keeping: list[int]
+        if len(povms) != len(pvm_keys):
+            raise ValueError
 
-    def result(self) -> list[POVMSamplerResult]:
+        self.povms = povms
+        self.base_job = base_job
+        self.pvm_keys = pvm_keys
+
+    def result(self) -> PrimitiveResult[POVMPubResult]:
         """Return the results of the job.
 
-        The results are returned in the form of a list of ``POVMSamplerResult``.
-        Each POVM sampler result in the list corresponds to an original pub that
-        was submitted.
+        Returns:
+            A ``PrimitiveResult`` containing a list of ``POVMPubResult``.
         """
-        result: list[POVMSamplerResult] = []
-        raw_result = self.base_job.result()
-        slice_start = 0
-        for i, slice_length in enumerate(self.book_keeping):
-            result.append(
-                POVMSamplerResult(
-                    self.povms[i],
-                    raw_result[slice_start : slice_start + slice_length],
-                    self.pvm_keys[i],
+        raw_results = self.base_job.result()
+        povm_pub_results = []
+
+        for i, pub_result in enumerate(raw_results):
+            # TODO : something like this to change the number of shots of the bit_array
+            # data = pub_result.data
+            # bit_array = data.povm_meas # shape=n_shots, num_shots = 1
+            # bit_array2 = BitArray(np.squeeze(bit_array.array, axis=-2), bit_array.num_bits) # shape=(), num_shots = n_shots
+            # data.povm_meas = bit_array2
+            povm_pub_results.append(
+                POVMPubResult(
+                    data=pub_result.data,
+                    povm=self.povms[i],
+                    pvm_keys=self.pvm_keys[i],
+                    metadata=pub_result.metadata,
                 )
             )
-            slice_start += slice_length
-        return result
+
+        return PrimitiveResult(povm_pub_results, metadata=raw_results.metadata)
+
+    def status(self) -> JobStatus:
+        """Return the status of the job."""
+        raise NotImplementedError("Subclass of BasePrimitiveJob must implement `status` method.")
+
+    def done(self) -> bool:
+        """Return whether the job has successfully run."""
+        return bool(self.base_job.done())
+
+    def running(self) -> bool:
+        """Return whether the job is actively running."""
+        return bool(self.base_job.running())
+
+    def cancelled(self) -> bool:
+        """Return whether all jobs have been cancelled."""
+        return bool(self.base_job.cancelled())
+
+    def in_final_state(self) -> bool:
+        """Return whether the job is in a final job state such as ``DONE`` or ``ERROR``."""
+        return bool(self.base_job.in_final_state())
+
+    def cancel(self):
+        """Attempt to cancel the job."""
+        self.base_job.cancel()
