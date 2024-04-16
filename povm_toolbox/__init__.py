@@ -8,4 +8,19 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""TODO.
+
+.. currentmodule:: povm_toolbox
+
+Submodules
+----------
+
+.. autosummary::
+   :toctree:
+
+   library
+   post_processor
+   quantum_info
+   sampler
+   utilities
+"""

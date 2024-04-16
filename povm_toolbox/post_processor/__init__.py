@@ -8,4 +8,19 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""TODO.
+
+.. currentmodule:: povm_toolbox.post_processor
+
+.. autosummary::
+   :toctree: ../stubs/
+   :nosignatures:
+
+   POVMPostprocessor
+"""
+
+from .povm_post_processor import POVMPostprocessor
+
+__all__ = [
+    "POVMPostprocessor",
+]

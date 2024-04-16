@@ -20,7 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "povm_toolbox[test,nbtest,lint]",
+    "povm_toolbox[test,nbtest,lint,docs]",
 ]
 basetest = [
     "tox>=4.0",
@@ -46,6 +46,15 @@ lint = [
 ]
 notebook-dependencies = [
     "povm_toolbox",
+]
+docs = [
+    "qiskit-sphinx-theme~=1.16",
+    "jupyter-sphinx",
+    "sphinx-design",
+    "sphinx-autodoc-typehints",
+    "sphinx-copybutton",
+    "nbsphinx",
+    "matplotlib",
 ]
 
 [tool.autoflake]
@@ -117,7 +126,7 @@ explicit-preview-rules = true
 max-args = 6
 
 [tool.ruff.lint.extend-per-file-ignores]
-"notebooks/*" = [
+"docs/tutorials/*" = [
     "E402", # module level import not at top of file
 ]
 

@@ -90,32 +90,33 @@ class ProductPOVM(BasePOVM):
         indices.
 
         Below are some examples:
-        ```python
-        sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
-        product = ProcuctPOVM.from_list([sqp, sqp])
-        # is equivalent to
-        product = ProductPOVM({(0,): sqp, (1,): sqp})
 
-        mqp = MultiQubitPOVM(
-            [
-                Operator.from_label("00"),
-                Operator.from_label("01"),
-                Operator.from_label("10"),
-                Operator.from_label("11"),
-            ]
-        )
-        product = ProductPOVM.from_list([mqp, mqp])
-        # is equivalent to
-        product = ProductPOVM({(0, 1): mqp, (2, 3): mqp})
+        .. code-block:: python
 
-        product = ProductPOVM.from_list([sqp, sqp, mqp])
-        # is equivalent to
-        product = ProductPOVM({(0,): sqp, (1,): sqp, (2, 3): mqp})
+            sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+            product = ProcuctPOVM.from_list([sqp, sqp])
+            # is equivalent to
+            product = ProductPOVM({(0,): sqp, (1,): sqp})
 
-        product = ProductPOVM.from_list([sqp, mqp, sqp])
-        # is equivalent to
-        product = ProductPOVM({(0,): sqp, (1, 2): mqp, (3,): sqp})
-        ```
+            mqp = MultiQubitPOVM(
+                [
+                    Operator.from_label("00"),
+                    Operator.from_label("01"),
+                    Operator.from_label("10"),
+                    Operator.from_label("11"),
+                ]
+            )
+            product = ProductPOVM.from_list([mqp, mqp])
+            # is equivalent to
+            product = ProductPOVM({(0, 1): mqp, (2, 3): mqp})
+
+            product = ProductPOVM.from_list([sqp, sqp, mqp])
+            # is equivalent to
+            product = ProductPOVM({(0,): sqp, (1,): sqp, (2, 3): mqp})
+
+            product = ProductPOVM.from_list([sqp, mqp, sqp])
+            # is equivalent to
+            product = ProductPOVM({(0,): sqp, (1, 2): mqp, (3,): sqp})
 
         Args:
             povms: a sequence of ``MultiQubitPOVM`` objects.

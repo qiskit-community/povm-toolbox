@@ -8,7 +8,19 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""TODO.
+
+.. currentmodule:: povm_toolbox.utilities
+
+.. autosummary::
+   :toctree: ../stubs/
+   :nosignatures:
+
+   matrix_to_double_ket
+   double_ket_to_matrix
+   gs
+   n_sphere
+"""
 
 from __future__ import annotations
 
