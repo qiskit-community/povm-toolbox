@@ -13,14 +13,21 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Generic, TypeVar
 
-import numpy as np
 from qiskit.circuit import QuantumCircuit
+from qiskit.primitives.containers import DataBin
+from qiskit.primitives.containers.bindings_array import BindingsArray
+from qiskit.primitives.containers.sampler_pub import SamplerPub
+from qiskit.transpiler import StagedPassManager
 
 from povms.quantum_info.base_povm import BasePOVM
 
+MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 
-class POVMImplementation(ABC):
+
+class POVMImplementation(ABC, Generic[MetadataT]):
     """Abstract base class that contains all methods that any specific POVMImplementation subclass should implement."""
 
     def __init__(
@@ -40,40 +47,54 @@ class POVMImplementation(ABC):
     def _build_qc(self) -> QuantumCircuit:
         """Return the parametetrized quantum circuit to implement the POVM."""
 
-    # specific to randomized measurements
     @abstractmethod
-    def distribute_shots(self, shots: int) -> list[tuple[int, ...]]:
-        """Return a list of sampled PVM labels.
+    def to_sampler_pub(
+        self,
+        circuit: QuantumCircuit,
+        parameter_values: BindingsArray,
+        shots: int,
+        pass_manager: StagedPassManager,
+    ) -> tuple[SamplerPub, MetadataT]:
+        """Append the measurement circuit(s) to the supplied circuit.
 
-        In the case of PM-simulable POVMs, each time we perfom a measurement we pick a
-        random projective measurement among a given set of PVMs. This method return a
-        list of labels of length :math:``shots``.
+        This method takes a supplied circuit and append the measurement circuit(s)
+        to it. If the measurement circuit is parametrized, its parameters values
+        should be concatenated with the parameter values associated with the supplied
+        quantum circuit.
 
         Args:
-            shots: total number of shots to be performed.
+            circuit: A quantum circuit.
+            parameter_values: A bindings array.
+            shots: A specific number of shots to run with.
 
         Returns:
-            The labels of the :math:``shots`` sampled PVMs.
+            A tuple of a sampler pub and a dictionnary of metadata which include
+            the ``POVMImplementation`` objetc itself. The metadata should contain
+            all the information neceassary to extract the POVM outcomes out of raw
+            bitstrings.
         """
+        # TODO: figure out if it would be better to pass these arguments as a
+        #    ``SamplerPubLike`` object or even as a ``SamplerPub`` object.
 
-    # specific to randomized measurements
-    @abstractmethod
-    def get_pvm_parameter(self, pvm_idx: tuple[int, ...]) -> np.ndarray:
-        """Return the concrete parameter values associated to a POVM label.
-
-        Args:
-            pvm_idx: label indicating a specific POVM. Its structure depends on the implementations.
-
-        Returns:
-            Parameter values for the specified POVM.
-        """
+        # TODO: is it the right place to coerce the ``SamplerPub`` ? Or should
+        # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
 
     @abstractmethod
-    def get_outcome_label(
-        self, pvm_idx: tuple[int, ...], bitstring_outcome: str
-    ) -> tuple[int, ...]:
-        """Convert a PVM label and a bitsring outcome obtained with it to a POVM outcome."""
+    def get_counts_from_raw(
+        self,
+        data: DataBin,
+        povm_metadata: MetadataT,
+        loc: int | tuple[int, ...] | None = None,
+    ):
+        """TODO."""
 
     @abstractmethod
     def to_povm(self) -> BasePOVM:
         """Return the corresponding POVM."""
+
+
+@dataclass
+class POVMMetadata:
+    """TODO."""
+
+    povm: POVMImplementation

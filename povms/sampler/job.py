@@ -17,7 +17,7 @@ import uuid
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
 from qiskit.providers import JobStatus
 
-from povms.library.povm_implementation import POVMImplementation
+from povms.library.povm_implementation import POVMMetadata
 from povms.sampler.result import POVMPubResult
 
 
@@ -26,9 +26,8 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
 
     def __init__(
         self,
-        povms: list[POVMImplementation],
         base_job: BasePrimitiveJob,
-        pvm_keys: list[list[tuple[int, ...]]],
+        metadata: list[POVMMetadata],
     ) -> None:
         """Initialize the job.
 
@@ -43,12 +42,8 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         """
         super().__init__(job_id=str(uuid.uuid4()))
 
-        if len(povms) != len(pvm_keys):
-            raise ValueError
-
-        self.povms = povms
         self.base_job = base_job
-        self.pvm_keys = pvm_keys
+        self.metadata = metadata
 
     def result(self) -> PrimitiveResult[POVMPubResult]:
         """Return the results of the job.
@@ -57,9 +52,13 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
             A ``PrimitiveResult`` containing a list of ``POVMPubResult``.
         """
         raw_results = self.base_job.result()
+
+        if len(raw_results) != len(self.metadata):
+            raise ValueError
+
         povm_pub_results = []
 
-        for i, pub_result in enumerate(raw_results):
+        for pub_result, povm_metadata in zip(raw_results, self.metadata):
             # TODO : something like this to change the number of shots of the bit_array
             # data = pub_result.data
             # bit_array = data.povm_meas # shape=n_shots, num_shots = 1
@@ -68,9 +67,8 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
             povm_pub_results.append(
                 POVMPubResult(
                     data=pub_result.data,
-                    povm=self.povms[i],
-                    pvm_keys=self.pvm_keys[i],
-                    metadata=pub_result.metadata,
+                    povm_metadata=povm_metadata,
+                    pub_metadata=pub_result.metadata,
                 )
             )
 

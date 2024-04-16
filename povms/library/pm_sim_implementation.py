@@ -12,16 +12,30 @@
 
 from __future__ import annotations
 
+from collections import Counter
+from dataclasses import dataclass
+
 import numpy as np
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
+from qiskit.primitives.containers import DataBin
+from qiskit.primitives.containers.bindings_array import BindingsArray
+from qiskit.primitives.containers.sampler_pub import SamplerPub
+from qiskit.transpiler import StagedPassManager
 
 from povms.quantum_info.product_povm import ProductPOVM
 from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
 
-from .povm_implementation import POVMImplementation
+from .povm_implementation import POVMImplementation, POVMMetadata
 
 
-class RandomizedPMs(POVMImplementation):
+@dataclass
+class RandomizedPMsMetadata(POVMMetadata):
+    """TODO."""
+
+    pvm_keys: list[tuple[int, ...]]
+
+
+class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
     """Class to represent the implementation of randomized projective measurements."""
 
     def __init__(
@@ -105,27 +119,103 @@ class RandomizedPMs(POVMImplementation):
 
         return qc
 
-    def distribute_shots(self, shots: int) -> list[tuple[int, ...]]:
-        """Return a list of sampled PVM labels.
+    def to_sampler_pub(
+        self,
+        circuit: QuantumCircuit,
+        parameter_values: BindingsArray,
+        shots: int,
+        pass_manager: StagedPassManager,
+    ) -> tuple[SamplerPub, RandomizedPMsMetadata]:
+        """Append the measurement circuit(s) to the supplied circuit.
 
-        In the case of PM-simulable POVMs, each time we perfom a measurement we pick a
-        random projective measurement among a given set of PVMs. This method return a
-        list of length :math:``shots``.
+        This method takes a supplied circuit and append the measurement circuit
+        to it. As the measurement circuit is parametrized, its parameters values
+        are concatenated with the parameter values associated with the supplied
+        quantum circuit. TODO: explain how the distribution of the shots is done.
+        If a randomized POVM is used, the enduser's parameters have to be
+        concantenated with the sampled POVM parameters. The POVM parametersare a
+        2-D (TODO: update docstrings in next PR, which will change this method anyways)
 
         Args:
-            shots: total number of shots to be performed.
+            circuit: A quantum circuit.
+            parameter_values: A bindings array.
+            shots: A specific number of shots to run with.
 
         Returns:
-            The labels of the :math:``shots`` sampled PVMs.
+            A tuple of a sampler pub and a dictionnary of metadata which include
+            the ``POVMImplementation`` object itself. The metadata should contain
+            all the information neceassary to extract the POVM outcomes out of raw
+            bitstrings. (TODO: explain what is it exactly)
         """
-        pvm_idx: np.ndarray = np.zeros((shots, self.n_qubit), dtype=int)
+        if parameter_values.num_parameters > 0:
+            raise NotImplementedError(
+                "Not yet able to pass parametric circuits and binding values as arguments."
+            )
 
+        # distribute the shots
+        pvm_idx = np.zeros((shots, self.n_qubit), dtype=int)
         for i in range(self.n_qubit):
             pvm_idx[:, i] = np.random.choice(self._n_PVMs, size=shots, replace=True, p=self.bias[i])
 
-        return list(map(tuple, pvm_idx))
+        # retrieve the actual parameters from the pvm labels
+        pvm_parameters = np.empty((shots, 2 * self.n_qubit))
+        for i in range(shots):
+            pvm_parameters[i] = self._get_pvm_parameter(tuple(pvm_idx[i]))
 
-    def get_pvm_parameter(self, pvm_idx: tuple[int, ...]) -> np.ndarray:
+        # TODO: assert circuit qubit routing and stuff
+        # TODO: assert both circuits are compatible, in particular no measurements at the end of ``circuits``
+        # TODO: how to compose classical registers ? CR used for POVM measurements should remain separate
+        # TODO: how to deal with transpilation ?
+
+        composed_circuit = circuit.compose(self.msmt_qc)
+        composed_isa_circuit = pass_manager.run(composed_circuit)
+
+        pub = (composed_isa_circuit, pvm_parameters, 1)
+
+        metadata = RandomizedPMsMetadata(povm=self, pvm_keys=list(map(tuple, pvm_idx)))
+
+        return (pub, metadata)
+
+    def get_counts_from_raw(
+        self,
+        data: DataBin,
+        povm_metadata: RandomizedPMsMetadata,
+        loc: int | tuple[int, ...] | None = None,
+    ):
+        """Get the histogram data of an experiment.
+
+        Args:
+            loc: Which entry of the ``BitArray`` to return a dictionary for.
+                If a ``BindingsArray`` was originally passed to the `POVMSampler``,
+                ``loc`` indicates the set of parameter values for which counts are
+                to be obtained.
+        """
+        try:
+            pvm_keys = povm_metadata.pvm_keys
+        except KeyError as exc:
+            raise KeyError(
+                "The metadata of povm sampler result associated with a "
+                "RandomizedPMs POVM should specify a list of pvm keys, "
+                "but none were found."
+            ) from exc
+        povm_outcomes = []
+        # TODO : improve performance. Currently we loop over all shots and get the
+        # outcome label each time. There's probably a way to group equivalent outcomes
+        # earlier or do it in a smarter way.
+
+        # TODO : be careful with ``loc``, try to really separate the enduser's parameters
+        # locations and the PVM parameter locations !
+        if loc is not None:
+            raise NotImplementedError("The use of the argument ``loc`` is not yet supported.")
+
+        for keys, raw_bitsring in zip(pvm_keys, data.povm_meas.get_bitstrings(loc)):
+            povm_outcomes.append(
+                self._get_outcome_label(pvm_idx=keys, bitstring_outcome=raw_bitsring)
+            )
+
+        return Counter(povm_outcomes)
+
+    def _get_pvm_parameter(self, pvm_idx: tuple[int, ...]) -> np.ndarray:
         """Return the concrete parameter values associated to a PVM label.
 
         Args:
@@ -145,7 +235,7 @@ class RandomizedPMs(POVMImplementation):
 
         return param.flatten()
 
-    def get_outcome_label(
+    def _get_outcome_label(
         self, pvm_idx: tuple[int, ...], bitstring_outcome: str
     ) -> tuple[int, ...]:
         """Transform a PVM index and a bitstring outcome to a POVM outcome.

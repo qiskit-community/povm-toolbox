@@ -21,7 +21,7 @@ from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.shape import ShapedMixin
 from qiskit.transpiler import StagedPassManager
 
-from povms.library.povm_implementation import POVMImplementation
+from povms.library.povm_implementation import POVMImplementation, POVMMetadata
 
 POVMSamplerPubLike = Union[
     QuantumCircuit,
@@ -227,45 +227,11 @@ class POVMSamplerPub(ShapedMixin):
                 "set a default POVM for all pubs."
             )
 
-    def compose_circuits(
+    def to_sampler_pub(
         self,
         pass_manager: StagedPassManager,
-    ) -> tuple[SamplerPubLike, list[tuple[int, ...]]]:
-        """Compose the pub circuit with measurement circuit(s).
-
-        Compose the internal quantum circuit with the measurement circuits of the
-        internal POVM. If a randomized POVM is used, the enduser's parameters have
-        to be concantenated with the sampled POVM parameters. The POVM parameters
-        are a 2-D (TODO: update docstrings in next PR, which will change this method anyways)
-
-        Args:
-            pass_manager: A staged pass manger to compile composed circuits.
-
-        Raises:
-            NotImplementedError: If paremeter values to be bound to a paremetric
-                circuit is passed as an argument in the pub-like object.
-
-        Returns:
-            (TODO update in next PR) A tuple of a list of sampler pubs and a list of keys indicating which random
-            measurement is used for each pub.
-        """
-        # TODO: assert circuit qubit routing and stuff
-        # TODO: assert both circuits are compatible, in particular no measurements at the end of ``circuits``
-        # TODO: how to compose classical registers ? CR used for POVM measurements should remain separate
-        # TODO: how to deal with transpilation ?
-
-        composed_circuit = self.circuit.compose(self.povm.msmt_qc)
-        composed_isa_circuit = pass_manager.run(composed_circuit)
-
-        pvm_keys = self.povm.distribute_shots(shots=self.shots)
-
-        parameters = list(map(self.povm.get_pvm_parameter, pvm_keys))
-
-        if self.parameter_values.num_parameters > 0:
-            raise NotImplementedError(
-                "Not yet able to pass parametric circuits and binding values as arguments."
-            )
-
-        pub = (composed_isa_circuit, parameters, 1)
-
-        return (pub, pvm_keys)
+    ) -> tuple[SamplerPubLike | list[SamplerPubLike], POVMMetadata]:
+        """TODO."""
+        return self.povm.to_sampler_pub(
+            self.circuit, self.parameter_values, self.shots, pass_manager
+        )

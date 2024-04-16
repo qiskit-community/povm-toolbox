@@ -18,7 +18,7 @@ from qiskit.primitives import BaseSamplerV2
 from qiskit.primitives.containers import SamplerPubLike
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
-from povms.library.povm_implementation import POVMImplementation
+from povms.library.povm_implementation import POVMImplementation, POVMMetadata
 from povms.sampler.job import POVMSamplerJob
 from povms.sampler.povm_sampler_pub import POVMSamplerPub, POVMSamplerPubLike
 
@@ -64,15 +64,13 @@ class POVMSampler:
 
         # Run all the pubs in one job
         # Flatten the list of pubs and keep track of the corresponding slices
-        coerced_povms: list[POVMImplementation] = []
         coerced_sampler_pubs: list[SamplerPubLike] = []
-        pvm_keys: list[list[tuple[int, ...]]] = []
+        metadata: list[POVMMetadata] = []
         for pub in pubs:
             povm_sampler_pub = POVMSamplerPub.coerce(pub=pub, shots=shots, povm=povm)
-            composed_pub, keys = povm_sampler_pub.compose_circuits(pass_manager=pm)
-            coerced_povms.append(povm_sampler_pub.povm)
-            coerced_sampler_pubs.append(composed_pub)
-            pvm_keys.append(keys)
+            sampler_pub, pub_metadata = povm_sampler_pub.to_sampler_pub(pass_manager=pm)
+            coerced_sampler_pubs.append(sampler_pub)
+            metadata.append(pub_metadata)
 
         job = self.sampler.run(coerced_sampler_pubs)
-        return POVMSamplerJob(coerced_povms, job, pvm_keys)
+        return POVMSamplerJob(job, metadata)

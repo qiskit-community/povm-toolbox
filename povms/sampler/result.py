@@ -12,12 +12,11 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from typing import Any
 
 from qiskit.primitives.containers import DataBin, PubResult
 
-from povms.library.povm_implementation import POVMImplementation
+from povms.library.povm_implementation import POVMMetadata
 
 
 class POVMPubResult(PubResult):
@@ -26,9 +25,8 @@ class POVMPubResult(PubResult):
     def __init__(
         self,
         data: DataBin,
-        povm: POVMImplementation,
-        pvm_keys: list[tuple[int, ...]],
-        metadata: dict[str, Any] | None = None,
+        povm_metadata: POVMMetadata,
+        pub_metadata: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the result object.
 
@@ -41,9 +39,17 @@ class POVMPubResult(PubResult):
                 randomized ``povm`` was used for each shot. The length
                 of the list should be the same as the number of shots.
         """
-        super().__init__(data, metadata)
-        self.povm = povm
-        self.pvm_keys = pvm_keys
+        super().__init__(data, pub_metadata)
+        try:
+            self.povm = povm_metadata.povm
+
+        except KeyError as exc:
+            raise KeyError(
+                "The metadata of a ``POVMSamplerJob`` should specify "
+                "a POVM for each submitted pub, but none was found."
+            ) from exc
+
+        self.povm_metadata = povm_metadata
 
     def get_counts(self, loc: int | tuple[int, ...] | None = None):
         """Get the histogram data of an experiment.
@@ -54,21 +60,6 @@ class POVMPubResult(PubResult):
                 ``loc`` indicates the set of parameter values for which counts are
                 to be obtained.
         """
-        povm_outcomes = []
-        # TODO : improve performance. Currently we loop over all shots and get the
-        # outcome label each time. There's probably a way to group equivalent outcomes
-        # earlier or do it in a smarter way.
-
-        # TODO : be careful with ``loc``, try to really separate the enduser's parameters
-        # locations and the PVM parameter locations !
-        if loc is not None:
-            raise NotImplementedError("The use of the argument ``loc`` is not yet supported.")
-
-        for i, raw_bitsring in enumerate(self.data.povm_meas.get_bitstrings(loc)):
-            povm_outcomes.append(
-                self.povm.get_outcome_label(
-                    pvm_idx=self.pvm_keys[i], bitstring_outcome=raw_bitsring
-                )
-            )
-
-        return Counter(povm_outcomes)
+        return self.povm.get_counts_from_raw(
+            data=self.data, povm_metadata=self.povm_metadata, loc=loc
+        )

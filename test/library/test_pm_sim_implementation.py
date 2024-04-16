@@ -100,19 +100,6 @@ class TestRandomizedPMs(TestCase):
 
             self.assertEqual(qc.num_qubits, n_qubit)
 
-    def test_get_parameters_and_shot(self):
-        """Test `get_parameters_and_shot` method."""
-
-        for n_qubit in range(1, 11):
-            q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
-            q /= q.sum(axis=1)[:, np.newaxis]
-
-            angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
-
-            cs_implementation = RandomizedPMs(n_qubit=n_qubit, bias=q, angles=angles)
-
-            self.assertEqual(len(cs_implementation.distribute_shots(1000)), 1000)
-
     # TODO: write a unittest for each public method of RandomizedPMs
 
     # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
