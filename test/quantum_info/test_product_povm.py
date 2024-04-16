@@ -13,9 +13,9 @@
 from unittest import TestCase
 
 import numpy as np
-from povms.quantum_info.multi_qubit_povm import MultiQubitPOVM
-from povms.quantum_info.product_povm import ProductPOVM
-from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
+from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
+from povm_toolbox.quantum_info.product_povm import ProductPOVM
+from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import DensityMatrix, Operator, random_density_matrix
 
 

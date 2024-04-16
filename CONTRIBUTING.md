@@ -11,7 +11,7 @@ for the installation into your development Python environment. This simplifies
 your development because you will not have to re-install the package after every
 edit to the code base.
 ```
-git clone git@github.ibm.com:fta-zurich/ic-povms.git
+git clone git@github.ibm.com:ibm-q-research/ic-povms.git
 cd ic-povms
 pip install -e ".[dev]"
 ```

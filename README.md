@@ -6,8 +6,9 @@ A module for the implementation of positive operator-valued measures (POVMs).
 
 You can install this code via pip:
 ```
-git clone git@github.ibm.com:fta-zurich/ic-povms.git
-pip install ic-povms
+git clone git@github.ibm.com:ibm-q-research/ic-povms.git
+cd ic-povms
+pip install .
 ```
 
 Make sure that you have the correct Python environment active, into which you

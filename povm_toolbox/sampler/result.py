@@ -16,7 +16,7 @@ from typing import Any
 
 from qiskit.primitives.containers import DataBin, PubResult
 
-from povms.library.povm_implementation import POVMMetadata
+from povm_toolbox.library.povm_implementation import POVMMetadata
 
 
 class POVMPubResult(PubResult):

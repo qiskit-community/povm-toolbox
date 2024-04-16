@@ -14,7 +14,7 @@ from collections import defaultdict
 from unittest import TestCase
 
 import numpy as np
-from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
+from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator
 from scipy.stats import unitary_group
 

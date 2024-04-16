@@ -22,8 +22,8 @@ from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager
 
-from povms.quantum_info.product_povm import ProductPOVM
-from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
+from povm_toolbox.quantum_info.product_povm import ProductPOVM
+from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 
 from .povm_implementation import POVMImplementation, POVMMetadata
 

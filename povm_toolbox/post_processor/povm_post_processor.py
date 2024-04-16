@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-from povms.sampler.result import POVMPubResult
+from povm_toolbox.sampler.result import POVMPubResult
 
 
 class POVMPostprocessor:

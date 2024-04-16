@@ -12,10 +12,10 @@
 
 from unittest import TestCase
 
-from povms.library.pm_sim_implementation import ClassicalShadows
-from povms.sampler.job import POVMSamplerJob
-from povms.sampler.povm_sampler import POVMSampler
-from povms.sampler.result import POVMPubResult
+from povm_toolbox.library.pm_sim_implementation import ClassicalShadows
+from povm_toolbox.sampler.job import POVMSamplerJob
+from povm_toolbox.sampler.povm_sampler import POVMSampler
+from povm_toolbox.sampler.result import POVMPubResult
 from qiskit.circuit.random import random_circuit
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import SamplerV2 as Sampler

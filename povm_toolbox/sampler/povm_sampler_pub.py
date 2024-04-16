@@ -21,7 +21,7 @@ from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.shape import ShapedMixin
 from qiskit.transpiler import StagedPassManager
 
-from povms.library.povm_implementation import POVMImplementation, POVMMetadata
+from povm_toolbox.library.povm_implementation import POVMImplementation, POVMMetadata
 
 POVMSamplerPubLike = Union[
     QuantumCircuit,

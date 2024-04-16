@@ -13,8 +13,12 @@
 from unittest import TestCase
 
 import numpy as np
-from povms.library.pm_sim_implementation import ClassicalShadows, LocallyBiased, RandomizedPMs
-from povms.quantum_info.single_qubit_povm import SingleQubitPOVM
+from povm_toolbox.library.pm_sim_implementation import (
+    ClassicalShadows,
+    LocallyBiased,
+    RandomizedPMs,
+)
+from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator
 
 

@@ -17,8 +17,8 @@ import uuid
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
 from qiskit.providers import JobStatus
 
-from povms.library.povm_implementation import POVMMetadata
-from povms.sampler.result import POVMPubResult
+from povm_toolbox.library.povm_implementation import POVMMetadata
+from povm_toolbox.sampler.result import POVMPubResult
 
 
 class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):

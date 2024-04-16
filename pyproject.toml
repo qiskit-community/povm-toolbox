@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "povms"
+name = "povm_toolbox"
 version = "0.0.0"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
@@ -20,17 +20,17 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "povms[test,nbtest,lint]",
+    "povm_toolbox[test,nbtest,lint]",
 ]
 basetest = [
     "tox>=4.0",
     "pytest>=8.0",
 ]
 test = [
-    "povms[basetest]",
+    "povm_toolbox[basetest]",
 ]
 nbtest = [
-    "povms[basetest]",
+    "povm_toolbox[basetest]",
     "nbmake>=1.5.0",
 ]
 style = [
@@ -38,14 +38,14 @@ style = [
     "nbqa>=1.7.1",
 ]
 lint = [
-    "povms[style]",
+    "povm_toolbox[style]",
     "pydocstyle==6.3.0",
     "mypy==1.8.0",
     "pylint==3.0.3",
     "toml",
 ]
 notebook-dependencies = [
-    "povms",
+    "povm_toolbox",
 ]
 
 [tool.autoflake]
@@ -54,7 +54,7 @@ remove-all-unused-imports = true
 
 [tool.hatch.build.targets.wheel]
 only-include = [
-    "povms",
+    "povm_toolbox",
 ]
 
 [tool.hatch.metadata]
@@ -87,11 +87,11 @@ enable = [
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:::.*qiskit.opflow*"]
-testpaths = ["./povms/", "./test/"]
+testpaths = ["./povm_toolbox/", "./test/"]
 
 [tool.ruff]
 line-length = 100
-src = ["povms", "test"]
+src = ["povm_toolbox", "test"]
 target-version = "py39"
 
 [tool.ruff.lint]

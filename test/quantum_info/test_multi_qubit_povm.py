@@ -13,7 +13,7 @@
 from unittest import TestCase
 
 import numpy as np
-from povms.quantum_info.multi_qubit_povm import MultiQubitPOVM
+from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from qiskit.quantum_info import Operator, random_hermitian
 
 

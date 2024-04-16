@@ -22,7 +22,7 @@ from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager
 
-from povms.quantum_info.base_povm import BasePOVM
+from povm_toolbox.quantum_info.base_povm import BasePOVM
 
 MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 

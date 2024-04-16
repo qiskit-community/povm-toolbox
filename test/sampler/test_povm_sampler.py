@@ -13,9 +13,9 @@
 from unittest import TestCase
 
 import numpy as np
-from povms.library.pm_sim_implementation import ClassicalShadows, LocallyBiased
-from povms.sampler.job import POVMSamplerJob
-from povms.sampler.povm_sampler import POVMSampler
+from povm_toolbox.library.pm_sim_implementation import ClassicalShadows, LocallyBiased
+from povm_toolbox.sampler.job import POVMSamplerJob
+from povm_toolbox.sampler.povm_sampler import POVMSampler
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BaseSamplerV2
 from qiskit_aer import AerSimulator
