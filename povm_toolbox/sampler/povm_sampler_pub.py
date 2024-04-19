@@ -12,12 +12,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from numbers import Integral
 from typing import Union
 
 from qiskit.circuit import QuantumCircuit
-from qiskit.primitives.containers import BindingsArrayLike, SamplerPubLike
+from qiskit.primitives.containers import BindingsArrayLike
 from qiskit.primitives.containers.bindings_array import BindingsArray
+from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.primitives.containers.shape import ShapedMixin
 from qiskit.transpiler import StagedPassManager
 
@@ -107,8 +109,7 @@ class POVMSamplerPub(ShapedMixin):
                 by the pub-like object.
 
         Raises:
-            TypeError: If number of shots is specified but is not an integer.
-            TypeError: If the specified number of shots is negative.
+            TypeError: If number of shots is specified but is not a positive integer.
             ValueError: If the pub-like object does not specify a number of shots
                 and that no default number of shots is set or if the pub-like
                 object does not specify a povm and that no default povm is set.
@@ -121,11 +122,10 @@ class POVMSamplerPub(ShapedMixin):
             A coerced POVM sampler pub.
         """
         # Validate shots kwarg if provided
-        if shots is not None:
-            if not isinstance(shots, int) or isinstance(shots, bool):
-                raise TypeError("shots must be an integer")
-            if shots < 0:
-                raise ValueError("shots must be positive")
+        if shots is not None and (
+            not isinstance(shots, int) or isinstance(shots, bool) or shots <= 0
+        ):
+            raise TypeError("shots must be a positive integer")
 
         if isinstance(pub, POVMSamplerPub):
             if pub.shots is None and shots is not None:
@@ -152,14 +152,15 @@ class POVMSamplerPub(ShapedMixin):
                     f"The length of pub must be 1, 2, 3 or 4, but length {len(pub)} is given."
                 )
 
-            qc: QuantumCircuit = pub[0]
+            circuit: QuantumCircuit = pub[0]
 
-            if len(pub) >= 2 and pub[1] is not None:
-                raise NotImplementedError(
-                    "Not yet able to pass parametric circuits and binding values as arguments."
-                )
-
-            parameter_values = None
+            if len(pub) > 1 and pub[1] is not None:
+                values = pub[1]
+                if not isinstance(values, (BindingsArray, Mapping)):
+                    values = {tuple(circuit.parameters): values}
+                parameter_values = BindingsArray.coerce(values)
+            else:
+                parameter_values = None
 
             pub_shots = pub[2] if len(pub) > 2 and pub[2] is not None else shots
             pub_povm = pub[3] if len(pub) > 3 and pub[3] is not None else povm
@@ -170,7 +171,7 @@ class POVMSamplerPub(ShapedMixin):
             )
 
         return cls(
-            circuit=qc,
+            circuit=circuit,
             parameter_values=parameter_values,
             shots=pub_shots,
             povm=pub_povm,
@@ -230,8 +231,11 @@ class POVMSamplerPub(ShapedMixin):
     def to_sampler_pub(
         self,
         pass_manager: StagedPassManager,
-    ) -> tuple[SamplerPubLike | list[SamplerPubLike], POVMMetadata]:
+    ) -> tuple[SamplerPub, POVMMetadata]:
         """TODO."""
         return self.povm.to_sampler_pub(
-            self.circuit, self.parameter_values, self.shots, pass_manager
+            circuit=self.circuit,
+            circuit_binding=self.parameter_values,
+            shots=self.shots,
+            pass_manager=pass_manager,
         )

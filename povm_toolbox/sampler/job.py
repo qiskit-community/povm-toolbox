@@ -59,14 +59,9 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         povm_pub_results = []
 
         for pub_result, povm_metadata in zip(raw_results, self.metadata):
-            # TODO : something like this to change the number of shots of the bit_array
-            # data = pub_result.data
-            # bit_array = data.povm_meas # shape=n_shots, num_shots = 1
-            # bit_array2 = BitArray(np.squeeze(bit_array.array, axis=-2), bit_array.num_bits) # shape=(), num_shots = n_shots
-            # data.povm_meas = bit_array2
             povm_pub_results.append(
                 POVMPubResult(
-                    data=pub_result.data,
+                    data=povm_metadata.povm.reshape_data_bin(pub_result.data),
                     povm_metadata=povm_metadata,
                     pub_metadata=pub_result.metadata,
                 )

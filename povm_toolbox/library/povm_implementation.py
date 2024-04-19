@@ -13,12 +13,15 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import Counter
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
+import numpy as np
 from qiskit.circuit import QuantumCircuit
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
+from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager
 
@@ -29,6 +32,8 @@ MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 
 class POVMImplementation(ABC, Generic[MetadataT]):
     """Abstract base class that contains all methods that any specific POVMImplementation subclass should implement."""
+
+    classical_register_name = "povm_measurement_cr"
 
     def __init__(
         self,
@@ -51,7 +56,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     def to_sampler_pub(
         self,
         circuit: QuantumCircuit,
-        parameter_values: BindingsArray,
+        circuit_binding: BindingsArray,
         shots: int,
         pass_manager: StagedPassManager,
     ) -> tuple[SamplerPub, MetadataT]:
@@ -80,6 +85,22 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
 
     @abstractmethod
+    def reshape_data_bin(self, data: DataBin) -> DataBin:
+        """TODO."""
+
+    def _extract_bitarray(self, data: DataBin) -> BitArray:
+        """TODO."""
+        return getattr(data, self.classical_register_name)
+
+    @abstractmethod
+    def _counter(
+        self,
+        bit_array: BitArray,
+        povm_metadata: MetadataT,
+        loc: int | tuple[int, ...] | None = None,
+    ) -> Counter:
+        """TODO."""
+
     def get_counts_from_raw(
         self,
         data: DataBin,
@@ -87,6 +108,18 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         loc: int | tuple[int, ...] | None = None,
     ):
         """TODO."""
+        bit_array = self._extract_bitarray(data)
+
+        if loc is None:
+            if bit_array.ndim == 0:
+                return np.array([self._counter(bit_array, povm_metadata)])
+            shape = bit_array.shape
+            ret: np.ndarray = np.ndarray(shape=shape, dtype=object)
+            for idx in np.ndindex(shape):
+                ret[idx] = self._counter(bit_array, povm_metadata, idx)
+            return ret
+
+        return self._counter(bit_array, povm_metadata, loc)
 
     @abstractmethod
     def to_povm(self) -> BasePOVM:

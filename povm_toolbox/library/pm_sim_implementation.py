@@ -19,6 +19,7 @@ import numpy as np
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
+from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager
 
@@ -43,6 +44,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         n_qubit: int,
         bias: np.ndarray,
         angles: np.ndarray,
+        shot_batch_size: int = 1,
     ) -> None:
         """Implement a product POVM through the randomization of single-qubit projective measurement.
 
@@ -59,6 +61,8 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
                 different angles of each effect. I.e. its length equals two times the number of
                 PVMs (since we have 2 angles per PVMs). If 2D, it will have a new set of angles
                 for each qubit.
+            shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
+                is sampled for each shot.
 
         Raises:
             ValueError: TODO.
@@ -89,6 +93,8 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
 
         self.msmt_qc = self._build_qc()
 
+        self.shot_batch_size = shot_batch_size
+
     def _build_qc(self) -> QuantumCircuit:
         """Build the quantum circuit that implements the measurement.
 
@@ -108,12 +114,20 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         phi = ParameterVector("phi", length=self.n_qubit)
 
         qr = QuantumRegister(self.n_qubit, name="povm_qr")
-        cr = ClassicalRegister(self.n_qubit, name="povm_meas")
+        cr = ClassicalRegister(self.n_qubit, name=self.classical_register_name)
         qc = QuantumCircuit(qr, cr, name="msmt_qc")
         for i in range(self.n_qubit):
             # We apply ``U_dag``, where ``U`` is the unitary operation to go from the computational basis
-            # to the new measurement basis.
-            qc.u(theta=-theta[i], phi=0.0, lam=-phi[i], qubit=i)
+            # to the new measurement basis:
+            #   qc.u(theta=theta[i], phi=phi[i], lam=0.0, qubit=i).inverse()
+            # which is equivalent to :
+            #   qc.u(theta=-theta[i], phi=0.0, lam=-phi[i], qubit=i)
+            # which can be decomposed into basis gates as:
+            qc.rz(-phi[i], qubit=i)
+            qc.sx(qubit=i)
+            qc.rz(np.pi - theta[i], qubit=i)
+            qc.sx(qubit=i)
+            qc.rz(3 * np.pi, qubit=i)
 
         qc.measure(qr, cr)
 
@@ -122,7 +136,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
     def to_sampler_pub(
         self,
         circuit: QuantumCircuit,
-        parameter_values: BindingsArray,
+        circuit_binding: BindingsArray,
         shots: int,
         pass_manager: StagedPassManager,
     ) -> tuple[SamplerPub, RandomizedPMsMetadata]:
@@ -138,7 +152,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
 
         Args:
             circuit: A quantum circuit.
-            parameter_values: A bindings array.
+            circuit_binding: A bindings array.
             shots: A specific number of shots to run with.
 
         Returns:
@@ -146,21 +160,74 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
             the ``POVMImplementation`` object itself. The metadata should contain
             all the information neceassary to extract the POVM outcomes out of raw
             bitstrings. (TODO: explain what is it exactly)
+
+        Raises:
+            ValueError: If the number of shots is not compatible with the batch size.
+                It should be a multiple of the batch size.
         """
-        if parameter_values.num_parameters > 0:
-            raise NotImplementedError(
-                "Not yet able to pass parametric circuits and binding values as arguments."
+        if shots % self.shot_batch_size != 0:
+            raise ValueError(
+                f"The number of shots ({shots}) is not a multiple of "
+                f"the batch size ({self.shot_batch_size})."
             )
 
+        num_batches = shots // self.shot_batch_size
+
         # distribute the shots
-        pvm_idx = np.zeros((shots, self.n_qubit), dtype=int)
+        pvm_idx = np.zeros((num_batches, self.n_qubit), dtype=int)
         for i in range(self.n_qubit):
-            pvm_idx[:, i] = np.random.choice(self._n_PVMs, size=shots, replace=True, p=self.bias[i])
+            pvm_idx[:, i] = np.random.choice(
+                self._n_PVMs, size=num_batches, replace=True, p=self.bias[i]
+            )
 
         # retrieve the actual parameters from the pvm labels
-        pvm_parameters = np.empty((shots, 2 * self.n_qubit))
-        for i in range(shots):
+        pvm_parameters = np.empty((num_batches, 2 * self.n_qubit))
+        for i in range(num_batches):
             pvm_parameters[i] = self._get_pvm_parameter(tuple(pvm_idx[i]))
+        measurement_binding = BindingsArray.coerce({tuple(self.msmt_qc.parameters): pvm_parameters})
+        # TODO : make _get_pvm_parameter return directly a bindingsArray ?
+
+        # We combine the parameter values from the supplied circuit and from the
+        # the measurement circuit.
+        binding_data = {}
+
+        # We tile the circuit parameter values such that it is duplicated for each measurement shot.
+        # E.g., if the supplied circuit has 3 parameters and 5 different set of values are supplied,
+        # the corresponding `BindingsArray` has :
+        #   .shape = (5,)
+        #   .num_parameters = 3
+        # Now if the POVM measurement circuit has 2*n_qubit parameters and a set of values is fed for
+        # each batch, the corresponding `BindingsArray` has :
+        #   .shape = (num_batches,)
+        #   .num_parameters = 2*n_qubit
+        # Then, the combined `BindingsArray` should have :
+        #   .shape = (5, num_batches)
+        #   .num_parameters = 3 + 2*n_qubit
+        # The data is stored as a dictionary of arrays where each array has a shape such that :
+        #   - the last dismension corresponds to the number of parameters stored in this entry
+        #     of the dictionnary
+        #   - the leading shape corresponds to the different sets of parameter values and is shared
+        #     amongst all dictionnary entries (it is the `.shape` of the `BindingsArray`)
+        # We loop over the circuit parameter values :
+        for circuit_param, circuit_val in circuit_binding.data.items():
+            # For each array we insert a dimension on the second to last axis and duplicate `num_batches` times
+            # the circuit values over this axis. The resulting np.ndarray shape is (5, num_batches, num_param_of_entry)
+            # where num_param_of_entry = circuit_val.shape[-1] is the number of parameters stored in this dictionnary entry.
+            # The general shape of the resulting np.ndarray is (*circuit_val.shape[:-1], num_batches, circuit_val.shape[-1]).
+            binding_data[circuit_param] = np.tile(circuit_val[..., np.newaxis, :], (num_batches, 1))
+
+        # TODO : Distribution of random PVMs is exactly the same for all set of circuit parameter values,
+        # turn this into an option (either same distribution or resample PVMs for each parameter value set)
+
+        # We loop over the measurement parameter values :
+        for povm_param, povm_val in measurement_binding.data.items():
+            # For each array of POVM parameters we duplicate the array, as many times as there are
+            # different sets of circuit parameter values. The tiling is done on the (newly inserted)
+            # leading dimension(s) of the array.
+            # The shape of the resulting np.ndarray is (*circuit_binding.shape, num_batches, num_povm_parameters).
+            binding_data[povm_param] = np.tile(povm_val, (*circuit_binding.shape, 1, 1))
+
+        combined_binding = BindingsArray.coerce(binding_data)
 
         # TODO: assert circuit qubit routing and stuff
         # TODO: assert both circuits are compatible, in particular no measurements at the end of ``circuits``
@@ -170,26 +237,46 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         composed_circuit = circuit.compose(self.msmt_qc)
         composed_isa_circuit = pass_manager.run(composed_circuit)
 
-        pub = (composed_isa_circuit, pvm_parameters, 1)
+        pub = SamplerPub(
+            circuit=composed_isa_circuit,
+            parameter_values=combined_binding,
+            shots=self.shot_batch_size,
+        )
 
         metadata = RandomizedPMsMetadata(povm=self, pvm_keys=list(map(tuple, pvm_idx)))
 
         return (pub, metadata)
 
-    def get_counts_from_raw(
+    def reshape_data_bin(self, data: DataBin) -> DataBin:
+        """TODO."""
+        # We extract the raw ``BitArray``
+        raw_bit_array = self._extract_bitarray(data)
+        # Next we reshape the array such that the number of shots is correct.
+        # For RandomizedPMs, the raw `BitArray` has the following properties :
+        #   .shape == (*pub.parameter_values.shape, pub.shots/n)
+        #   .num_shots == batch_size
+        # -> the internal numpy array has shape (*pub.parameter_values.shape, pub.shots/batch_size, batch_size, num_bits)
+        # where `pub` is the corresponding `POVMSamplerPub` supplied to the `run`
+        # method. We now reshape the raw `BitArray` such that :
+        #   .shape == pub.parameter_values.shape
+        #   .num_shots == pub.shots
+        # -> internal array with shape (*pub.parameter_values.shape, pub.shots, num_bits)
+        # `BitArray.reshape` method does not handle the n=1 case properly,
+        # so we have to do it "manually":
+        shape = raw_bit_array.array.shape
+        new_shape = (*shape[:-3], -1, shape[-1])
+        bit_array = BitArray(
+            array=raw_bit_array.array.reshape(new_shape), num_bits=raw_bit_array.num_bits
+        )
+        return data.__class__(**{self.classical_register_name: bit_array})
+
+    def _counter(
         self,
-        data: DataBin,
+        bit_array: BitArray,
         povm_metadata: RandomizedPMsMetadata,
         loc: int | tuple[int, ...] | None = None,
-    ):
-        """Get the histogram data of an experiment.
-
-        Args:
-            loc: Which entry of the ``BitArray`` to return a dictionary for.
-                If a ``BindingsArray`` was originally passed to the `POVMSampler``,
-                ``loc`` indicates the set of parameter values for which counts are
-                to be obtained.
-        """
+    ) -> Counter:
+        """TODO."""
         try:
             pvm_keys = povm_metadata.pvm_keys
         except KeyError as exc:
@@ -198,19 +285,17 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
                 "RandomizedPMs POVM should specify a list of pvm keys, "
                 "but none were found."
             ) from exc
-        povm_outcomes = []
+
         # TODO : improve performance. Currently we loop over all shots and get the
         # outcome label each time. There's probably a way to group equivalent outcomes
         # earlier or do it in a smarter way.
 
-        # TODO : be careful with ``loc``, try to really separate the enduser's parameters
-        # locations and the PVM parameter locations !
-        if loc is not None:
-            raise NotImplementedError("The use of the argument ``loc`` is not yet supported.")
-
-        for keys, raw_bitsring in zip(pvm_keys, data.povm_meas.get_bitstrings(loc)):
+        povm_outcomes = []
+        for i, raw_bitstring in enumerate(bit_array.get_bitstrings(loc)):
             povm_outcomes.append(
-                self._get_outcome_label(pvm_idx=keys, bitstring_outcome=raw_bitsring)
+                self._get_outcome_label(
+                    pvm_idx=pvm_keys[i // self.shot_batch_size], bitstring_outcome=raw_bitstring
+                )
             )
 
         return Counter(povm_outcomes)

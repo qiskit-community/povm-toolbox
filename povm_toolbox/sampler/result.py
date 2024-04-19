@@ -16,7 +16,8 @@ from typing import Any
 
 from qiskit.primitives.containers import DataBin, PubResult
 
-from povm_toolbox.library.povm_implementation import POVMMetadata
+from povm_toolbox.library.povm_implementation import POVMImplementation, POVMMetadata
+from povm_toolbox.quantum_info.base_povm import BasePOVM
 
 
 class POVMPubResult(PubResult):
@@ -40,16 +41,17 @@ class POVMPubResult(PubResult):
                 of the list should be the same as the number of shots.
         """
         super().__init__(data, pub_metadata)
-        try:
-            self.povm = povm_metadata.povm
-
-        except KeyError as exc:
-            raise KeyError(
-                "The metadata of a ``POVMSamplerJob`` should specify "
-                "a POVM for each submitted pub, but none was found."
-            ) from exc
-
         self.povm_metadata = povm_metadata
+
+    @property
+    def povm_implementation(self) -> POVMImplementation:
+        """Return the ``POVMImplementation`` associated with the result."""
+        return self.povm_metadata.povm
+
+    @property
+    def povm(self) -> BasePOVM:
+        """Return the ``BasePOVM`` associated with the result."""
+        return self.povm_metadata.povm.to_povm()
 
     def get_counts(self, loc: int | tuple[int, ...] | None = None):
         """Get the histogram data of an experiment.
@@ -60,6 +62,6 @@ class POVMPubResult(PubResult):
                 ``loc`` indicates the set of parameter values for which counts are
                 to be obtained.
         """
-        return self.povm.get_counts_from_raw(
+        return self.povm_implementation.get_counts_from_raw(
             data=self.data, povm_metadata=self.povm_metadata, loc=loc
         )

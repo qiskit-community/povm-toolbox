@@ -32,16 +32,29 @@ class POVMPostprocessor:
             povm_sample: a result from a POVM sampler run.
             alphas: parameters of the frame superoperator of the POVM.
         """
-        self.povm = povm_sample.povm.to_povm()
+        self.povm = povm_sample.povm
         self.counts = povm_sample.get_counts()
         if alphas is not None:
             self.povm.alphas = alphas
 
-    def get_expectation_value(self, observable: SparsePauliOp) -> float:
+    def get_expectation_value(
+        self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
+    ) -> np.ndarray | float:
         """Return the expectation value of a given observable."""
+        if loc is not None:
+            return self._single_exp_val(observable, loc)
+
+        exp_val = np.zeros(shape=self.counts.shape, dtype=float)
+        for idx in np.ndindex(self.counts.shape):
+            exp_val[idx] = self._single_exp_val(observable, idx)
+        return exp_val
+
+    def _single_exp_val(self, observable: SparsePauliOp, loc: int | tuple[int, ...]) -> float:
         exp_val = 0.0
-        omegas = dict(self.povm.get_omegas(observable, set(self.counts.keys())))  # type: ignore
-        for outcome in self.counts:
-            exp_val += self.counts[outcome] * omegas[outcome]
-        exp_val /= sum(self.counts.values())
+        count = self.counts[loc]
+        # TODO: performance gains to be made in getting the omegas here ?
+        omegas = dict(self.povm.get_omegas(observable, set(count.keys())))  # type: ignore
+        for outcome in count:
+            exp_val += count[outcome] * omegas[outcome]
+        exp_val /= sum(count.values())
         return exp_val
