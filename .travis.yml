@@ -34,8 +34,6 @@ jobs:
 
     # Notebook tests
     - python: 3.10
-      before_install:
-        - sudo apt-get update
       env: TOXENV=notebook
       script: tox -e $TOXENV
 
