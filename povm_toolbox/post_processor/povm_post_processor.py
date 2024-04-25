@@ -32,7 +32,7 @@ class POVMPostprocessor:
             povm_sample: a result from a POVM sampler run.
             alphas: parameters of the frame superoperator of the POVM.
         """
-        self.povm = povm_sample.povm
+        self.povm = povm_sample.get_povm()
         self.counts = povm_sample.get_counts()
         if alphas is not None:
             self.povm.alphas = alphas

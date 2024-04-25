@@ -48,8 +48,7 @@ class POVMPubResult(PubResult):
         """Return the ``POVMImplementation`` associated with the result."""
         return self.povm_metadata.povm
 
-    @property
-    def povm(self) -> BasePOVM:
+    def get_povm(self) -> BasePOVM:
         """Return the ``BasePOVM`` associated with the result."""
         return self.povm_metadata.povm.to_povm()
 
