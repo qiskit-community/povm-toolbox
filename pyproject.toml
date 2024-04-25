@@ -46,6 +46,8 @@ lint = [
 ]
 notebook-dependencies = [
     "povm_toolbox",
+    "matplotlib",
+    "pylatexenc",
 ]
 docs = [
     "qiskit-sphinx-theme~=1.16",

@@ -49,9 +49,9 @@ class POVMSampler:
         Args:
             pubs: An iterable of pub-like objects. For example, a list of circuits
                 or tuples ``(circuit, parameter_values, shots, povm)``.
-            shots: The total number of shots to sample for each pub that does
-                not specify its own shots. If ``None``, each pub has to specify its
-                own shots.
+            shots: The total number of shots to sample for each pub that does not
+                specify its own shots. If ``None``, the default number of shots
+                of the POVM sampler is used.
             povm: A POVM implementation that defines the measurement to perform
                 for each pub that does not specify it own POVM. If ``None``, each pub
                 has to specify its own POVM.
@@ -60,10 +60,10 @@ class POVMSampler:
             The POVM sampler job object.
         """
         # TODO: we need to revisit this as part part of issue #37
-        pm = generate_preset_pass_manager(optimization_level=1, backend=self.sampler._backend)
+        pm = generate_preset_pass_manager(
+            optimization_level=1, backend=getattr(self.sampler, "_backend", None)
+        )
 
-        # Run all the pubs in one job
-        # Flatten the list of pubs and keep track of the corresponding slices
         coerced_sampler_pubs: list[SamplerPub] = []
         metadata: list[POVMMetadata] = []
         for pub in pubs:

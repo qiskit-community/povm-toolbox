@@ -12,8 +12,9 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections import Counter
 
+import numpy as np
 from qiskit.primitives.containers import DataBin, PubResult
 
 from povm_toolbox.library.povm_implementation import POVMImplementation, POVMMetadata
@@ -26,33 +27,35 @@ class POVMPubResult(PubResult):
     def __init__(
         self,
         data: DataBin,
-        povm_metadata: POVMMetadata,
-        pub_metadata: dict[str, Any] | None = None,
+        metadata: POVMMetadata,
     ) -> None:
         """Initialize the result object.
 
         Args:
             data: The raw data bin object that contains raw measurement
-                bitstrings. Each bitstring has to be associated with the
-                corresponding pvm_key to produce a meaningful POVM outcvome.
-            povm: The POVM that was used to collect the samples.
-            pvm_keys: A list of indices indicating which pvm from the
-                randomized ``povm`` was used for each shot. The length
-                of the list should be the same as the number of shots.
+                bitstrings.
+            metadata: The `POVMMetadata` object that stores the POVM used
+                and all necessary data to interpret the raw measurement bitstring.
+                E.g., for randomized POVMs, each bitstring has to be associated
+                with the corresponding pvm_key to produce a meaningful POVM outcome.
         """
-        super().__init__(data, pub_metadata)
-        self.povm_metadata = povm_metadata
+        super().__init__(data, metadata)
+
+    @property
+    def metadata(self) -> POVMMetadata:
+        """Note: this subclass returns a different type than its base."""
+        return self._metadata  # type:ignore
 
     @property
     def povm_implementation(self) -> POVMImplementation:
         """Return the ``POVMImplementation`` associated with the result."""
-        return self.povm_metadata.povm
+        return self.metadata.povm
 
     def get_povm(self) -> BasePOVM:
         """Return the ``BasePOVM`` associated with the result."""
-        return self.povm_metadata.povm.to_povm()
+        return self.povm_implementation.to_povm()
 
-    def get_counts(self, loc: int | tuple[int, ...] | None = None):
+    def get_counts(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
         """Get the histogram data of an experiment.
 
         Args:
@@ -62,5 +65,5 @@ class POVMPubResult(PubResult):
                 to be obtained.
         """
         return self.povm_implementation.get_counts_from_raw(
-            data=self.data, povm_metadata=self.povm_metadata, loc=loc
+            data=self.data, povm_metadata=self.metadata, loc=loc
         )

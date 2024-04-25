@@ -50,11 +50,18 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
 
         Returns:
             A ``PrimitiveResult`` containing a list of ``POVMPubResult``.
+
+        Raises:
+            ValueError: TODO.
         """
         raw_results = self.base_job.result()
 
         if len(raw_results) != len(self.metadata):
-            raise ValueError
+            raise ValueError(
+                "The numbers of PUB results and associated POVM metadata"
+                f" objects do not correspond ({len(raw_results)} and"
+                f" {len(self.metadata)})."
+            )
 
         povm_pub_results = []
 
@@ -62,12 +69,11 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
             povm_pub_results.append(
                 POVMPubResult(
                     data=povm_metadata.povm.reshape_data_bin(pub_result.data),
-                    povm_metadata=povm_metadata,
-                    pub_metadata=pub_result.metadata,
+                    metadata=povm_metadata,
                 )
             )
 
-        return PrimitiveResult(povm_pub_results, metadata=raw_results.metadata)
+        return PrimitiveResult(povm_pub_results, metadata={"raw_results": raw_results})
 
     def status(self) -> JobStatus:
         """Return the status of the job."""

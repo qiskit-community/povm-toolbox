@@ -33,7 +33,7 @@ MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 class POVMImplementation(ABC, Generic[MetadataT]):
     """Abstract base class that contains all methods that any specific POVMImplementation subclass should implement."""
 
-    classical_register_name = "povm_measurement_cr"
+    classical_register_name = "povm_measurement_creg"
 
     def __init__(
         self,
@@ -47,6 +47,10 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         super().__init__()
         self.n_qubit = n_qubit
         self.msmt_qc: QuantumCircuit
+
+    def __repr__(self) -> str:
+        """Return the string representation of a POVMImplementation instance."""
+        return f"{self.__class__.__name__}(n_qubits={self.n_qubit})"
 
     @abstractmethod
     def _build_qc(self) -> QuantumCircuit:
@@ -88,7 +92,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     def reshape_data_bin(self, data: DataBin) -> DataBin:
         """TODO."""
 
-    def _extract_bitarray(self, data: DataBin) -> BitArray:
+    def _get_bitarray(self, data: DataBin) -> BitArray:
         """TODO."""
         return getattr(data, self.classical_register_name)
 
@@ -106,20 +110,21 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         data: DataBin,
         povm_metadata: MetadataT,
         loc: int | tuple[int, ...] | None = None,
-    ):
+    ) -> np.ndarray | Counter:
         """TODO."""
-        bit_array = self._extract_bitarray(data)
+        bit_array = self._get_bitarray(data)
 
-        if loc is None:
-            if bit_array.ndim == 0:
-                return np.array([self._counter(bit_array, povm_metadata)])
-            shape = bit_array.shape
-            ret: np.ndarray = np.ndarray(shape=shape, dtype=object)
-            for idx in np.ndindex(shape):
-                ret[idx] = self._counter(bit_array, povm_metadata, idx)
-            return ret
+        if loc is not None:
+            return self._counter(bit_array, povm_metadata, loc)
 
-        return self._counter(bit_array, povm_metadata, loc)
+        if bit_array.ndim == 0:
+            return np.array([self._counter(bit_array, povm_metadata)])
+
+        shape = bit_array.shape
+        counters_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
+        for idx in np.ndindex(shape):
+            counters_array[idx] = self._counter(bit_array, povm_metadata, idx)
+        return counters_array
 
     @abstractmethod
     def to_povm(self) -> BasePOVM:

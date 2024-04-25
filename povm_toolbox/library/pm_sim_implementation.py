@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
-from qiskit.primitives.containers import DataBin
+from qiskit.primitives.containers import DataBin, make_data_bin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
@@ -40,7 +40,7 @@ class RandomizedPMsMetadata(POVMMetadata):
     parametrized quantum circuit supplied in the :meth:`.POVMSampler.run` method.
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Implement the default ``__repr__`` method to avoid printing large ``numpy.array``.
 
         The attribute ``pvm_keys`` will typically be a large ``numpy.ndarray`` object.
@@ -246,7 +246,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
             )
 
         # Transform the PVM indices into actual measurement parameters that are
-        # the coerced into a :class:``BindingsArray`` object.
+        # then coerced into a :class:``BindingsArray`` object.
         measurement_binding = self._get_pvm_bindings_array(pvm_idx)
         binding_data.update(measurement_binding.data)
 
@@ -273,7 +273,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
     def reshape_data_bin(self, data: DataBin) -> DataBin:
         """TODO."""
         # We extract the raw ``BitArray``
-        raw_bit_array = self._extract_bitarray(data)
+        raw_bit_array = self._get_bitarray(data)
         # Next we reshape the array such that the number of shots is correct.
         # For RandomizedPMs, the raw `BitArray` has the following properties :
         #   .shape == (*pub.parameter_values.shape, pub.shots/n)
@@ -291,7 +291,12 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         bit_array = BitArray(
             array=raw_bit_array.array.reshape(new_shape), num_bits=raw_bit_array.num_bits
         )
-        return data.__class__(**{self.classical_register_name: bit_array})
+        data_bin_cls = make_data_bin(
+            [(self.classical_register_name, BitArray)],
+            shape=bit_array.shape,
+        )
+        data_bin = data_bin_cls(**{self.classical_register_name: bit_array})
+        return data_bin
 
     def _counter(
         self,
