@@ -67,5 +67,4 @@ class MultiQubitPOVM(JointFrame, BasePOVM):
         Raises:
             TypeError: TODO.
         """
-        print("Enter `MultiQubitPOVM.get_prob`")
         return self.analysis(rho, outcome_idx)

@@ -16,6 +16,7 @@ import numpy as np
 from qiskit.quantum_info import Operator
 
 from .base_dual import BaseDUAL
+from .base_frame import BaseFrame
 from .joint_frame import JointFrame
 
 
@@ -43,3 +44,12 @@ class MultiQubitDUAL(JointFrame, BaseDUAL):
             An array of decomposition weights.
         """
         return self.analysis(obs, outcome_idx)
+
+    def is_dual_to(self, frame=BaseFrame) -> bool:
+        """Check if `self` is a dual to another frame."""
+        raise NotImplementedError
+
+    @classmethod
+    def from_frame(cls, frame=BaseFrame) -> MultiQubitDUAL:
+        """Construct a dual frame to another frame."""
+        raise NotImplementedError
