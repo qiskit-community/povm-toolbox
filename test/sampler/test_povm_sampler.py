@@ -8,14 +8,13 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Tests for the classes in the ``povm_sampler.py`` file."""
+"""Tests for the POVMSampler class."""
 
 from unittest import TestCase
 
 import numpy as np
-from povm_toolbox.library.pm_sim_implementation import ClassicalShadows, LocallyBiased
-from povm_toolbox.sampler.job import POVMSamplerJob
-from povm_toolbox.sampler.povm_sampler import POVMSampler
+from povm_toolbox.library import ClassicalShadows, LocallyBiasedClassicalShadows
+from povm_toolbox.sampler import POVMSampler, POVMSamplerJob
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BaseSamplerV2
 from qiskit_aer import AerSimulator
@@ -40,7 +39,7 @@ class TestPOVMSampler(TestCase):
         qc_random1 = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
         qc_random2 = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
-        lbcs_implementation = LocallyBiased(
+        lbcs_implementation = LocallyBiasedClassicalShadows(
             n_qubit=n_qubit, bias=np.array([[0.2, 0.3, 0.5], [0.8, 0.1, 0.1]])
         )
         cs_shots = 4096

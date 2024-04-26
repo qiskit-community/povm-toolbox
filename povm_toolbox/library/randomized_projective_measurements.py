@@ -12,9 +12,7 @@
 
 from __future__ import annotations
 
-import dataclasses
 from collections import Counter
-from dataclasses import dataclass
 
 import numpy as np
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
@@ -27,42 +25,11 @@ from qiskit.transpiler import StagedPassManager
 from povm_toolbox.quantum_info.product_povm import ProductPOVM
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 
-from .povm_implementation import POVMImplementation, POVMMetadata
+from .metadata import RPMMetadata
+from .povm_implementation import POVMImplementation
 
 
-@dataclass(repr=False)
-class RandomizedPMsMetadata(POVMMetadata):
-    """TODO."""
-
-    pvm_keys: np.ndarray
-    """Shape of `pvm_keys` is assumed to be ``(*pv.shape, num_batches, n_qubit)``,
-    where ``pv`` is the bindings array provided by the user to run with the
-    parametrized quantum circuit supplied in the :meth:`.POVMSampler.run` method.
-    """
-
-    def __repr__(self) -> str:
-        """Implement the default ``__repr__`` method to avoid printing large ``numpy.array``.
-
-        The attribute ``pvm_keys`` will typically be a large ``numpy.ndarray`` object.
-        With the defalut ``dataclass.__repr__``, it would be entirely printed. As this
-        is recursive, the full array would be printed when printing the :class:`.PrimitiveResult`
-        object returned by the :meth:`.POVMSampler.run` method. The redefintion here avoids this.
-        """
-        lst_fields = []
-        for field in dataclasses.fields(self):
-            f_name = field.name
-            f_val = getattr(self, field.name)
-            f_val = (
-                f_val
-                if not isinstance(f_val, np.ndarray)
-                else f'np.ndarray<{",".join(map(str, f_val.shape))}>'
-            )
-            lst_fields.append((f_name, f_val))
-        f_repr = ", ".join(f"{name}={value}" for name, value in lst_fields)
-        return f"{self.__class__.__name__}({f_repr})"
-
-
-class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
+class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
     """Class to represent the implementation of randomized projective measurements."""
 
     def __init__(
@@ -128,9 +95,9 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         measurement. Any PM on single qubits can be described by two orthogonal projectors :math:``M_0 = |pi><pi|``
         and :math:``M_1 = |pi_orth><pi_orth|``. The vector :math:``|pi> = U(theta, phi, 0) |0>`` can be defined by the
         first two usual Euler angles. The third Euler angles defines the global phase, which is irrelevant here.
-        We then have :math:``|pi_orth> = U(theta, phi, 0) |1>`` up to another irrelvant global phase. To implement
+        We then have :math:``|pi_orth> = U(theta, phi, 0) |1>`` up to another irrelevant global phase. To implement
         this measurement, we use the fact that :math:``p_i = Tr[rho M_i] = Tr[rho U|i><i|U_dag] = Tr[U_dag rho U |i><i|]``.
-        In other words, we can first let the state evolve under :math:``U_dag`` ands then perform a computational basis
+        In other words, we can first let the state evolve under :math:``U_dag`` and then perform a computational basis
         measurement. Note that we have :math:``U(theta, phi, lambda)_dag = U(-theta, -lambda, -phi)``.
 
         Returns:
@@ -165,7 +132,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         circuit_binding: BindingsArray,
         shots: int,
         pass_manager: StagedPassManager,
-    ) -> tuple[SamplerPub, RandomizedPMsMetadata]:
+    ) -> tuple[SamplerPub, RPMMetadata]:
         """Append the measurement circuit(s) to the supplied circuit.
 
         This method takes a supplied circuit and append the measurement circuit
@@ -173,7 +140,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         are concatenated with the parameter values associated with the supplied
         quantum circuit. TODO: explain how the distribution of the shots is done.
         If a randomized POVM is used, the enduser's parameters have to be
-        concantenated with the sampled POVM parameters. The POVM parametersare a
+        concatenated with the sampled POVM parameters. The POVM parametersare a
         2-D (TODO: update docstrings in next PR, which will change this method anyways)
 
         Args:
@@ -182,7 +149,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
             shots: A specific number of shots to run with.
 
         Returns:
-            A tuple of a sampler pub and a dictionnary of metadata which include
+            A tuple of a sampler pub and a dictionary of metadata which include
             the ``POVMImplementation`` object itself. The metadata should contain
             all the information neceassary to extract the POVM outcomes out of raw
             bitstrings. (TODO: explain what is it exactly)
@@ -217,14 +184,14 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         #   .num_parameters = 3 + 2*n_qubit
         # The data is stored as a dictionary of arrays where each array has a shape such that :
         #   - the last dismension corresponds to the number of parameters stored in this entry
-        #     of the dictionnary
+        #     of the dictionary
         #   - the leading shape corresponds to the different sets of parameter values and is shared
-        #     amongst all dictionnary entries (it is the `.shape` of the `BindingsArray`)
+        #     amongst all dictionary entries (it is the `.shape` of the `BindingsArray`)
         # We loop over the circuit parameter values :
         for circuit_param, circuit_val in circuit_binding.data.items():
             # For each array we insert a dimension on the second to last axis and duplicate `num_batches` times
             # the circuit values over this axis. The resulting np.ndarray shape is (5, num_batches, num_param_of_entry)
-            # where num_param_of_entry = circuit_val.shape[-1] is the number of parameters stored in this dictionnary entry.
+            # where num_param_of_entry = circuit_val.shape[-1] is the number of parameters stored in this dictionary entry.
             # The general shape of the resulting np.ndarray is (*circuit_val.shape[:-1], num_batches, circuit_val.shape[-1]).
             binding_data[circuit_param] = np.tile(circuit_val[..., np.newaxis, :], (num_batches, 1))
 
@@ -266,7 +233,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
             shots=self.shot_batch_size,
         )
 
-        metadata = RandomizedPMsMetadata(povm=self, pvm_keys=pvm_idx)
+        metadata = RPMMetadata(povm_implementation=self, pvm_keys=pvm_idx)
 
         return (pub, metadata)
 
@@ -301,7 +268,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
     def _counter(
         self,
         bit_array: BitArray,
-        povm_metadata: RandomizedPMsMetadata,
+        povm_metadata: RPMMetadata,
         loc: int | tuple[int, ...] | None = None,
     ) -> Counter:
         """TODO."""
@@ -377,8 +344,7 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
         """
         return tuple(pvm_idx[i] * 2 + int(bit) for i, bit in enumerate(bitstring_outcome[::-1]))
 
-    # TODO: find a better name
-    def to_povm(self) -> ProductPOVM:
+    def definition(self) -> ProductPOVM:
         """Return the POVM corresponding to this implementation."""
         stabilizers: np.ndarray = np.zeros((self.n_qubit, self._n_PVMs, 2, 2), dtype=complex)
 
@@ -399,46 +365,3 @@ class RandomizedPMs(POVMImplementation[RandomizedPMsMetadata]):
             sq_povms.append(SingleQubitPOVM.from_vectors(vecs))
 
         return ProductPOVM.from_list(sq_povms)
-
-
-class LocallyBiased(RandomizedPMs):
-    """TODO."""
-
-    def __init__(
-        self,
-        n_qubit: int,
-        bias: np.ndarray,
-        shot_batch_size: int = 1,
-    ):
-        """Construct a locally-biased classical shadow POVM.
-
-        TODO: The same as above, but the angles are hard-coded to be X/Y/Z for all qubits.
-        """
-        angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
-        assert bias.shape[-1] == 3
-        super().__init__(
-            n_qubit=n_qubit,
-            bias=bias,
-            angles=angles,
-            shot_batch_size=shot_batch_size,
-        )
-
-
-class ClassicalShadows(LocallyBiased):
-    """TODO."""
-
-    def __init__(
-        self,
-        n_qubit: int,
-        shot_batch_size: int = 1,
-    ):
-        """Construct a classical shadow POVM.
-
-        TODO: The same as above, but also hard-coding the biases to be equally distributed.
-        """
-        bias = 1.0 / 3.0 * np.ones(3)
-        super().__init__(
-            n_qubit=n_qubit,
-            bias=bias,
-            shot_batch_size=shot_batch_size,
-        )

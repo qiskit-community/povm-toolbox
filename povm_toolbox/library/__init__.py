@@ -17,34 +17,27 @@
    :nosignatures:
 
    POVMImplementation
-   RandomizedPMs
-   LocallyBiased
+   RandomizedProjectiveMeasurements
+   LocallyBiasedClassicalShadows
    ClassicalShadows
 
-Metadata Classes
-----------------
+Submodules
+----------
 
 .. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+   :toctree:
 
-   POVMMetadata
-   RandomizedPMsMetadata
+   metadata
 """
 
-from .pm_sim_implementation import (
-    ClassicalShadows,
-    LocallyBiased,
-    RandomizedPMs,
-    RandomizedPMsMetadata,
-)
-from .povm_implementation import POVMImplementation, POVMMetadata
+from .classical_shadows import ClassicalShadows
+from .locally_biased_classical_shadows import LocallyBiasedClassicalShadows
+from .povm_implementation import POVMImplementation
+from .randomized_projective_measurements import RandomizedProjectiveMeasurements
 
 __all__ = [
     "POVMImplementation",
-    "RandomizedPMs",
-    "LocallyBiased",
+    "RandomizedProjectiveMeasurements",
+    "LocallyBiasedClassicalShadows",
     "ClassicalShadows",
-    "POVMMetadata",
-    "RandomizedPMsMetadata",
 ]

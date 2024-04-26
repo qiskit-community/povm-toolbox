@@ -18,9 +18,11 @@ from qiskit.primitives import BaseSamplerV2
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
-from povm_toolbox.library.povm_implementation import POVMImplementation, POVMMetadata
-from povm_toolbox.sampler.job import POVMSamplerJob
-from povm_toolbox.sampler.povm_sampler_pub import POVMSamplerPub, POVMSamplerPubLike
+from povm_toolbox.library.metadata import POVMMetadata
+from povm_toolbox.library.povm_implementation import POVMImplementation
+
+from .povm_sampler_job import POVMSamplerJob
+from .povm_sampler_pub import POVMSamplerPub, POVMSamplerPubLike
 
 
 class POVMSampler:

@@ -17,8 +17,7 @@ from collections import Counter
 import numpy as np
 from qiskit.primitives.containers import DataBin, PubResult
 
-from povm_toolbox.library.povm_implementation import POVMImplementation, POVMMetadata
-from povm_toolbox.quantum_info.base_povm import BasePOVM
+from povm_toolbox.library.metadata import POVMMetadata
 
 
 class POVMPubResult(PubResult):
@@ -46,15 +45,6 @@ class POVMPubResult(PubResult):
         """Note: this subclass returns a different type than its base."""
         return self._metadata  # type:ignore
 
-    @property
-    def povm_implementation(self) -> POVMImplementation:
-        """Return the ``POVMImplementation`` associated with the result."""
-        return self.metadata.povm
-
-    def get_povm(self) -> BasePOVM:
-        """Return the ``BasePOVM`` associated with the result."""
-        return self.povm_implementation.to_povm()
-
     def get_counts(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
         """Get the histogram data of an experiment.
 
@@ -64,6 +54,4 @@ class POVMPubResult(PubResult):
                 ``loc`` indicates the set of parameter values for which counts are
                 to be obtained.
         """
-        return self.povm_implementation.get_counts_from_raw(
-            data=self.data, povm_metadata=self.metadata, loc=loc
-        )
+        return self.metadata.povm_implementation.get_counts_from_raw(self.data, self.metadata, loc)

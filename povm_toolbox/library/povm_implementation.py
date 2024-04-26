@@ -14,8 +14,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import Counter
-from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit
@@ -26,6 +25,9 @@ from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager
 
 from povm_toolbox.quantum_info.base_povm import BasePOVM
+
+if TYPE_CHECKING:
+    from .metadata import POVMMetadata
 
 MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 
@@ -77,8 +79,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             shots: A specific number of shots to run with.
 
         Returns:
-            A tuple of a sampler pub and a dictionnary of metadata which include
-            the ``POVMImplementation`` objetc itself. The metadata should contain
+            A tuple of a sampler pub and a dictionary of metadata which include
+            the ``POVMImplementation`` object itself. The metadata should contain
             all the information neceassary to extract the POVM outcomes out of raw
             bitstrings.
         """
@@ -127,12 +129,5 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         return counters_array
 
     @abstractmethod
-    def to_povm(self) -> BasePOVM:
+    def definition(self) -> BasePOVM:
         """Return the corresponding POVM."""
-
-
-@dataclass
-class POVMMetadata:
-    """TODO."""
-
-    povm: POVMImplementation

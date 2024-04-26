@@ -12,9 +12,6 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
-from typing import TypeVar
-
 import numpy as np
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, SuperOp
@@ -23,15 +20,12 @@ from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
 
 from .base_povm import BasePOVM
 
-# Create a generic variable that can be 'MultiQubitPOVM', or any subclass.
-T = TypeVar("T", bound="MultiQubitPOVM")
-
 
 class MultiQubitPOVM(BasePOVM):
-    """Class that collects all information that any MultiQubit POVM should specifiy.
+    """Class that collects all information that any MultiQubit POVM should specify.
 
     This is a representation of a positive operator-valued measure (POVM). The effects are
-    sepcified as a list of :class:`~qiskit.quantum_info.Operator`.
+    specified as a list of :class:`~qiskit.quantum_info.Operator`.
     """
 
     def __init__(self, povm_ops: list[Operator]) -> None:
@@ -78,7 +72,7 @@ class MultiQubitPOVM(BasePOVM):
 
     @property
     def alphas(self) -> np.ndarray:
-        """Paremeters of the dual frame."""
+        """Parameters of the dual frame."""
         return self._alphas
 
     @alphas.setter
@@ -122,12 +116,8 @@ class MultiQubitPOVM(BasePOVM):
             ]
         return self._dual_operators
 
-    # TODO: cleaner implementation that does not trigger B019
-    @lru_cache(maxsize=64)  # noqa: B019
     def pauli_operators(self, dual: bool = False) -> list[dict[str, complex]]:
         """Convert the internal POVM operators to Pauli form.
-
-        This method will cache its returned data to avoid re-computation.
 
         Args:
             dual: False if the pauli decomposistion of the effects should be returned.
@@ -191,7 +181,7 @@ class MultiQubitPOVM(BasePOVM):
     def get_prob(
         self, rho: DensityMatrix, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
-        r"""Return the outcome probablities given a state ``rho``.
+        r"""Return the outcome probabilities given a state ``rho``.
 
         Each outcome :math:`k` is associated with an effect :math:`M_k` of the POVM. The probability of obtaining
         the outcome :math:`k` when measuring a state ``rho`` is given by :math:`p_k = Tr[M_k \rho]`.
@@ -253,7 +243,7 @@ class MultiQubitPOVM(BasePOVM):
         )
 
     @classmethod
-    def from_vectors(cls: type[T], povm_vectors: np.ndarray) -> T:
+    def from_vectors(cls, povm_vectors: np.ndarray) -> MultiQubitPOVM:
         r"""Initialize a POVM from non-normalized bloch vectors :math:``|psi>``.
 
         Args:

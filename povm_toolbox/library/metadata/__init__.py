@@ -10,26 +10,20 @@
 
 """TODO.
 
-.. currentmodule:: povm_toolbox.sampler
+.. currentmodule:: povm_toolbox.library.metadata
 
 .. autosummary::
    :toctree: ../stubs/
    :nosignatures:
 
-   POVMSampler
-   POVMSamplerJob
-   POVMSamplerPub
-   POVMPubResult
+   POVMMetadata
+   RPMMetadata
 """
 
-from .povm_sampler import POVMSampler
-from .povm_sampler_job import POVMSamplerJob
-from .povm_sampler_pub import POVMSamplerPub
-from .povm_sampler_result import POVMPubResult
+from .povm_metadata import POVMMetadata
+from .rpm_metadata import RPMMetadata
 
 __all__ = [
-    "POVMSampler",
-    "POVMSamplerJob",
-    "POVMSamplerPub",
-    "POVMPubResult",
+    "POVMMetadata",
+    "RPMMetadata",
 ]

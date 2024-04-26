@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-from povm_toolbox.sampler.result import POVMPubResult
+from povm_toolbox.sampler import POVMPubResult
 
 
 class POVMPostprocessor:
@@ -32,7 +32,7 @@ class POVMPostprocessor:
             povm_sample: a result from a POVM sampler run.
             alphas: parameters of the frame superoperator of the POVM.
         """
-        self.povm = povm_sample.get_povm()
+        self.povm = povm_sample.metadata.povm_implementation.definition()
         self.counts: np.ndarray = povm_sample.get_counts()  # type: ignore
         # TODO: find a way to avoid the type ignore
         if alphas is not None:

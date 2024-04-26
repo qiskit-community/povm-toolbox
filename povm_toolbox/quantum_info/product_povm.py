@@ -150,7 +150,7 @@ class ProductPOVM(BasePOVM):
 
     @property
     def alphas(self) -> list[np.ndarray]:
-        """Paremeters of the dual frames of each local POVM."""
+        """Parameters of the dual frames of each local POVM."""
         return [povm._alphas for povm in self._povms.values()]
 
     @alphas.setter
@@ -180,7 +180,7 @@ class ProductPOVM(BasePOVM):
 
         Args:
             operator: the input operator to multiply with an effect or dual operator.
-            outcome_idx: the label specifiying the effect (or its dual) to use. The outcome is labeled
+            outcome_idx: the label specifying the effect (or its dual) to use. The outcome is labeled
                 by a tuple of integers (one index per local POVM).
             dual: False if the the POVM effects should be used. True if the corresponding dual operator
                 should be used instead.
@@ -191,7 +191,7 @@ class ProductPOVM(BasePOVM):
         Raises:
             IndexError: when the provided outcome label (tuple of integers) has a number of integers
                 which does not correspond to the number of local POVMs making up the product POVM.
-            IndexError: when a local index exceed the number of outcomes of the correpsonding local POVM.
+            IndexError: when a local index exceed the number of outcomes of the corresponding local POVM.
             ValueError: when the probability is not a real number.
         """
         p_idx = 0.0 + 0.0j
@@ -315,7 +315,7 @@ class ProductPOVM(BasePOVM):
         Returns:
             Probabilities of obtaining the outcome(s) specified by ``outcome_idx`` over the state ``rho``.
             If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
-            queried, a dictionnary mapping outcomes to probabilities is returned. If all outcomes were
+            queried, a dictionary mapping outcomes to probabilities is returned. If all outcomes were
             queried, a high-dimensional array with one dimension per local POVM stored inside this
             ``ProductPOVM`` is returned. The length of each dimension is given by the number of outcomes
             of the POVM encoded along that axis.
@@ -340,7 +340,7 @@ class ProductPOVM(BasePOVM):
         Returns:
             Decomposition weight(s) associated to the effct(s) specified by ``outcome_idx``.
             If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
-            queried, a dictionnary mapping outcome labels to weights is returned. If all outcomes were
+            queried, a dictionary mapping outcome labels to weights is returned. If all outcomes were
             queried, a high-dimensional array with one dimension per local POVM stored inside this
             ``ProductPOVM`` is returned. The length of each dimension is given by the number of outcomes
             of the POVM encoded along that axis.

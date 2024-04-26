@@ -43,12 +43,12 @@ class BasePOVM(ABC):
     @property
     @abstractmethod
     def alphas(self) -> np.ndarray | list[np.ndarray]:
-        """Paremeters of the dual frame."""
+        """Parameters of the dual frame."""
 
     @alphas.setter
     @abstractmethod
     def alphas(self, var: np.ndarray | list[np.ndarray]) -> None:
-        """Set paremeters of the dual frame."""
+        """Set parameters of the dual frame."""
 
     @abstractmethod
     def _check_validity(self) -> None:

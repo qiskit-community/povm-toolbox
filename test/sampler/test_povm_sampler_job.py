@@ -8,14 +8,12 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Tests for the classes in the ``povm_sampler.py`` file."""
+"""Tests for the POVMSamplerJob class."""
 
 from unittest import TestCase
 
-from povm_toolbox.library.pm_sim_implementation import ClassicalShadows
-from povm_toolbox.sampler.job import POVMSamplerJob
-from povm_toolbox.sampler.povm_sampler import POVMSampler
-from povm_toolbox.sampler.result import POVMPubResult
+from povm_toolbox.library import ClassicalShadows
+from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
 from qiskit.circuit.random import random_circuit
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import SamplerV2 as Sampler

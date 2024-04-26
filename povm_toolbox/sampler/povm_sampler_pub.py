@@ -23,7 +23,8 @@ from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.primitives.containers.shape import ShapedMixin
 from qiskit.transpiler import StagedPassManager
 
-from povm_toolbox.library.povm_implementation import POVMImplementation, POVMMetadata
+from povm_toolbox.library.metadata import POVMMetadata
+from povm_toolbox.library.povm_implementation import POVMImplementation
 
 POVMSamplerPubLike = Union[
     QuantumCircuit,
@@ -114,7 +115,7 @@ class POVMSamplerPub(ShapedMixin):
                 and that no default number of shots is set or if the pub-like
                 object does not specify a povm and that no default povm is set.
             ValueError: If a tuple is supplied but its length exceed 4.
-            NotImplementedError: If paremeter values to be bound to a paremetric
+            NotImplementedError: If parameter values to be bound to a paremetric
                 circuit is passed as an argument in the pub-like object.
             TypeError: If the pub-like object does not have a valid type.
 

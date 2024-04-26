@@ -17,8 +17,9 @@ import uuid
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
 from qiskit.providers import JobStatus
 
-from povm_toolbox.library.povm_implementation import POVMMetadata
-from povm_toolbox.sampler.result import POVMPubResult
+from povm_toolbox.library.metadata import POVMMetadata
+
+from .povm_sampler_result import POVMPubResult
 
 
 class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
@@ -35,7 +36,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
             povm: The list of POVMs that were submitted for each pub.
             base_job: The raw job from which to extract results.
             pvm_keys: The length of the list is equal to the number of pubs that
-                were submited. Each element of the list is a list of tuples, where
+                were submitted. Each element of the list is a list of tuples, where
                 each tuple indicates which PVM from the randomized ``povm`` was
                 used for a specific shot. The length of each nested list is equal
                 the number of shots associated with the corresponding pub.
@@ -68,7 +69,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         for pub_result, povm_metadata in zip(raw_results, self.metadata):
             povm_pub_results.append(
                 POVMPubResult(
-                    data=povm_metadata.povm.reshape_data_bin(pub_result.data),
+                    data=povm_metadata.povm_implementation.reshape_data_bin(pub_result.data),
                     metadata=povm_metadata,
                 )
             )

@@ -20,11 +20,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "povm_toolbox[test,nbtest,lint,docs]",
+    "povm_toolbox[test,nbtest,lint,docs,notebook-dependencies]",
 ]
 basetest = [
     "tox>=4.0",
     "pytest>=8.0",
+    "pytest-cov>=5.0",
 ]
 test = [
     "povm_toolbox[basetest]",
@@ -36,6 +37,7 @@ nbtest = [
 style = [
     "ruff>=0.3.0",
     "nbqa>=1.7.1",
+    "typos>=1.20.0",
 ]
 lint = [
     "povm_toolbox[style]",
@@ -144,3 +146,9 @@ notice-rgx = """
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals\\.
 """
+
+[tool.typos.default.extend-words]
+arange = "arange"
+aer = "aer"
+IY = "IY"
+ket = "ket"
