@@ -20,3 +20,13 @@ want to install this code, before running the above.
 
 If you intend to develop on this code, you should consider reading the
 [contributing guide](CONTRIBUTING.md).
+
+## Documentation
+
+You can find the documentation hosted
+[here](https://qiskit-community.github.io/povm-toolbox/).
+
+> [!WARNING]
+> Since this toolbox is still in development, so is its documentation! You may
+> encounter missing information as well as sudden changes from one day to
+> another.
