@@ -61,10 +61,6 @@ docs = [
     "matplotlib",
 ]
 
-[tool.autoflake]
-remove-unused-variables = true
-remove-all-unused-imports = true
-
 [tool.hatch.build.targets.wheel]
 only-include = [
     "povm_toolbox",
