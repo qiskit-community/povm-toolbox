@@ -1,0 +1,7 @@
+# Global rule, unless specialized by a later one
+* @mrossinek @timmintam
+
+# Override the release notes directories to have _no_ code owners, so any review
+# from somebody with write access is acceptable.
+/docs
+/releasenotes/notes

@@ -5,10 +5,6 @@ Introduction
 ------------------------
 Generalized measurements
 ------------------------
-..
-   Define non-breaking space
-.. |_| unicode:: 0xA0 
-   :trim:
 
 The most general class of measurements in quantum mechanics are
 described by the POVM formalism. An :math:`n`-outcome POVM is a set of
@@ -28,20 +24,20 @@ a special case of POVMs, where each POVM operator is a projector such
 that :math:`M_k = \ketbra{\phi_k}{\phi_k}` for some pure states
 :math:`\phi_k`. A POVM is said to be *informationally complete* (IC) if
 it spans the space of Hermitian
-operators |_| [d2004informationally]_. Then, for any
+operators [#d2004informationally]_. Then, for any
 observable :math:`\mathcal{O}`, there exist :math:`\omega_k \in \mathbb{R}` such that
 
 .. math::
+   :label: observable_povm_decomp
 
-   \label{eqn:observable_povm_decomp}
-  \mathcal{O}= \sum_{k=1}^{n} \omega_k M_k .
+   \mathcal{O}= \sum_{k=1}^{n} \omega_k M_k .
 
 Given such a decomposition of :math:`\mathcal{O}`, the expectation value
 :math:`{\langle\mathcal{O}\rangle}_\rho` can be written as
 
 .. math::
+   :label: expectation_value_decomp
 
-   \label{eqn:expectation_value_decomp}
    {\langle\mathcal{O}\rangle}_\rho = \mathrm{Tr}[\rho O] = \sum_k \omega_k \mathrm{Tr}[\rho M_k] = \mathbb{E}_{k \sim \{p_k\}}[\omega_k].
 
 In other words, :math:`{\langle\mathcal{O}\rangle}_\rho` can be expressed as the mean
@@ -51,11 +47,9 @@ outcomes :math:`\{ k^{(1)}, \dots, k^{(S)} \}`, we can thus construct an
 unbiased Monte-Carlo estimator of :math:`{\langle\mathcal{O}\rangle}_\rho` as
 
 .. math::
+   :label: canonical_estimator
 
-   \label{eqn:canonical_estimator}
-       \hat{o} : \{k^{(1)},\dots, k^{(S)}\} \mapsto \frac{1}{S} \sum_{s=1}^{S} \omega_{k^{(s)}}.
-
-.. _`sec:PM-simulabel_POVMs`:
+   \hat{o} : \{k^{(1)},\dots, k^{(S)}\} \mapsto \frac{1}{S} \sum_{s=1}^{S} \omega_{k^{(s)}}.
 
 ------------------
 PM-simulable POVMs
@@ -65,15 +59,15 @@ Digital quantum computers typically only give access to projective
 measurements (PMs) in a specified computational basis. More general
 POVMs can be implemented through additional quantum resources, e.g., by
 coupling to a higher-dimensional space in a Naimark
-dilation |_| [gelfand1943imbedding]_ with ancilla
-qubits |_| [chen2007ancilla]_ or
-qudits |_| [fischer_ancilla_free_2022]_, |_| [stricker2022experimental]_
+dilation [#gelfand1943imbedding]_ with ancilla
+qubits [#chen2007ancilla]_ or
+qudits [#fischer_ancilla_free_2022]_ [#stricker2022experimental]_
 or through controlled operations with mid-circuit measurements and
-classical feed-forward |_| [ivashkov2023highfidelity]_.
+classical feed-forward [#ivashkov2023highfidelity]_.
 While these techniques have been demonstrated in proof-of-principle
 experiments, their full-scale high-fidelity implementation remains a
 challenge for current quantum
-devices |_| [fischer_ancilla_free_2022]_. Of particular
+devices [#fischer_ancilla_free_2022]_. Of particular
 interest are thus POVMs that can be implemented without additional
 quantum resources, i.e., only through projective measurements in
 available measurement bases.
@@ -93,18 +87,17 @@ quantum computers the easiest basis transformations are single-qubit
 transformations of the computational basis. POVMs that consist of
 single-qubit PM-simulable POVMs are thus the most readily accessible
 class of generalized measurements and have found widespread application.
-These include classical shadows and most of their derivatives, see
-Appendix |_| .
+These include classical shadows and most of their derivatives.
 
 Importantly, PM-simulable informationally-complete POVMs are
-overcomplete |_| [dariano_classical_2005]_. The
+overcomplete [#dariano_classical_2005]_. The
 decomposition of observables from
-Eq. |_| blabla is
+Eq. :eq:`expectation_value_decomp` is
 thus not unique. In this work, we leverage these additional degrees of
-freedom to build better observable estimators, see
-Fig.
+freedom to build better observable estimators, see :numref:`overview`.
 
-.. figure:: overview_schematic.*
+.. _overview:
+.. figure:: ../_static/overview_schematic.*
    :width: 50.0%
 
    Schematic of dual frame optimization. Generalized measurements are
@@ -118,11 +111,20 @@ Fig.
    estimation variance.
 
 
+.. rubric:: References
 
-.. [d2004informationally] d2004informationally.
-.. [gelfand1943imbedding] gelfand1943imbedding.
-.. [chen2007ancilla] chen2007ancilla.
-.. [fischer_ancilla_free_2022] fischer_ancilla_free_2022.
-.. [stricker2022experimental] stricker2022experimental.
-.. [ivashkov2023highfidelity] ivashkov2023highfidelity.
-.. [dariano_classical_2005] dariano_classical_2005.
+.. [#d2004informationally] G. M. d'Ariano, P. Perinotti, M. Sacchi, Journal of
+   Optics B: Quantum and Semiclassical Optics 6, S487 (2004).
+.. [#gelfand1943imbedding] I. Gelfand, M. Neumark, Matematicheskii Sbornik 12,
+   197 (1943).
+.. [#chen2007ancilla] P.-X. Chen, J. A. Bergou, S.-Y. Zhu, G.-C. Guo, Physical
+   Review A 76, 060303 (2007).
+.. [#fischer_ancilla_free_2022] L. E. Fischer, D. Miller, F. Tacchino,, P. K.
+   Barkoutsos, D. J. Egger, I. Tavernelli, Phys. Rev. Res. 4, 033027 (2022).
+.. [#stricker2022experimental] R. Stricker, M. Meth, L. Postler, C. Edmunds, C.
+   Ferrie, R. Blatt, P. Schindler, T. Monz, R. Kueng, M. Ringbauer, PRX Quantum
+   3, 040310 (2022).
+.. [#ivashkov2023highfidelity] P. Ivashkov, G. Uchehara, L. Jiang, D. S. Wang, A.
+   Seif (2023), arXiv:2312.14087.
+.. [#dariano_classical_2005] G. M. d'Ariano, P. L. Presti, P. Perinotti, Journal
+   of Physics A: Mathematical and General 38, 5979 (2005).

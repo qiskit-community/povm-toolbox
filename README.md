@@ -1,13 +1,17 @@
 # POVMs
 
-A module for the implementation of positive operator-valued measures (POVMs).
+A toolbox for the implementation of positive operator-valued measures (POVMs).
+
+> [!WARNING]
+> This toolbox is still in development! Breaking changes to the API may be
+> introduced at any time without prior warning.
 
 ## Installations
 
 You can install this code via pip:
 ```
-git clone git@github.ibm.com:ibm-q-research/ic-povms.git
-cd ic-povms
+git clone git@github.com:qiskit-community/povm-toolbox.git
+cd povm-toolbox
 pip install .
 ```
 

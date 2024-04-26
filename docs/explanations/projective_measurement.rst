@@ -2,19 +2,14 @@
 Projective measurements
 =======================
 
-..
-   Define non-breaking space
-.. |_| unicode:: 0xA0 
-   :trim:
-
-
+---------------------------------
 Measurement in an arbitrary basis
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 Consider a :math:`d`-dimensional quantum system with a computational basis
 :math:`\{ \ket{k}\}_{k=1}^d`. The corresponding projective measurement
 in this basis is described by :math:`\mathbf{P} = \{\ketbra{k}{k}\}_{k=1}^d`.
-Suppose we want to perform a projective measurement in another ONB
+Suppose we want to perform a projective measurement in another orthonormal basis
 :math:`\{ \ket{\psi_k}\}_{k=1}^d`. As a unitary transformation is
 equivalent to a change of basis, there exists a unitary :math:`U` such
 that :math:`\ket{\psi_k} = U \ket{k}` for all :math:`k=1,2,\dots,d`.
@@ -22,7 +17,10 @@ This implies that the new projective measurement is described by the PVM
 :math:`\{\ketbra{\psi_k}{\psi_k}\}_{k=1}^d = \{U \ketbra{k}{k} U^\dagger\}_{k=1}^d`.
 The probability of obtaining the outcome :math:`k` is then given by
 
-.. math:: p_k = \mathrm{Tr}[\ketbra{\psi_k}{\psi_k} \rho] = \mathrm{Tr}[U \ketbra{k}{k} U^\dagger \rho] = \mathrm{Tr}[\ketbra{k}{k} U^\dagger \rho U] \, ,
+.. math::
+   :label: probability
+
+   p_k = \mathrm{Tr}[\ketbra{\psi_k}{\psi_k} \rho] = \mathrm{Tr}[U \ketbra{k}{k} U^\dagger \rho] = \mathrm{Tr}[\ketbra{k}{k} U^\dagger \rho U] \, ,
 
 where we used the invariance of the trace under cyclic permutations in
 the last equality. It becomes now clear that the two procedures
@@ -59,20 +57,21 @@ one can emulate other projective measurements.
    :math:`\mathbf{M}_X = \{X_+ , X_-\} = \{\ketbra{+}{+} , \ketbra{-}{-}\}`, by
    applying the Hadamard transformation
 
-   .. math:: H = \frac{1}{\sqrt{2}} \begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}
+   .. math::
+      :label: hadamard
+
+      H = \frac{1}{\sqrt{2}} \begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}
 
    to the state and then performing a measurement in the computational
    basis. Indeed, we have :math:`\ket{+} = H \ket{0}` and
-   :math:`\ket{-} = H \ket{1}`. The Bloch sphere representation of some
-   projective measurements are shown in
-   Fig. |_| [#fig]_.
+   :math:`\ket{-} = H \ket{1}`.
 
+-------------------------
 PM-simulable measurements
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 We can extend the Procedures 1A and 1B to PM-simulable POVMs, which can
-always be achieved by the randomization technique introduced in
-Section |_| [#sec1_2_1]_. Suppose we want to perform the
+always be achieved by ra randomization technique. Suppose we want to perform the
 measurement associated with the POVM
 :math:`\mathbf{M} = \biguplus_i q_i \mathbf{P}_i = \{q_i \ketbra{\psi^{i}_k}{\psi^{i}_k} \}_{(i,k)}`,
 where :math:`\{q_i\}_i` is a probability distribution and
@@ -111,11 +110,3 @@ where
 :math:`\mathbf{P}_i = \{U_i \ket{k} \bra{k} U_i^\dagger\}_k \in \mathcal{P}(d,n)`.
 Finally, we choose the POVM to be performed from the set
 :math:`\mathcal{S}^\mathrm{sim}`.
-
-
-
-
-.. rubric:: Footnotes
-
-.. [#fig] Figure.
-.. [#sec1_2_1] Section 1.2.1.

@@ -2,6 +2,8 @@
 
 This document explains the various things you should know in order to be able to
 contribute to this repository.
+When contributing to this project you will need to sign this [contribution
+license agreement](https://cla-assistant.io/Qiskit/qiskit).
 
 ## Installation
 
@@ -11,8 +13,8 @@ for the installation into your development Python environment. This simplifies
 your development because you will not have to re-install the package after every
 edit to the code base.
 ```
-git clone git@github.ibm.com:ibm-q-research/ic-povms.git
-cd ic-povms
+git clone git@github.com:qiskit-community/povm-toolbox.git
+cd povm-toolbox
 pip install -e ".[dev]"
 ```
 
@@ -75,7 +77,7 @@ Under the hood, we use [`pytest`](https://docs.pytest.org/en/stable/) for
 finding and executing the unittests. You can pass command-line arguments to it,
 for example, for selecting a subset of tests to run, like so:
 ```
-tox -e py311 -- test/test_base_povm.py
+tox -e py311 -- <path/to/test_file.py>
 ```
 
 #### Coverage
