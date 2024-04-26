@@ -6,7 +6,7 @@ A toolbox for the implementation of positive operator-valued measures (POVMs).
 > This toolbox is still in development! Breaking changes to the API may be
 > introduced at any time without prior warning.
 
-## Installations
+## Installation
 
 You can install this code via pip:
 ```
