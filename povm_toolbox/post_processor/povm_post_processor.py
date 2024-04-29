@@ -12,19 +12,16 @@
 
 from __future__ import annotations
 
-from typing import Type, TypeVar
-
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-from povm_toolbox.sampler import POVMPubResult
 from povm_toolbox.quantum_info.base_dual import BaseDUAL
-from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
-from povm_toolbox.quantum_info.product_povm import ProductPOVM
+from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from povm_toolbox.quantum_info.product_dual import ProductDUAL
+from povm_toolbox.quantum_info.product_povm import ProductPOVM
+from povm_toolbox.sampler import POVMPubResult
 
-TDual = TypeVar("TDual", bound=BaseDUAL)
 
 class POVMPostProcessor:
     """Class to represent a POVM post-processor.."""
@@ -32,7 +29,7 @@ class POVMPostProcessor:
     def __init__(
         self,
         povm_sample: POVMPubResult,
-        DUAL_CLASS: Type[TDual] | None = None,
+        DUAL_CLASS: type[BaseDUAL] | None = None,
     ) -> None:
         """Initialize the POVM post-processor.
 
@@ -51,6 +48,9 @@ class POVMPostProcessor:
                 DUAL_CLASS = ProductDUAL
             else:
                 raise TypeError
+        elif not issubclass(DUAL_CLASS, BaseDUAL):
+            raise TypeError
+
         self.dual = DUAL_CLASS.build_dual_from_frame(self.povm)
 
     def get_expectation_value(
