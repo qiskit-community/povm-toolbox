@@ -16,11 +16,11 @@
    :toctree: ../stubs/
    :nosignatures:
 
-   POVMPostprocessor
+   POVMPostProcessor
 """
 
-from .povm_post_processor import POVMPostprocessor
+from .povm_post_processor import POVMPostProcessor
 
 __all__ = [
-    "POVMPostprocessor",
+    "POVMPostProcessor",
 ]
