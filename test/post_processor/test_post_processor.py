@@ -12,7 +12,6 @@
 
 from unittest import TestCase
 
-import numpy as np
 from povm_toolbox.post_processor import POVMPostProcessor
 
 
@@ -26,7 +25,7 @@ class TestPostProcessor(TestCase):
 
         qc = QuantumCircuit(2)
         qc.h(0)
-        qc.cx(0,1)
+        qc.cx(0, 1)
 
         from povm_toolbox.sampler import POVMSampler
         from qiskit.primitives import StatevectorSampler as Sampler
@@ -49,7 +48,3 @@ class TestPostProcessor(TestCase):
         post_processor = POVMPostProcessor(pub_result)
 
         self.assertIsInstance(post_processor.get_expectation_value(observable), float)
-
-
-
-        
