@@ -29,6 +29,7 @@ class BaseDUAL(BaseFrame, ABC):
         """Give the number of outcomes of the POVM."""
         return self.n_operators
 
+    @abstractmethod
     def get_omegas(
         self,
         obs: Operator,
@@ -41,7 +42,7 @@ class BaseDUAL(BaseFrame, ABC):
     def is_dual_to(self, frame=BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
 
-    @abstractmethod
     @classmethod
-    def from_frame(cls, frame=BaseFrame) -> BaseDUAL:
+    @abstractmethod
+    def build_dual_from_frame(cls, frame=BaseFrame) -> BaseDUAL:
         """Construct a dual frame to another frame."""

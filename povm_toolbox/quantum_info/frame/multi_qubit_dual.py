@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
+from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
 from qiskit.quantum_info import Operator
 
 from .base_dual import BaseDUAL
@@ -32,7 +33,7 @@ class MultiQubitDUAL(JointFrame, BaseDUAL):
     ) -> float | dict[int, float] | np.ndarray:
         r"""Return the decomposition weights of observable ``obs`` into the POVM effects.
 
-        Given an obseravble :math:`O` which is in the span of the POVM, one can write the
+        Given an observable :math:`O` which is in the span of the POVM, one can write the
         observable :math:`O` as the weighted sum of the POVM effects, :math:`O = \sum_k w_k M_k`
         for real weights :math:`w_k`. There might be infinitely many valid sets of weight.
         This method returns a possible set of weights.
@@ -47,9 +48,27 @@ class MultiQubitDUAL(JointFrame, BaseDUAL):
 
     def is_dual_to(self, frame=BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
+        if isinstance(frame, JointFrame):
+            return np.allclose(frame._array @ np.conj(self._array).T, np.eye(self.dimension**2))
         raise NotImplementedError
 
     @classmethod
-    def from_frame(cls, frame=BaseFrame) -> MultiQubitDUAL:
+    def build_dual_from_frame(cls, frame=BaseFrame) -> MultiQubitDUAL:
         """Construct a dual frame to another frame."""
+        if isinstance(frame, JointFrame):
+            superop = frame._array @ np.conj(frame._array).T
+            dual_operators = [
+                Operator(
+                    double_ket_to_matrix(
+                        np.linalg.solve(
+                            superop,
+                            matrix_to_double_ket(frame_op.data),
+                        )
+                    )
+                )
+                for frame_op in frame.operators
+            ]
+            # dual_operators_array = np.linalg.solve(superop,frame._array,)
+            # dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
+            return cls(dual_operators)
         raise NotImplementedError

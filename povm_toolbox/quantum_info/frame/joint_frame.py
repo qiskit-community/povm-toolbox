@@ -53,6 +53,7 @@ class JointFrame(BaseFrame):
         for k, frame_op in enumerate(list_operators):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
 
+        # TODO.
         self._informationally_complete: bool
 
         self._check_validity()
@@ -72,6 +73,7 @@ class JointFrame(BaseFrame):
         """Give the number of outcomes of the POVM."""
         return self._n_operators
 
+    @property
     def pauli_operators(self) -> list[dict[str, complex]]:
         """Convert the internal POVM operators to Pauli form.
 
@@ -171,7 +173,4 @@ class JointFrame(BaseFrame):
         Returns:
             The POVM corresponding to the vectors.
         """
-        operators = []
-        for vec in povm_vectors:
-            operators.append(Operator(np.outer(vec, vec.conj())))
-        return cls(operators)
+        return cls([Operator(np.outer(vec, vec.conj())) for vec in povm_vectors])
