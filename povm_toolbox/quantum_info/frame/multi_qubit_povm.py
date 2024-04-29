@@ -16,10 +16,10 @@ import numpy as np
 from qiskit.quantum_info import DensityMatrix
 
 from .base_povm import BasePOVM
-from .joint_frame import JointFrame
+from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitPOVM(JointFrame, BasePOVM):
+class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
     """Class that collects all information that any MultiQubit POVM should specify.
 
     This is a representation of a positive operator-valued measure (POVM). The effects are

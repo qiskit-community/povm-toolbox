@@ -20,7 +20,7 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 from .base_frame import BaseFrame
 
 
-class JointFrame(BaseFrame):
+class MultiQubitFrame(BaseFrame):
     """Class that collects all information that any MultiQubit frame should specify.
 
     This is a representation of an operator-valued vector space frame. The effects are
@@ -161,7 +161,7 @@ class JointFrame(BaseFrame):
         return Operator(double_ket_to_matrix(op))
 
     @classmethod
-    def from_vectors(cls, povm_vectors: np.ndarray) -> JointFrame:
+    def from_vectors(cls, povm_vectors: np.ndarray) -> MultiQubitFrame:
         r"""Initialize a POVM from non-normalized bloch vectors :math:``|psi>``.
 
         Args:

@@ -20,9 +20,9 @@ import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .base_frame import BaseFrame
-from .joint_frame import JointFrame
+from .multi_qubit_frame import MultiQubitFrame
 
-T = TypeVar("T", bound=JointFrame)
+T = TypeVar("T", bound=MultiQubitFrame)
 
 
 class ProductFrame(BaseFrame, Generic[T]):
@@ -38,7 +38,7 @@ class ProductFrame(BaseFrame, Generic[T]):
         """Initialize a ``ProductPOVM`` instance.
 
         Args:
-            povms: a dictionary mapping from a tuple of subsystem indices to a ``JointFrame``
+            povms: a dictionary mapping from a tuple of subsystem indices to a ``MultiQubitFrame``
                 object.
 
         Raises:
@@ -49,7 +49,7 @@ class ProductFrame(BaseFrame, Generic[T]):
                 words, all POVMs must act on mutually exclusive subsystem indices.
             ValueError: if any key in ``povms`` does not specify the number of subsystem indices,
                 which matches the number of systems acted upon by that POVM
-                (:meth:`JointFrame.n_subsystems`).
+                (:meth:`MultiQubitFrame.n_subsystems`).
         """
         subsystem_indices = set()
         self._dimension = 1
@@ -88,7 +88,7 @@ class ProductFrame(BaseFrame, Generic[T]):
 
     @classmethod
     def from_list(cls, povms: Sequence[T]) -> ProductFrame:
-        """Construct a ``ProductPOVM`` from a list of ``JointFrame`` objects.
+        """Construct a ``ProductPOVM`` from a list of ``MultiQubitFrame`` objects.
 
         This is a convenience method to simplify the construction of a ``ProductPOVM`` for the cases
         in which the POVM objects act on a sequential order of subsystems. In other words, this
@@ -105,7 +105,7 @@ class ProductFrame(BaseFrame, Generic[T]):
             # is equivalent to
             product = ProductPOVM({(0,): sqp, (1,): sqp})
 
-            mqp = JointFrame(
+            mqp = MultiQubitFrame(
                 [
                     Operator.from_label("00"),
                     Operator.from_label("01"),
@@ -126,7 +126,7 @@ class ProductFrame(BaseFrame, Generic[T]):
             product = ProductPOVM({(0,): sqp, (1, 2): mqp, (3,): sqp})
 
         Args:
-            povms: a sequence of ``JointFrame`` objects.
+            povms: a sequence of ``MultiQubitFrame`` objects.
 
         Returns:
             A new ``ProductPOVM`` instance.

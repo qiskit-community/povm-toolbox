@@ -18,10 +18,10 @@ from qiskit.quantum_info import Operator
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
-from .joint_frame import JointFrame
+from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitDUAL(JointFrame, BaseDUAL):
+class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
     """Class that collects all information that any MultiQubit POVM should specify.
 
     This is a representation of a positive operator-valued measure (POVM). The effects are
@@ -48,14 +48,14 @@ class MultiQubitDUAL(JointFrame, BaseDUAL):
 
     def is_dual_to(self, frame=BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
-        if isinstance(frame, JointFrame):
+        if isinstance(frame, MultiQubitFrame):
             return np.allclose(frame._array @ np.conj(self._array).T, np.eye(self.dimension**2))
         raise NotImplementedError
 
     @classmethod
     def build_dual_from_frame(cls, frame=BaseFrame) -> MultiQubitDUAL:
         """Construct a dual frame to another frame."""
-        if isinstance(frame, JointFrame):
+        if isinstance(frame, MultiQubitFrame):
             superop = frame._array @ np.conj(frame._array).T
             dual_operators = [
                 Operator(
