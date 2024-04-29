@@ -12,9 +12,16 @@
 
 from __future__ import annotations
 
+import sys
 import warnings
 from collections.abc import Sequence
 from typing import Generic, TypeVar
+
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
@@ -87,13 +94,13 @@ class ProductFrame(BaseFrame, Generic[T]):
         self._check_validity()
 
     @classmethod
-    def from_list(cls, povms: Sequence[T]) -> ProductFrame:
+    def from_list(cls, povms: Sequence[T]) -> Self:
         """Construct a ``ProductPOVM`` from a list of ``MultiQubitFrame`` objects.
 
         This is a convenience method to simplify the construction of a ``ProductPOVM`` for the cases
         in which the POVM objects act on a sequential order of subsystems. In other words, this
         method converts the sequence of POVMs to a dictionary of POVMs in accordance with the input
-        to :meth:`ProcutPOVM.__init__` by using the positions along the sequence as subsystem
+        to :meth:`ProductPOVM.__init__` by using the positions along the sequence as subsystem
         indices.
 
         Below are some examples:

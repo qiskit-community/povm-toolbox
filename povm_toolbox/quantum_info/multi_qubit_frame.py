@@ -12,10 +12,18 @@
 
 from __future__ import annotations
 
+import sys
+
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 import numpy as np
-from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import Operator, SparsePauliOp
+
+from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
 
 from .base_frame import BaseFrame
 
@@ -116,6 +124,10 @@ class MultiQubitFrame(BaseFrame):
         """Return the number of outcomes of the POVM."""
         return self.n_operators
 
+    def __array__(self) -> np.ndarray:
+        """TODO."""
+        return self._array
+
     def analysis(
         self, op: Operator, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
@@ -134,7 +146,7 @@ class MultiQubitFrame(BaseFrame):
         Raises:
             TypeError: TODO.
         """
-        op_vectorized = matrix_to_double_ket(op.data)
+        op_vectorized = np.conj(matrix_to_double_ket(op.data))
         if isinstance(outcome_idx, int):
             return float(np.dot(op_vectorized, self._array[:, outcome_idx]).real)
         if isinstance(outcome_idx, set):
@@ -161,7 +173,7 @@ class MultiQubitFrame(BaseFrame):
         return Operator(double_ket_to_matrix(op))
 
     @classmethod
-    def from_vectors(cls, povm_vectors: np.ndarray) -> MultiQubitFrame:
+    def from_vectors(cls, povm_vectors: np.ndarray) -> Self:
         r"""Initialize a POVM from non-normalized bloch vectors :math:``|psi>``.
 
         Args:

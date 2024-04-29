@@ -13,8 +13,9 @@
 from __future__ import annotations
 
 import numpy as np
-from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
 from qiskit.quantum_info import Operator
+
+from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
