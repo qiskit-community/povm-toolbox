@@ -16,13 +16,13 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix
+from qiskit.quantum_info import Operator
 
 from .base_frame import BaseFrame
 
 
-class BasePOVM(BaseFrame, ABC):
-    """Abstract base class that contains all methods that any specific POVM subclass should implement."""
+class BaseDUAL(BaseFrame, ABC):
+    """Abstract base class that contains all methods that any specific DUAL subclass should implement."""
 
     @property
     def n_outcomes(self) -> int:
@@ -30,10 +30,19 @@ class BasePOVM(BaseFrame, ABC):
         return self.n_operators
 
     @abstractmethod
-    def get_prob(
+    def get_omegas(
         self,
-        rho: DensityMatrix,
+        obs: Operator,
         outcome_idx: Any | set[Any] | None = None,
     ) -> float | dict[Any, float] | np.ndarray:
-        """Return the outcome probabilities given a state rho."""
-        return self.analysis(rho, outcome_idx)
+        """Return the decomposition weights of obserservable `obs` into the POVM effects."""
+        return self.analysis(obs, outcome_idx)
+
+    @abstractmethod
+    def is_dual_to(self, frame=BaseFrame) -> bool:
+        """Check if `self` is a dual to another frame."""
+
+    @classmethod
+    @abstractmethod
+    def build_dual_from_frame(cls, frame=BaseFrame) -> BaseDUAL:
+        """Construct a dual frame to another frame."""
