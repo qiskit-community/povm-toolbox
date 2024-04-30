@@ -33,7 +33,7 @@ MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 
 
 class POVMImplementation(ABC, Generic[MetadataT]):
-    """Abstract base class that contains all methods that any specific POVMImplementation subclass should implement."""
+    """The abstract base interface for all POVM implementations in this library."""
 
     classical_register_name = "povm_measurement_creg"
 

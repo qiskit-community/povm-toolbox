@@ -21,7 +21,7 @@ from povm_toolbox.library.metadata import POVMMetadata
 
 
 class POVMPubResult(PubResult):
-    """Base class to gather all relevant result information."""
+    """Result class for the :class:`.POVMSamplerJob`."""
 
     def __init__(
         self,

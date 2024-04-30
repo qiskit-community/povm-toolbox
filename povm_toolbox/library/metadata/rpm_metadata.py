@@ -22,10 +22,12 @@ from .povm_metadata import POVMMetadata
 
 @dataclass(repr=False)
 class RPMMetadata(POVMMetadata):
-    """TODO."""
+    """A metadata container for randomized projective measurements (RPM) POVM sampling results."""
 
     pvm_keys: np.ndarray
-    """Shape of `pvm_keys` is assumed to be ``(*pv.shape, num_batches, n_qubit)``,
+    """The keys which associate a specific result sample with the corresponding RPM parameters.
+
+    Shape of `pvm_keys` is assumed to be ``(*pv.shape, num_batches, n_qubit)``,
     where ``pv`` is the bindings array provided by the user to run with the
     parametrized quantum circuit supplied in the :meth:`.POVMSampler.run` method.
     """

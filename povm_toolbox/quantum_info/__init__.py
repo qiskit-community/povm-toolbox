@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO.
+"""A module for working with POVMs on a quantum-informational setting.
 
 .. currentmodule:: povm_toolbox.quantum_info
 

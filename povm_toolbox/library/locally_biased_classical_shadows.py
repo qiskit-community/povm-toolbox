@@ -18,7 +18,7 @@ from .randomized_projective_measurements import RandomizedProjectiveMeasurements
 
 
 class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
-    """TODO."""
+    """A locally-biased classical shadows POVM."""
 
     def __init__(
         self,
