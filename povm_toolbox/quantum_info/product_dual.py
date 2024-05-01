@@ -37,7 +37,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
         r"""Return the decomposition weights of observable ``obs`` into the POVM effects.
 
-        Given an obseravble :math:`O` which is in the span of the POVM, one can write the
+        Given an observable :math:`O` which is in the span of the POVM, one can write the
         observable :math:`O` as the weighted sum of the POVM effects, :math:`O = \sum_k w_k M_k`
         for real weights :math:`w_k`. There might be infinitely many valid sets of weight.
         This method returns a possible set of weights.
@@ -46,7 +46,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
             obs: the observable to be decomposed into the POVM effects.
 
         Returns:
-            Decomposition weight(s) associated to the effct(s) specified by ``outcome_idx``.
+            Decomposition weight(s) associated to the effect(s) specified by ``outcome_idx``.
             If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
             queried, a dictionary mapping outcome labels to weights is returned. If all outcomes were
             queried, a high-dimensional array with one dimension per local POVM stored inside this
@@ -58,8 +58,8 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
 
     def is_dual_to(self, frame=BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
-        if isinstance(frame, ProductFrame) and set(self._povms.keys()) == set(frame._povms.keys()):
-            return all([self._povms[idx].is_dual_to(frame._povms[idx]) for idx in self._povms])
+        if isinstance(frame, ProductFrame) and set(self.sub_systems) == set(frame.sub_systems):
+            return all([self[idx].is_dual_to(frame[idx]) for idx in self.sub_systems])
         # TODO: maybe differentiate two distinct cases:
         #   1) the subsystems are not the same, e.g. `self` acts on (0,) and (1,) but `frame` acts
         #      on (0,) and (2,). Then we should raise an ValueError
@@ -73,7 +73,11 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         """Construct a dual frame to another frame."""
         dual_operators = {}
         if isinstance(frame, ProductFrame):
-            for sub_systems, local_frame in frame._povms.items():
-                dual_operators[sub_systems] = MultiQubitDUAL.build_dual_from_frame(local_frame)
-            return cls(dual_operators)
+            for sub_system in frame.sub_systems:
+                dual_operators[sub_system] = MultiQubitDUAL.build_dual_from_frame(frame[sub_system])
+            # TODO : move this test to unittest in the future and just return cls(dual_operators)
+            dual_frame = cls(dual_operators)
+            if not dual_frame.is_dual_to(frame):
+                raise ValueError
+            return dual_frame
         raise NotImplementedError

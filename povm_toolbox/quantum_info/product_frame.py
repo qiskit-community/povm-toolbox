@@ -166,6 +166,11 @@ class ProductFrame(BaseFrame, Generic[T]):
         """Give the number of operators per sub-system."""
         return self._shape
 
+    @property
+    def sub_systems(self) -> list[tuple[int, ...]]:
+        """Give the number of operators per sub-system."""
+        return list(self._povms.keys())
+
     def _check_validity(self) -> None:
         """Check if POVM axioms are fulfilled.
 
@@ -174,6 +179,17 @@ class ProductFrame(BaseFrame, Generic[T]):
         """
         for povm in self._povms.values():
             povm._check_validity()
+
+    def __getitem__(self, sub_system: tuple[int, ...]) -> T:
+        r"""Return the :class:`.MultiQubitFrame` acting on the specified sub-system.
+
+        Args:
+            sub_system: indicate the sub-system on which the queried frame acts on.
+
+        Returns:
+            The :class:`.MultiQubitFrame` acting on the specified sub-system.
+        """
+        return self._povms[sub_system]
 
     def __len__(self) -> int:
         """Return the number of outcomes of the POVM."""
@@ -281,13 +297,13 @@ class ProductFrame(BaseFrame, Generic[T]):
         # If effect_idx is `None`, it means all outcomes are queried
         if effect_idx is None:
             # Extract the number of outcomes for each local POVM.
-            n_outcomes = [povm.n_operators for povm in self._povms.values()]
+            # TOREMOVE: n_outcomes = [povm.n_operators for povm in self._povms.values()]
 
             # Create the output probability array as a high-dimensional matrix. This matrix will have
             # its number of dimensions equal to the number of POVMs stored inside the ProductPOVM. The
             # length of each dimension is given by the number of outcomes of the POVM encoded along it.
-            p_init: np.ndarray = np.zeros(n_outcomes, dtype=float)
-            # p_init: np.ndarray = np.zeros(self.shape, dtype=float)
+            # TOREMOVE: p_init: np.ndarray = np.zeros(n_outcomes, dtype=float)
+            p_init: np.ndarray = np.zeros(self.shape, dtype=float)
 
             # First, we iterate over all the positions of `p_init`. This corresponds to the different
             # probabilities for the different outcomes whose probability we want to compute.

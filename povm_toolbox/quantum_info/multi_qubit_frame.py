@@ -125,7 +125,10 @@ class MultiQubitFrame(BaseFrame):
         return self.n_operators
 
     def __array__(self) -> np.ndarray:
-        """TODO."""
+        """Return the array representation of the frame, with shape.
+
+        The array has a shape :math:``(self.dimension**2, self.n_operators)``.
+        """
         return self._array
 
     def analysis(

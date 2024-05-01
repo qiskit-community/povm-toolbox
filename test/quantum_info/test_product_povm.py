@@ -14,9 +14,10 @@ from unittest import TestCase
 
 import numpy as np
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
+from povm_toolbox.quantum_info.product_dual import ProductDUAL
 from povm_toolbox.quantum_info.product_povm import ProductPOVM
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
-from qiskit.quantum_info import DensityMatrix, Operator, random_density_matrix
+from qiskit.quantum_info import DensityMatrix, Operator, random_density_matrix, random_hermitian
 
 
 class TestProductPOVM(TestCase):
@@ -202,6 +203,38 @@ class TestProductPOVM(TestCase):
             rho3 = DensityMatrix(0.5 * np.outer(rho3_vec, rho3_vec.conj()))
             self.assertTrue(np.allclose(prod_povm1.get_prob(rho3), npzfile["prob_1_3"]))
             self.assertTrue(np.allclose(prod_povm2.get_prob(rho3), npzfile["prob_2_3"]))
+
+    def test_build_dual(self):
+        seed = 12
+        n_qubit = 3
+        rng = np.random.RandomState(seed)
+        q = rng.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
+        q /= q.sum(axis=1)[:, np.newaxis]
+
+        povm_list = []
+        for i in range(n_qubit):
+            povm_list.append(
+                SingleQubitPOVM(
+                    [
+                        q[i, 0] * Operator.from_label("0"),
+                        q[i, 0] * Operator.from_label("1"),
+                        q[i, 1] * Operator.from_label("+"),
+                        q[i, 1] * Operator.from_label("-"),
+                        q[i, 2] * Operator.from_label("r"),
+                        q[i, 2] * Operator.from_label("l"),
+                    ]
+                )
+            )
+
+        prod_povm = ProductPOVM.from_list(povm_list)
+
+        dual = ProductDUAL.build_dual_from_frame(prod_povm)
+
+        obs = random_hermitian(dims=2**n_qubit)
+        omegas = dual.get_omegas(obs)
+        self.assertIsInstance(omegas[0, 0, 0], float)
+
+        self.assertTrue(dual.is_dual_to(prod_povm))
 
     # TODO
     def test_build_from_vectors(self):

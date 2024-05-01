@@ -50,23 +50,24 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
     def is_dual_to(self, frame=BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
         if isinstance(frame, MultiQubitFrame):
-            return np.allclose(frame._array @ np.conj(self._array).T, np.eye(self.dimension**2))
+            return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
         raise NotImplementedError
 
     @classmethod
     def build_dual_from_frame(cls, frame=BaseFrame) -> MultiQubitDUAL:
         """Construct a dual frame to another frame."""
         if isinstance(frame, MultiQubitFrame):
-            superop = frame._array @ np.conj(frame._array).T
+            diag_trace = np.diag([1.0 / np.trace(frame_op.data) for frame_op in frame.operators])
+            superop = frame @ diag_trace @ np.conj(frame).T
+
             dual_operators_array = np.linalg.solve(
                 superop,
-                frame._array,
+                frame @ diag_trace,
             )
             dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
 
+            # TODO : move this test to unittest in the future and just return cls(dual_operators)
             dual_frame = cls(dual_operators)
-
-            # TODO : move this test to unittest in the future
             if not dual_frame.is_dual_to(frame):
                 raise ValueError
             return dual_frame
