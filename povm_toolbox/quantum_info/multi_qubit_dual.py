@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import Operator
 
-from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
+from povm_toolbox.utilities import double_ket_to_matrix
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
@@ -58,18 +58,17 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         """Construct a dual frame to another frame."""
         if isinstance(frame, MultiQubitFrame):
             superop = frame._array @ np.conj(frame._array).T
-            dual_operators = [
-                Operator(
-                    double_ket_to_matrix(
-                        np.linalg.solve(
-                            superop,
-                            matrix_to_double_ket(frame_op.data),
-                        )
-                    )
-                )
-                for frame_op in frame.operators
-            ]
-            # dual_operators_array = np.linalg.solve(superop,frame._array,)
-            # dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
-            return cls(dual_operators)
+            dual_operators_array = np.linalg.solve(
+                superop,
+                frame._array,
+            )
+            dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
+
+            dual_frame = cls(dual_operators)
+
+            # TODO : move this test to unittest in the future
+            if not dual_frame.is_dual_to(frame):
+                raise ValueError
+            return dual_frame
+
         raise NotImplementedError
