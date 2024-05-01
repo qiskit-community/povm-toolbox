@@ -18,7 +18,7 @@ from .locally_biased_classical_shadows import LocallyBiasedClassicalShadows
 
 
 class ClassicalShadows(LocallyBiasedClassicalShadows):
-    """TODO."""
+    """A classical shadows POVM."""
 
     def __init__(
         self,

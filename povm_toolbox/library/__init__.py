@@ -8,7 +8,11 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO.
+"""A library of POVM implementations.
+
+This module provides "ready-to-go" POVM implementations.
+Each one serves as a factory to generate a specific, concrete POVM and provides the means to
+`sample` from it.
 
 .. currentmodule:: povm_toolbox.library
 

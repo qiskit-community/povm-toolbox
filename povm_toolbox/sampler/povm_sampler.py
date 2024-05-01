@@ -26,7 +26,7 @@ from .povm_sampler_pub import POVMSamplerPub, POVMSamplerPubLike
 
 
 class POVMSampler:
-    """POVM Sampler V2 class."""
+    """A :class:`.BaseSamplerV2`-compatible interface for sampling POVMs."""
 
     def __init__(
         self,

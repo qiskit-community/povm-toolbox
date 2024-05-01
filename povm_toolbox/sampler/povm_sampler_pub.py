@@ -38,7 +38,7 @@ POVMSamplerPubLike = Union[
 
 
 class POVMSamplerPub(ShapedMixin):
-    """Pub (Primitive Unified Bloc) for a POVM Sampler.
+    """Pub (Primitive Unified Bloc) for the :class:`.POVMSampler`.
 
     Pub is composed of tuple (circuit, parameter_values, shots, povm_implementation).
     """

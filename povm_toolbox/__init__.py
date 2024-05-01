@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO.
+"""A toolbox for the implementation of positive operator-valued measures (POVMs).
 
 .. currentmodule:: povm_toolbox
 

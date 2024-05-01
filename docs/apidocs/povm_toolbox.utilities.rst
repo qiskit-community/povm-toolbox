@@ -2,6 +2,9 @@
 Utilities
 =========
 
+.. warning::
+   This API reference is still `under construction`.
+
 .. _povm_toolbox-utilities:
 
 .. automodule:: povm_toolbox.utilities
