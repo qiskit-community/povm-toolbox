@@ -35,7 +35,7 @@ class BaseFrame(ABC):
     @property
     @abstractmethod
     def informationally_complete(self) -> bool:
-        """Return if the frame span the entire Hilbert space."""
+        """Return if the frame spans the entire Hilbert space."""
 
     @property
     @abstractmethod

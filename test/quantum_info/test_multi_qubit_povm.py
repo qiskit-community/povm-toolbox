@@ -22,7 +22,7 @@ class TestMultiQubitPOVM(TestCase):
     """Test that we can create valid POVM and get warnings if invalid."""
 
     def test_random_operators(self):
-        """Test that an error is raised if the oprators are not Hermitian."""
+        """Test that an error is raised if the operators are not Hermitian."""
 
         ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
 

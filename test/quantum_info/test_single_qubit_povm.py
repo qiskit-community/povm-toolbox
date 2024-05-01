@@ -39,9 +39,9 @@ class TestSingleQubitPovm(TestCase):
 
         # TODO : select a random POVM ...
         dim = 2
-        eival = np.random.uniform(low=-5, high=5, size=dim)
+        eigval = np.random.uniform(low=-5, high=5, size=dim)
         x = unitary_group.rvs(dim)  # , random_state=seed_obs[i])
-        obs = x @ np.diag(eival) @ x.T.conj()
+        obs = x @ np.diag(eigval) @ x.T.conj()
 
         _, V = np.linalg.eigh(obs)
 

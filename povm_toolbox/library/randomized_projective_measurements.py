@@ -101,7 +101,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         measurement. Note that we have :math:``U(theta, phi, lambda)_dag = U(-theta, -lambda, -phi)``.
 
         Returns:
-            Paramnetrized quantum circuit that can implement any product of single-qubit projective measurements.
+            Parametrized quantum circuit that can implement any product of single-qubit projective measurements.
         """
         self._qc_theta = ParameterVector("theta", length=self.n_qubit)
         self._qc_phi = ParameterVector("phi", length=self.n_qubit)
@@ -139,9 +139,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         to it. As the measurement circuit is parametrized, its parameters values
         are concatenated with the parameter values associated with the supplied
         quantum circuit. TODO: explain how the distribution of the shots is done.
-        If a randomized POVM is used, the enduser's parameters have to be
-        concatenated with the sampled POVM parameters. The POVM parametersare a
-        2-D (TODO: update docstrings in next PR, which will change this method anyways)
+        If a randomized POVM is used, the end user's parameters have to be
+        concatenated with the sampled POVM parameters. The POVM parameters are a
+        2-D (TODO: update docstring in next PR, which will change this method anyways)
 
         Args:
             circuit: A quantum circuit.
@@ -151,7 +151,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         Returns:
             A tuple of a sampler pub and a dictionary of metadata which include
             the ``POVMImplementation`` object itself. The metadata should contain
-            all the information neceassary to extract the POVM outcomes out of raw
+            all the information necessary to extract the POVM outcomes out of raw
             bitstrings. (TODO: explain what is it exactly)
 
         Raises:
@@ -183,7 +183,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         #   .shape = (5, num_batches)
         #   .num_parameters = 3 + 2*n_qubit
         # The data is stored as a dictionary of arrays where each array has a shape such that :
-        #   - the last dismension corresponds to the number of parameters stored in this entry
+        #   - the last dimension corresponds to the number of parameters stored in this entry
         #     of the dictionary
         #   - the leading shape corresponds to the different sets of parameter values and is shared
         #     amongst all dictionary entries (it is the `.shape` of the `BindingsArray`)

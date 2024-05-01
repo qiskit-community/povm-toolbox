@@ -18,7 +18,7 @@ from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator
 
 
-class TestClassicalShadowsd(TestCase):
+class TestClassicalShadows(TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
 

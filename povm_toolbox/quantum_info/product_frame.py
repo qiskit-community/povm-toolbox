@@ -108,7 +108,7 @@ class ProductFrame(BaseFrame, Generic[T]):
         .. code-block:: python
 
             sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
-            product = ProcuctPOVM.from_list([sqp, sqp])
+            product = ProductPOVM.from_list([sqp, sqp])
             # is equivalent to
             product = ProductPOVM({(0,): sqp, (1,): sqp})
 
@@ -148,7 +148,7 @@ class ProductFrame(BaseFrame, Generic[T]):
 
     @property
     def informationally_complete(self) -> bool:
-        """Return if the frame span the entire Hilbert space."""
+        """Return if the frame spans the entire Hilbert space."""
         return self._informationally_complete
 
     @property
@@ -297,12 +297,10 @@ class ProductFrame(BaseFrame, Generic[T]):
         # If effect_idx is `None`, it means all outcomes are queried
         if effect_idx is None:
             # Extract the number of outcomes for each local POVM.
-            # TOREMOVE: n_outcomes = [povm.n_operators for povm in self._povms.values()]
 
             # Create the output probability array as a high-dimensional matrix. This matrix will have
             # its number of dimensions equal to the number of POVMs stored inside the ProductPOVM. The
             # length of each dimension is given by the number of outcomes of the POVM encoded along it.
-            # TOREMOVE: p_init: np.ndarray = np.zeros(n_outcomes, dtype=float)
             p_init: np.ndarray = np.zeros(self.shape, dtype=float)
 
             # First, we iterate over all the positions of `p_init`. This corresponds to the different

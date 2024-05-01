@@ -35,7 +35,7 @@ class POVMPostProcessor:
 
         Args:
             povm_sample: a result from a POVM sampler run.
-            alphas: parameters of the frame superoperator of the POVM.
+            alphas: parameters of the frame super-operator of the POVM.
         """
         self.povm = povm_sample.metadata.povm_implementation.definition()
         self.counts: np.ndarray = povm_sample.get_counts()  # type: ignore
