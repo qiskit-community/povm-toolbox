@@ -71,10 +71,10 @@ class BaseFrame(ABC):
     ) -> float | dict[Any, float] | np.ndarray:
         """Return the frame coefficients of `operator`."""
 
-    @abstractmethod
-    def synthesis(
-        self,
-        frame_coef: np.ndarray,
-        bias: np.ndarray | None = None,
-    ) -> Operator:
-        """Adjoint of the analysis operator."""
+    # @abstractmethod
+    # def synthesis(
+    #     self,
+    #     frame_coef: np.ndarray,
+    #     bias: np.ndarray | None = None,
+    # ) -> Operator:
+    #     """Adjoint of the analysis operator."""

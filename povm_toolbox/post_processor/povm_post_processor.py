@@ -53,6 +53,10 @@ class POVMPostProcessor:
 
         self.dual = DUAL_CLASS.build_dual_from_frame(self.povm)
 
+    def optimize(self, **options) -> None:
+        """Optimize the dual inplace."""
+        self.dual.optimize(self.povm, **options)
+
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
     ) -> np.ndarray | float:

@@ -19,6 +19,7 @@ import numpy as np
 from qiskit.quantum_info import Operator
 
 from .base_frame import BaseFrame
+from .base_povm import BasePOVM
 
 
 class BaseDUAL(BaseFrame, ABC):
@@ -41,6 +42,10 @@ class BaseDUAL(BaseFrame, ABC):
     @abstractmethod
     def is_dual_to(self, frame: BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
+
+    @abstractmethod
+    def optimize(self, povm: BasePOVM, **options) -> None:
+        """Optimize the dual inplace."""
 
     @classmethod
     @abstractmethod

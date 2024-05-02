@@ -315,10 +315,10 @@ class ProductFrame(BaseFrame, Generic[T]):
             return self._trace_of_prod(operator, effect_idx)
         raise TypeError("wrong shape of effect_idx")
 
-    def synthesis(
-        self,
-        frame_coef: np.ndarray,
-        bias: np.ndarray | None = None,
-    ) -> Operator:
-        """Adjoint of the analysis operator."""
-        raise NotImplementedError
+    # def synthesis(
+    #     self,
+    #     frame_coef: np.ndarray,
+    #     bias: np.ndarray | None = None,
+    # ) -> Operator:
+    #     """Adjoint of the analysis operator."""
+    #     raise NotImplementedError

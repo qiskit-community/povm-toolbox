@@ -17,6 +17,7 @@ from qiskit.quantum_info import Operator
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
+from .base_povm import BasePOVM
 from .multi_qubit_dual import MultiQubitDUAL
 from .product_frame import ProductFrame
 
@@ -67,6 +68,10 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         #      (1,2) but `frame` on (0,1) and (2,). `self` could still be a valid dual frame but we
         #      have not implemented the check for this. Then we should raise an NotImplementedError.
         raise NotImplementedError
+
+    def optimize(self, povm: BasePOVM, **options) -> None:
+        """Optimize the dual inplace."""
+        pass
 
     @classmethod
     def build_dual_from_frame(

@@ -19,6 +19,7 @@ from povm_toolbox.utilities import double_ket_to_matrix
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
+from .base_povm import BasePOVM
 from .multi_qubit_frame import MultiQubitFrame
 
 
@@ -52,6 +53,13 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         if isinstance(frame, MultiQubitFrame):
             return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
         raise NotImplementedError
+
+    def optimize(self, povm: BasePOVM, **options) -> None:
+        """Optimize the dual inplace."""
+        state = options.get("state", None)
+        if state is not None:
+            alphas = tuple(povm.get_prob(state))  # type: ignore
+            self = self.build_dual_from_frame(povm, alphas)
 
     @classmethod
     def build_dual_from_frame(

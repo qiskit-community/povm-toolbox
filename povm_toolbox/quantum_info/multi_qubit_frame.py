@@ -23,7 +23,7 @@ import numpy as np
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import Operator, SparsePauliOp
 
-from povm_toolbox.utilities import double_ket_to_matrix, matrix_to_double_ket
+from povm_toolbox.utilities import matrix_to_double_ket
 
 from .base_frame import BaseFrame
 
@@ -162,18 +162,18 @@ class MultiQubitFrame(BaseFrame):
             f"The optional ``outcome_idx`` can either be a single or sequence of integers, not a {type(outcome_idx)}."
         )
 
-    def synthesis(
-        self,
-        frame_coef: np.ndarray,
-        bias: np.ndarray | None = None,
-    ) -> Operator:
-        """Adjoint of the analysis operator."""
-        if bias is not None:
-            np.multiply(bias, frame_coef, out=frame_coef)
-        if frame_coef.shape != (self.n_operators,):
-            raise ValueError
-        op = np.dot(self._array, frame_coef)
-        return Operator(double_ket_to_matrix(op))
+    # def synthesis(
+    #     self,
+    #     frame_coef: np.ndarray,
+    #     bias: np.ndarray | None = None,
+    # ) -> Operator:
+    #     """Adjoint of the analysis operator."""
+    #     if bias is not None:
+    #         np.multiply(bias, frame_coef, out=frame_coef)
+    #     if frame_coef.shape != (self.n_operators,):
+    #         raise ValueError
+    #     op = np.dot(self._array, frame_coef)
+    #     return Operator(double_ket_to_matrix(op))
 
     @classmethod
     def from_vectors(cls, povm_vectors: np.ndarray) -> Self:
