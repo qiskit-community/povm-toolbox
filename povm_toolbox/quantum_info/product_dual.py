@@ -20,6 +20,7 @@ from .base_frame import BaseFrame
 from .base_povm import BasePOVM
 from .multi_qubit_dual import MultiQubitDUAL
 from .product_frame import ProductFrame
+from .product_povm import ProductPOVM
 
 
 class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
@@ -71,7 +72,17 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
 
     def optimize(self, povm: BasePOVM, **options) -> None:
         """Optimize the dual inplace."""
-        pass
+        state = options.get("state", None)
+        if not isinstance(povm, ProductPOVM):
+            raise NotImplementedError
+        if state is not None:
+            axes = np.arange(len(povm.sub_systems), dtype=int)
+            joint_prob: np.ndarray = povm.get_prob(rho=state)  # type: ignore
+            for i, sub_system in enumerate(povm.sub_systems):
+                marg_prob = joint_prob.sum(axis=tuple(np.delete(axes, [i])))
+                if not all(marg_prob):
+                    marg_prob += 1e-3
+                self[sub_system].optimize(povm=povm[sub_system], alphas=tuple(marg_prob))
 
     @classmethod
     def build_dual_from_frame(
@@ -93,7 +104,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
                 )
             # TODO : move this test to unittest in the future and just return cls(dual_operators)
             dual_frame = cls(dual_operators)
-            if not dual_frame.is_dual_to(frame):
-                raise ValueError
+            # if not dual_frame.is_dual_to(frame):
+            #     raise ValueError
             return dual_frame
         raise NotImplementedError

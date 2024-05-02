@@ -55,7 +55,7 @@ class MultiQubitFrame(BaseFrame):
                 raise ValueError(
                     f"POVM operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and all of the same dimension."
                 )
-        self.operators: list[Operator] = list_operators
+        self._operators: list[Operator] = list_operators
 
         self._array: np.ndarray = np.ndarray((self.dimension**2, self.n_operators), dtype=complex)
         for k, frame_op in enumerate(list_operators):
@@ -80,6 +80,32 @@ class MultiQubitFrame(BaseFrame):
     def n_operators(self) -> int:
         """Give the number of outcomes of the POVM."""
         return self._n_operators
+
+    @property
+    def operators(self) -> list[Operator]:
+        """Return the list of frame operators."""
+        return self._operators
+
+    @operators.setter
+    def operators(self, new_operators: list[Operator]):
+        """Set the frame operators."""
+        self._n_operators = len(new_operators)
+        self._dimension = new_operators[0].dim[0]
+        for frame_op in new_operators:
+            if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
+                raise ValueError(
+                    f"POVM operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and all of the same dimension."
+                )
+
+        self._operators = new_operators
+
+        self._array = np.ndarray((self.dimension**2, self.n_operators), dtype=complex)
+        for k, frame_op in enumerate(new_operators):
+            self._array[:, k] = matrix_to_double_ket(frame_op.data)
+
+        # TODO self._informationally_complete: bool
+
+        self._check_validity()
 
     @property
     def pauli_operators(self) -> list[dict[str, complex]]:

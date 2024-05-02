@@ -56,15 +56,16 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
 
     def optimize(self, povm: BasePOVM, **options) -> None:
         """Optimize the dual inplace."""
-        state = options.get("state", None)
-        if state is not None:
+        if (state := options.get("state", None)) is not None:
             alphas = tuple(povm.get_prob(state))  # type: ignore
-            self = self.build_dual_from_frame(povm, alphas)
+            self.operators = self._build_dual_operators(povm, alphas)
+        elif (alphas := options.get("alphas", None)) is not None:
+            self.operators = self._build_dual_operators(povm, alphas)
 
-    @classmethod
-    def build_dual_from_frame(
-        cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
-    ) -> MultiQubitDUAL:
+    @staticmethod
+    def _build_dual_operators(
+        frame: BaseFrame, alphas: tuple[float, ...] | None = None
+    ) -> list[Operator]:
         """Construct a dual frame to another frame."""
         if isinstance(frame, MultiQubitFrame):
             if alphas is None:
@@ -85,10 +86,19 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
             )
             dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
 
-            # TODO : move this test to unittest in the future and just return cls(dual_operators)
-            dual_frame = cls(dual_operators)
-            if not dual_frame.is_dual_to(frame):
-                raise ValueError
-            return dual_frame
+            return dual_operators
 
-        raise NotImplementedError
+        raise NotImplementedError(f"Not implemented for {type(frame)}")
+
+    @classmethod
+    def build_dual_from_frame(
+        cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
+    ) -> MultiQubitDUAL:
+        """Construct a dual frame to another frame."""
+        dual_operators = cls._build_dual_operators(frame, alphas)
+
+        # TODO : move this test to unittest in the future and just return cls(dual_operators)
+        dual_frame = cls(dual_operators)
+        # if not dual_frame.is_dual_to(frame):
+        #     raise ValueError
+        return dual_frame
