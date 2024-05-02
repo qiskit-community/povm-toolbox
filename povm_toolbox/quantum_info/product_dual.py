@@ -56,7 +56,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         # TODO: check that obs is Hermitian ?
         return self.analysis(obs, outcome_idx)
 
-    def is_dual_to(self, frame=BaseFrame) -> bool:
+    def is_dual_to(self, frame: BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
         if isinstance(frame, ProductFrame) and set(self.sub_systems) == set(frame.sub_systems):
             return all([self[idx].is_dual_to(frame[idx]) for idx in self.sub_systems])
@@ -69,12 +69,23 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         raise NotImplementedError
 
     @classmethod
-    def build_dual_from_frame(cls, frame=BaseFrame) -> ProductDUAL:
+    def build_dual_from_frame(
+        cls, frame: BaseFrame, alphas: tuple[tuple[float, ...] | None, ...] | None = None
+    ) -> ProductDUAL:
         """Construct a dual frame to another frame."""
         dual_operators = {}
         if isinstance(frame, ProductFrame):
-            for sub_system in frame.sub_systems:
-                dual_operators[sub_system] = MultiQubitDUAL.build_dual_from_frame(frame[sub_system])
+            if alphas is None:
+                alphas = len(frame.sub_systems) * (None,)
+            elif len(alphas) != len(frame.sub_systems):
+                raise ValueError(
+                    f"The number of sets of alpha-parameters ({len(alphas)}) does not match"
+                    f" the number of sub-systems ({len(frame.sub_systems)})."
+                )
+            for sub_system, sub_alphas in zip(frame.sub_systems, alphas):
+                dual_operators[sub_system] = MultiQubitDUAL.build_dual_from_frame(
+                    frame[sub_system], sub_alphas
+                )
             # TODO : move this test to unittest in the future and just return cls(dual_operators)
             dual_frame = cls(dual_operators)
             if not dual_frame.is_dual_to(frame):

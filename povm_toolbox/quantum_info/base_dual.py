@@ -35,14 +35,14 @@ class BaseDUAL(BaseFrame, ABC):
         obs: Operator,
         outcome_idx: Any | set[Any] | None = None,
     ) -> float | dict[Any, float] | np.ndarray:
-        """Return the decomposition weights of obserservable `obs` into the POVM effects."""
+        """Return the decomposition weights of observable `obs` into the POVM effects."""
         return self.analysis(obs, outcome_idx)
 
     @abstractmethod
-    def is_dual_to(self, frame=BaseFrame) -> bool:
+    def is_dual_to(self, frame: BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
 
     @classmethod
     @abstractmethod
-    def build_dual_from_frame(cls, frame=BaseFrame) -> BaseDUAL:
+    def build_dual_from_frame(cls, frame: BaseFrame) -> BaseDUAL:
         """Construct a dual frame to another frame."""

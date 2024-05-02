@@ -54,10 +54,21 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         raise NotImplementedError
 
     @classmethod
-    def build_dual_from_frame(cls, frame=BaseFrame) -> MultiQubitDUAL:
+    def build_dual_from_frame(
+        cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
+    ) -> MultiQubitDUAL:
         """Construct a dual frame to another frame."""
         if isinstance(frame, MultiQubitFrame):
-            diag_trace = np.diag([1.0 / np.trace(frame_op.data) for frame_op in frame.operators])
+            if alphas is None:
+                alphas = tuple(np.trace(frame_op.data) for frame_op in frame.operators)
+            elif len(alphas) != frame.n_operators:
+                raise ValueError(
+                    f"The number of alpha-parameters should be equal to the number of"
+                    f" operators in the frame ({frame.n_operators}). Here, {len(alphas)}"
+                    " parameters were provided."
+                )
+
+            diag_trace = np.diag([1.0 / alpha for alpha in alphas])
             superop = frame @ diag_trace @ np.conj(frame).T
 
             dual_operators_array = np.linalg.solve(
