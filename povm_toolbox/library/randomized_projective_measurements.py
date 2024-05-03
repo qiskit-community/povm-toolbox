@@ -121,7 +121,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             qc.rz(np.pi - self._qc_theta[i], qubit=i)
             qc.sx(qubit=i)
             qc.rz(3 * np.pi, qubit=i)
-
+        qc.barrier()
         qc.measure(qr, cr)
 
         return qc
@@ -224,7 +224,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         # TODO: how to compose classical registers ? CR used for POVM measurements should remain separate
         # TODO: how to deal with transpilation ?
 
-        composed_circuit = circuit.compose(self.msmt_qc)
+        composed_circuit = self.compose_circuits(circuit)
         composed_isa_circuit = pass_manager.run(composed_circuit)
 
         pub = SamplerPub(

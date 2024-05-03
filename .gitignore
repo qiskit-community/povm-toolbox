@@ -134,5 +134,6 @@ dmypy.json
 
 # untracked local files
 local_files/
+.vscode/
 
 .DS_STORE

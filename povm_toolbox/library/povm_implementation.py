@@ -17,12 +17,13 @@ from collections import Counter
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
-from qiskit.circuit import QuantumCircuit
+from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
-from qiskit.transpiler import StagedPassManager
+from qiskit.transpiler import StagedPassManager, TranspileLayout
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 from povm_toolbox.quantum_info.base_povm import BasePOVM
 
@@ -131,3 +132,29 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     @abstractmethod
     def definition(self) -> BasePOVM:
         """Return the corresponding POVM."""
+
+    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
+        """Compose the circuit to sample from, with the measurement circuit."""
+        if isinstance(circuit.layout, TranspileLayout):
+            circuit_num_qubits = len(circuit.layout.final_index_layout(filter_ancillas=True))
+
+            if self.msmt_qc.num_qubits < circuit.num_qubits:
+                msmt_circuit = self.msmt_qc.copy()
+                qa = QuantumRegister(circuit.num_qubits - msmt_circuit.num_qubits, name="ancilla")
+                msmt_circuit.add_register(qa)
+            else:
+                msmt_circuit = self.msmt_qc
+            pm = generate_preset_pass_manager(
+                optimization_level=0, initial_layout=circuit.layout.initial_index_layout()
+            )
+            routed_msmt_circuit = pm.run(msmt_circuit)
+        elif circuit.layout is None:
+            circuit_num_qubits = circuit.num_qubits
+            routed_msmt_circuit = self.msmt_qc
+        else:
+            raise NotImplementedError
+
+        if self.msmt_qc.num_qubits != circuit_num_qubits:
+            raise ValueError
+
+        return circuit.compose(routed_msmt_circuit)
