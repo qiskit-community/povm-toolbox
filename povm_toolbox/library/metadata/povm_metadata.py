@@ -19,6 +19,7 @@ from ..povm_implementation import POVMImplementation
 
 @dataclass
 class POVMMetadata:
-    """TODO."""
+    """The bare metadata container for POVM sampling results."""
 
     povm_implementation: POVMImplementation
+    """The POVM implementation which produced the results to which this metadata belongs."""

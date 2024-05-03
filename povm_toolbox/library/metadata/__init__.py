@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO.
+"""Metadata containers for your POVM sampling results.
 
 .. currentmodule:: povm_toolbox.library.metadata
 

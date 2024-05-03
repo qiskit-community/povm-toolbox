@@ -30,7 +30,7 @@ from .povm_implementation import POVMImplementation
 
 
 class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
-    """Class to represent the implementation of randomized projective measurements."""
+    """A general randomized projective measurements POVM."""
 
     def __init__(
         self,

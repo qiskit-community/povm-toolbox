@@ -23,7 +23,7 @@ from .povm_sampler_result import POVMPubResult
 
 
 class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
-    """Job class for the :class:`POVMSampler`."""
+    """Job class for the :class:`.POVMSampler`."""
 
     def __init__(
         self,

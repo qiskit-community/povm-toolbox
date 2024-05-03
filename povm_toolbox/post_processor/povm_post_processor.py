@@ -24,7 +24,7 @@ from povm_toolbox.sampler import POVMPubResult
 
 
 class POVMPostProcessor:
-    """Class to represent a POVM post-processor.."""
+    """A common POVM result post-processor."""
 
     def __init__(
         self,

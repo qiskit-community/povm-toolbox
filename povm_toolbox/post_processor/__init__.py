@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO.
+"""A module of POVM result post-processing tools.
 
 .. currentmodule:: povm_toolbox.post_processor
 
