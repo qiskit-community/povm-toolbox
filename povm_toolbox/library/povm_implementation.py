@@ -17,13 +17,12 @@ from collections import Counter
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
-from qiskit.circuit import QuantumCircuit, QuantumRegister
+from qiskit.circuit import QuantumCircuit
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager, TranspileLayout
-from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 from povm_toolbox.quantum_info.base_povm import BasePOVM
 
@@ -144,41 +143,23 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             circuit of this POVM implementation.
         """
         if circuit.layout is None:
-            if self.n_qubit != circuit.num_qubits:
-                raise ValueError(
-                    f"The supplied circuit ({circuit.num_qubits} qubits)"
-                    " does not match this POVM implementation which acts"
-                    f" on {self.n_qubit} qubits."
-                )
-            routed_msmt_circuit = self.msmt_qc
+            # Basic one-to-one layout
+            index_layout = list(range(circuit.num_qubits))
 
         elif isinstance(circuit.layout, TranspileLayout):
-            # Check that the number of qubits of the circuit before the transpilation matches
-            # the number of qubits of the POVM implementation.
-            if self.n_qubit != (
-                init_n_qubits := len(circuit.layout.initial_index_layout(filter_ancillas=True))
-            ):
-                raise ValueError(
-                    f"The supplied circuit (acting on {init_n_qubits} qubits)"
-                    " does not match this POVM implementation which acts"
-                    f" on {self.n_qubit} qubits."
-                )
-
-            # If transpilation of the circuit has added ancilla qubits, we add the same number
-            # of ancilla qubits to the measurement circuit.
-            if self.msmt_qc.num_qubits < circuit.num_qubits:
-                msmt_circuit = self.msmt_qc.copy()
-                qa = QuantumRegister(circuit.num_qubits - msmt_circuit.num_qubits, name="ancilla")
-                msmt_circuit.add_register(qa)
-            else:
-                msmt_circuit = self.msmt_qc
-
-            # Apply the layout of the transpiled circuit to the measurement circuit.
-            pm = generate_preset_pass_manager(
-                optimization_level=0, initial_layout=circuit.layout.initial_index_layout()
-            )
-            routed_msmt_circuit = pm.run(msmt_circuit)
+            # Extract the final layout of the transpiled circuit (ancillas are filtered).
+            index_layout = circuit.layout.final_index_layout(filter_ancillas=True)
         else:
             raise NotImplementedError
 
-        return circuit.compose(routed_msmt_circuit)
+        # Check that the number of qubits of the circuit (before the transpilation, if
+        #  applicable) matches the number of qubits of the POVM implementation.
+        if self.n_qubit != len(index_layout):
+            raise ValueError(
+                f"The supplied circuit (acting on {len(index_layout)} qubits)"
+                " does not match this POVM implementation which acts on"
+                f" {self.n_qubit} qubits."
+            )
+
+        # Compose the two circuits with the correct routing.
+        return circuit.compose(self.msmt_qc, qubits=index_layout)
