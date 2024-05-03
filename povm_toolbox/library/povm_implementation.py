@@ -134,27 +134,51 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """Return the corresponding POVM."""
 
     def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
-        """Compose the circuit to sample from, with the measurement circuit."""
-        if isinstance(circuit.layout, TranspileLayout):
-            circuit_num_qubits = len(circuit.layout.final_index_layout(filter_ancillas=True))
+        """Compose the circuit to sample from, with the measurement circuit.
 
+        Args:
+            circuit: Quantum circuit to be sampled from.
+
+        Returns:
+            The composition of the supplied quantum circuit with the measurement
+            circuit of this POVM implementation.
+        """
+        if circuit.layout is None:
+            if self.n_qubit != circuit.num_qubits:
+                raise ValueError(
+                    f"The supplied circuit ({circuit.num_qubits} qubits)"
+                    " does not match this POVM implementation which acts"
+                    f" on {self.n_qubit} qubits."
+                )
+            routed_msmt_circuit = self.msmt_qc
+
+        elif isinstance(circuit.layout, TranspileLayout):
+            # Check that the number of qubits of the circuit before the transpilation matches
+            # the number of qubits of the POVM implementation.
+            if self.n_qubit != (
+                init_n_qubits := len(circuit.layout.initial_index_layout(filter_ancillas=True))
+            ):
+                raise ValueError(
+                    f"The supplied circuit (acting on {init_n_qubits} qubits)"
+                    " does not match this POVM implementation which acts"
+                    f" on {self.n_qubit} qubits."
+                )
+
+            # If transpilation of the circuit has added ancilla qubits, we add the same number
+            # of ancilla qubits to the measurement circuit.
             if self.msmt_qc.num_qubits < circuit.num_qubits:
                 msmt_circuit = self.msmt_qc.copy()
                 qa = QuantumRegister(circuit.num_qubits - msmt_circuit.num_qubits, name="ancilla")
                 msmt_circuit.add_register(qa)
             else:
                 msmt_circuit = self.msmt_qc
+
+            # Apply the layout of the transpiled circuit to the measurement circuit.
             pm = generate_preset_pass_manager(
                 optimization_level=0, initial_layout=circuit.layout.initial_index_layout()
             )
             routed_msmt_circuit = pm.run(msmt_circuit)
-        elif circuit.layout is None:
-            circuit_num_qubits = circuit.num_qubits
-            routed_msmt_circuit = self.msmt_qc
         else:
             raise NotImplementedError
-
-        if self.msmt_qc.num_qubits != circuit_num_qubits:
-            raise ValueError
 
         return circuit.compose(routed_msmt_circuit)
