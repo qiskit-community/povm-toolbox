@@ -131,7 +131,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         circuit: QuantumCircuit,
         circuit_binding: BindingsArray,
         shots: int,
-        pass_manager: StagedPassManager,
+        pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, RPMMetadata]:
         """Append the measurement circuit(s) to the supplied circuit.
 
@@ -147,6 +147,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             circuit: A quantum circuit.
             circuit_binding: A bindings array.
             shots: A specific number of shots to run with.
+            pass_manager: An optional pass manager. After the supplied circuit has
+                been composed with the measurement circuit, the pass manager will
+                transpile the composed circuit.
 
         Returns:
             A tuple of a sampler pub and a dictionary of metadata which include
@@ -225,10 +228,12 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         # TODO: how to deal with transpilation ?
 
         composed_circuit = self.compose_circuits(circuit)
-        composed_isa_circuit = pass_manager.run(composed_circuit)
+
+        if pass_manager is not None:
+            composed_circuit = pass_manager.run(composed_circuit)
 
         pub = SamplerPub(
-            circuit=composed_isa_circuit,
+            circuit=composed_circuit,
             parameter_values=combined_binding,
             shots=self.shot_batch_size,
         )

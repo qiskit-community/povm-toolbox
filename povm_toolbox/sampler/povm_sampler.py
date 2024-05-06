@@ -16,7 +16,7 @@ from collections.abc import Iterable
 
 from qiskit.primitives import BaseSamplerV2
 from qiskit.primitives.containers.sampler_pub import SamplerPub
-from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit.transpiler import StagedPassManager
 
 from povm_toolbox.library.metadata import POVMMetadata
 from povm_toolbox.library.povm_implementation import POVMImplementation
@@ -45,6 +45,7 @@ class POVMSampler:
         *,
         shots: int | None = None,
         povm: POVMImplementation | None = None,
+        pass_manager: StagedPassManager | None = None,
     ) -> POVMSamplerJob:
         """Run and collect samples from each pub.
 
@@ -57,20 +58,18 @@ class POVMSampler:
             povm: A POVM implementation that defines the measurement to perform
                 for each pub that does not specify it own POVM. If ``None``, each pub
                 has to specify its own POVM.
+            pass_manager: An optional pass manager. For each pub, its circuit will be
+                composed with the associated measurement circuit. If a pass manager is
+                provided, it will transpile the composed circuits.
 
         Returns:
             The POVM sampler job object.
         """
-        # TODO: we need to revisit this as part part of issue #37
-        pm = generate_preset_pass_manager(
-            optimization_level=1, backend=getattr(self.sampler, "_backend", None)
-        )
-
         coerced_sampler_pubs: list[SamplerPub] = []
         metadata: list[POVMMetadata] = []
         for pub in pubs:
             povm_sampler_pub = POVMSamplerPub.coerce(pub=pub, shots=shots, povm=povm)
-            sampler_pub, pub_metadata = povm_sampler_pub.to_sampler_pub(pass_manager=pm)
+            sampler_pub, pub_metadata = povm_sampler_pub.to_sampler_pub(pass_manager=pass_manager)
             coerced_sampler_pubs.append(sampler_pub)
             metadata.append(pub_metadata)
 

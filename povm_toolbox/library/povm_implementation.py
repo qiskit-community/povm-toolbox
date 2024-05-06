@@ -64,7 +64,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         circuit: QuantumCircuit,
         circuit_binding: BindingsArray,
         shots: int,
-        pass_manager: StagedPassManager,
+        pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, MetadataT]:
         """Append the measurement circuit(s) to the supplied circuit.
 
@@ -77,6 +77,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             circuit: A quantum circuit.
             parameter_values: A bindings array.
             shots: A specific number of shots to run with.
+            pass_manager: An optional pass manager. After the supplied circuit has
+                been composed with the measurement circuit, the pass manager will
+                transpile the composed circuit.
 
         Returns:
             A tuple of a sampler pub and a dictionary of metadata which include
@@ -89,6 +92,38 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
         # TODO: is it the right place to coerce the ``SamplerPub`` ? Or should
         # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
+
+    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
+        """Compose the circuit to sample from, with the measurement circuit.
+
+        Args:
+            circuit: Quantum circuit to be sampled from.
+
+        Returns:
+            The composition of the supplied quantum circuit with the measurement
+            circuit of this POVM implementation.
+        """
+        if circuit.layout is None:
+            # Basic one-to-one layout
+            index_layout = list(range(circuit.num_qubits))
+
+        elif isinstance(circuit.layout, TranspileLayout):
+            # Extract the final layout of the transpiled circuit (ancillas are filtered).
+            index_layout = circuit.layout.final_index_layout(filter_ancillas=True)
+        else:
+            raise NotImplementedError
+
+        # Check that the number of qubits of the circuit (before the transpilation, if
+        # applicable) matches the number of qubits of the POVM implementation.
+        if self.n_qubit != len(index_layout):
+            raise ValueError(
+                f"The supplied circuit (acting on {len(index_layout)} qubits)"
+                " does not match this POVM implementation which acts on"
+                f" {self.n_qubit} qubits."
+            )
+
+        # Compose the two circuits with the correct routing.
+        return circuit.compose(self.msmt_qc, qubits=index_layout)
 
     @abstractmethod
     def reshape_data_bin(self, data: DataBin) -> DataBin:
@@ -131,35 +166,3 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     @abstractmethod
     def definition(self) -> BasePOVM:
         """Return the corresponding POVM."""
-
-    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
-        """Compose the circuit to sample from, with the measurement circuit.
-
-        Args:
-            circuit: Quantum circuit to be sampled from.
-
-        Returns:
-            The composition of the supplied quantum circuit with the measurement
-            circuit of this POVM implementation.
-        """
-        if circuit.layout is None:
-            # Basic one-to-one layout
-            index_layout = list(range(circuit.num_qubits))
-
-        elif isinstance(circuit.layout, TranspileLayout):
-            # Extract the final layout of the transpiled circuit (ancillas are filtered).
-            index_layout = circuit.layout.final_index_layout(filter_ancillas=True)
-        else:
-            raise NotImplementedError
-
-        # Check that the number of qubits of the circuit (before the transpilation, if
-        #  applicable) matches the number of qubits of the POVM implementation.
-        if self.n_qubit != len(index_layout):
-            raise ValueError(
-                f"The supplied circuit (acting on {len(index_layout)} qubits)"
-                " does not match this POVM implementation which acts on"
-                f" {self.n_qubit} qubits."
-            )
-
-        # Compose the two circuits with the correct routing.
-        return circuit.compose(self.msmt_qc, qubits=index_layout)
