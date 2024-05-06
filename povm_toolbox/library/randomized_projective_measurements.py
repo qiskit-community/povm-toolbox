@@ -238,7 +238,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             shots=self.shot_batch_size,
         )
 
-        metadata = RPMMetadata(povm_implementation=self, pvm_keys=pvm_idx)
+        metadata = RPMMetadata(
+            povm_implementation=self, composed_circuit=composed_circuit, pvm_keys=pvm_idx
+        )
 
         return (pub, metadata)
 
