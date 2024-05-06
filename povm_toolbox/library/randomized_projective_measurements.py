@@ -222,11 +222,6 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         combined_binding = BindingsArray.coerce(binding_data)
 
-        # TODO: assert circuit qubit routing and stuff
-        # TODO: assert both circuits are compatible, in particular no measurements at the end of ``circuits``
-        # TODO: how to compose classical registers ? CR used for POVM measurements should remain separate
-        # TODO: how to deal with transpilation ?
-
         composed_circuit = self.compose_circuits(circuit)
 
         if pass_manager is not None:
