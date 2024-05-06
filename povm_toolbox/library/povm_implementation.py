@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit
+from qiskit.circuit.exceptions import CircuitError
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
@@ -103,13 +104,14 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             The composition of the supplied quantum circuit with the measurement
             circuit of this POVM implementation.
         """
-        if circuit.layout is None:
+        dest_circuit = circuit.copy()
+        if dest_circuit.layout is None:
             # Basic one-to-one layout
-            index_layout = list(range(circuit.num_qubits))
+            index_layout = list(range(dest_circuit.num_qubits))
 
-        elif isinstance(circuit.layout, TranspileLayout):
+        elif isinstance(dest_circuit.layout, TranspileLayout):
             # Extract the final layout of the transpiled circuit (ancillas are filtered).
-            index_layout = circuit.layout.final_index_layout(filter_ancillas=True)
+            index_layout = dest_circuit.layout.final_index_layout(filter_ancillas=True)
         else:
             raise NotImplementedError
 
@@ -122,8 +124,20 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 f" {self.n_qubit} qubits."
             )
 
+        try:
+            dest_circuit.add_register(*self.msmt_qc.cregs)
+        except CircuitError as exc:
+            raise CircuitError(
+                f"{exc}\nNote: the supplied quantum circuit should not have a classical register"
+                " which has the same name as the classical register that the POVM"
+                " implementation uses to store measurement outcomes (creg name: "
+                f"'{self.classical_register_name}').\nTo fix it, either delete this register or "
+                " change the name of the register of the supplied circuit or of the"
+                " POVM implementation."
+            ) from exc
+
         # Compose the two circuits with the correct routing.
-        return circuit.compose(self.msmt_qc, qubits=index_layout)
+        return dest_circuit.compose(self.msmt_qc, qubits=index_layout, clbits=self.msmt_qc.clbits)
 
     @abstractmethod
     def reshape_data_bin(self, data: DataBin) -> DataBin:
