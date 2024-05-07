@@ -16,6 +16,7 @@ import numpy as np
 from qiskit.quantum_info import DensityMatrix
 
 from .base_povm import BasePOVM
+from .multi_qubit_dual import MultiQubitDUAL
 from .multi_qubit_frame import MultiQubitFrame
 
 
@@ -25,6 +26,8 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
     This is a representation of a positive operator-valued measure (POVM). The effects are
     specified as a list of :class:`~qiskit.quantum_info.Operator`.
     """
+
+    default_dual_class = MultiQubitDUAL
 
     def _check_validity(self) -> None:
         r"""Check if POVM axioms are fulfilled.

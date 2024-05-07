@@ -18,11 +18,14 @@ from typing import Any
 import numpy as np
 from qiskit.quantum_info import DensityMatrix
 
+from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
 
 
 class BasePOVM(BaseFrame, ABC):
     """Abstract base class that contains all methods that any specific POVM subclass should implement."""
+
+    default_dual_class: type[BaseDUAL]
 
     @property
     def n_outcomes(self) -> int:

@@ -17,6 +17,7 @@ from qiskit.quantum_info import DensityMatrix, Operator
 
 from .base_povm import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
+from .product_dual import ProductDUAL
 from .product_frame import ProductFrame
 
 
@@ -28,6 +29,8 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
     product of local effects,
     :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
     """
+
+    default_dual_class = ProductDUAL
 
     def _check_validity(self) -> None:
         """Check if POVM axioms are fulfilled.
