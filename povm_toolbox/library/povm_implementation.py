@@ -104,9 +104,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             The composition of the supplied quantum circuit with the measurement
             circuit of this POVM implementation.
         """
-        # TODO: assert both circuits are compatible, in particular no measurements at the end of ``circuits``
+        # Create a copy of the circuit and remove final measurements:
+        dest_circuit = circuit.remove_final_measurements(inplace=False)
 
-        dest_circuit = circuit.copy()
         if dest_circuit.layout is None:
             # Basic one-to-one layout
             index_layout = list(range(dest_circuit.num_qubits))
