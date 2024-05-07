@@ -19,7 +19,6 @@ import numpy as np
 from qiskit.quantum_info import Operator
 
 from .base_frame import BaseFrame
-from .base_povm import BasePOVM
 
 
 class BaseDUAL(BaseFrame, ABC):
@@ -27,7 +26,7 @@ class BaseDUAL(BaseFrame, ABC):
 
     @property
     def n_outcomes(self) -> int:
-        """Give the number of outcomes of the POVM."""
+        """Give the number of outcomes of the DUAL."""
         return self.n_operators
 
     @abstractmethod
@@ -36,7 +35,7 @@ class BaseDUAL(BaseFrame, ABC):
         obs: Operator,
         outcome_idx: Any | set[Any] | None = None,
     ) -> float | dict[Any, float] | np.ndarray:
-        """Return the decomposition weights of observable `obs` into the POVM effects."""
+        """Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual."""
         return self.analysis(obs, outcome_idx)
 
     @abstractmethod
@@ -44,8 +43,8 @@ class BaseDUAL(BaseFrame, ABC):
         """Check if `self` is a dual to another frame."""
 
     @abstractmethod
-    def optimize(self, povm: BasePOVM, **options) -> None:
-        """Optimize the dual inplace."""
+    def optimize(self, frame: BaseFrame, **options) -> None:
+        """Optimize the dual to `frame` inplace."""
 
     @classmethod
     @abstractmethod

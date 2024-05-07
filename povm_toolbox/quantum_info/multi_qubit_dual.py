@@ -13,29 +13,29 @@
 from __future__ import annotations
 
 import numpy as np
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import DensityMatrix, Operator, Statevector
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
-from .base_povm import BasePOVM
 from .multi_qubit_frame import MultiQubitFrame
 
 
 class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
-    """Class that collects all information that any MultiQubit POVM should specify.
+    """Class that collects all information that any MultiQubit DUAL should specify.
 
-    This is a representation of a positive operator-valued measure (POVM). The effects are
-    specified as a list of :class:`~qiskit.quantum_info.Operator`.
+    This is a representation of a dual frame. Its elements are specified as a list
+    of :class:`~qiskit.quantum_info.Operator`.
     """
 
     def get_omegas(
         self, obs: Operator, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
-        r"""Return the decomposition weights of observable ``obs`` into the POVM effects.
+        r"""Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual.
 
-        Given an observable :math:`O` which is in the span of the POVM, one can write the
+        Here the POVM itself is not explicitly needed, its dual is sufficient. Given
+        an observable :math:`O` which is in the span of a given POVM, one can write the
         observable :math:`O` as the weighted sum of the POVM effects, :math:`O = \sum_k w_k M_k`
         for real weights :math:`w_k`. There might be infinitely many valid sets of weight.
         This method returns a possible set of weights.
@@ -48,19 +48,23 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         """
         return self.analysis(obs, outcome_idx)
 
-    def is_dual_to(self, frame=BaseFrame) -> bool:
+    def is_dual_to(self, frame: BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
         if isinstance(frame, MultiQubitFrame):
             return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
         raise NotImplementedError
 
-    def optimize(self, povm: BasePOVM, **options) -> None:
-        """Optimize the dual inplace."""
+    def optimize(self, frame: BaseFrame, **options) -> None:
+        """Optimize the dual to `frame` inplace."""
         if (state := options.get("state", None)) is not None:
-            alphas = tuple(povm.get_prob(state))  # type: ignore
-            self.operators = self._build_dual_operators(povm, alphas)
+            if isinstance(state, (Statevector, DensityMatrix)):
+                state = Operator(state)
+            elif not isinstance(state, Operator):
+                raise TypeError
+            alphas = tuple(frame.analysis(state))  # type: ignore
+            self.operators = self._build_dual_operators(frame, alphas)
         elif (alphas := options.get("alphas", None)) is not None:
-            self.operators = self._build_dual_operators(povm, alphas)
+            self.operators = self._build_dual_operators(frame, alphas)
 
     @staticmethod
     def _build_dual_operators(

@@ -13,23 +13,21 @@
 from __future__ import annotations
 
 import numpy as np
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import DensityMatrix, Operator, Statevector
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
-from .base_povm import BasePOVM
 from .multi_qubit_dual import MultiQubitDUAL
 from .product_frame import ProductFrame
-from .product_povm import ProductPOVM
 
 
 class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
-    r"""Class to represent a set of product POVM operators.
+    r"""Class to represent a set of product DUAL operators.
 
-    A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting
+    A product DUAL :math:`D` is made of local DUAL :math:`D1, D2, ...` acting
     on respective subsystems. Each global effect can be written as the tensor
     product of local effects,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
+    :math:`D_{k_1, k_2, ...} = D1_{k_1} \otimes D2_{k2} \otimes ...`.
     """
 
     def get_omegas(
@@ -37,9 +35,10 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         obs: Operator,
         outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        r"""Return the decomposition weights of observable ``obs`` into the POVM effects.
+        r"""Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual.
 
-        Given an observable :math:`O` which is in the span of the POVM, one can write the
+        Here the POVM itself is not explicitly needed, its dual is sufficient. Given
+        an observable :math:`O` which is in the span of a given POVM, one can write the
         observable :math:`O` as the weighted sum of the POVM effects, :math:`O = \sum_k w_k M_k`
         for real weights :math:`w_k`. There might be infinitely many valid sets of weight.
         This method returns a possible set of weights.
@@ -70,19 +69,23 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         #      have not implemented the check for this. Then we should raise an NotImplementedError.
         raise NotImplementedError
 
-    def optimize(self, povm: BasePOVM, **options) -> None:
-        """Optimize the dual inplace."""
+    def optimize(self, frame: BaseFrame, **options) -> None:
+        """Optimize the dual to `frame` inplace."""
         state = options.get("state", None)
-        if not isinstance(povm, ProductPOVM):
+        if not isinstance(frame, ProductFrame):
             raise NotImplementedError
         if state is not None:
-            axes = np.arange(len(povm.sub_systems), dtype=int)
-            joint_prob: np.ndarray = povm.get_prob(rho=state)  # type: ignore
-            for i, sub_system in enumerate(povm.sub_systems):
+            axes = np.arange(len(frame.sub_systems), dtype=int)
+            if isinstance(state, (Statevector, DensityMatrix)):
+                state = Operator(state)
+            elif not isinstance(state, Operator):
+                raise TypeError
+            joint_prob: np.ndarray = frame.analysis(rho=state)  # type: ignore
+            for i, sub_system in enumerate(frame.sub_systems):
                 marg_prob = joint_prob.sum(axis=tuple(np.delete(axes, [i])))
                 if not all(marg_prob):
                     marg_prob += 1e-3
-                self[sub_system].optimize(povm=povm[sub_system], alphas=tuple(marg_prob))
+                self[sub_system].optimize(frame=frame[sub_system], alphas=tuple(marg_prob))
 
     @classmethod
     def build_dual_from_frame(
