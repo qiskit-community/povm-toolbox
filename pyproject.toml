@@ -109,6 +109,7 @@ testpaths = ["./povm_toolbox/", "./test/"]
 [tool.ruff]
 line-length = 100
 src = ["povm_toolbox", "test"]
+extend-include = ["*.ipynb"]
 target-version = "py39"
 
 [tool.ruff.lint]
