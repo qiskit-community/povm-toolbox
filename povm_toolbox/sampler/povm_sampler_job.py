@@ -78,7 +78,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
 
     def status(self) -> JobStatus:
         """Return the status of the job."""
-        raise NotImplementedError("Subclass of BasePrimitiveJob must implement `status` method.")
+        return self.base_job.status()
 
     def done(self) -> bool:
         """Return whether the job has successfully run."""
