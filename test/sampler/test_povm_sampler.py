@@ -17,6 +17,7 @@ from povm_toolbox.library import ClassicalShadows, LocallyBiasedClassicalShadows
 from povm_toolbox.sampler import POVMSampler, POVMSamplerJob
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BaseSamplerV2
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 
@@ -28,6 +29,7 @@ class TestPOVMSampler(TestCase):
         super().__init__(methodName)
         self.backend = AerSimulator()
         self.sampler = Sampler(backend=self.backend)
+        self.pm = generate_preset_pass_manager(optimization_level=1, backend=self.backend)
 
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
@@ -36,8 +38,12 @@ class TestPOVMSampler(TestCase):
     def test_run(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         n_qubit = 2
-        qc_random1 = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
-        qc_random2 = random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
+        qc_random1 = self.pm.run(
+            random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=42)
+        )
+        qc_random2 = self.pm.run(
+            random_circuit(num_qubits=n_qubit, depth=3, measure=False, seed=43)
+        )
         cs_implementation = ClassicalShadows(n_qubit=n_qubit)
         lbcs_implementation = LocallyBiasedClassicalShadows(
             n_qubit=n_qubit, bias=np.array([[0.2, 0.3, 0.5], [0.8, 0.1, 0.1]])
