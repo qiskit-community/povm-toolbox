@@ -57,6 +57,8 @@ class MultiQubitFrame(BaseFrame):
                 )
         self._operators: list[Operator] = list_operators
 
+        self._pauli_operators: list[dict[str, complex]] | None = None
+
         self._array: np.ndarray = np.ndarray((self.dimension**2, self.n_operators), dtype=complex)
         for k, frame_op in enumerate(list_operators):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
@@ -99,6 +101,8 @@ class MultiQubitFrame(BaseFrame):
 
         self._operators = new_operators
 
+        self._pauli_operators = None
+
         self._array = np.ndarray((self.dimension**2, self.n_operators), dtype=complex)
         for k, frame_op in enumerate(new_operators):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
@@ -118,10 +122,14 @@ class MultiQubitFrame(BaseFrame):
         Raises:
             ValueError: when the POVM operators are not N-qubit operators.
         """
-        try:
-            return [dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.operators]
-        except QiskitError as exc:
-            raise ValueError("Failed to convert POVM operators to Pauli form.") from exc
+        if self._pauli_operators is None:
+            try:
+                self._pauli_operators = [
+                    dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.operators
+                ]
+            except QiskitError as exc:
+                raise ValueError("Failed to convert POVM operators to Pauli form.") from exc
+        return self._pauli_operators
 
     def _check_validity(self) -> None:
         r"""Check if POVM axioms are fulfilled.
@@ -158,7 +166,7 @@ class MultiQubitFrame(BaseFrame):
         return self._array
 
     def analysis(
-        self, op: Operator, outcome_idx: int | set[int] | None = None
+        self, op: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
         r"""Return the outcome probabilities given a state ``rho``.
 
@@ -175,6 +183,8 @@ class MultiQubitFrame(BaseFrame):
         Raises:
             TypeError: TODO.
         """
+        if isinstance(op, SparsePauliOp):
+            op = op.to_operator()
         op_vectorized = np.conj(matrix_to_double_ket(op.data))
         if isinstance(outcome_idx, int):
             return float(np.dot(op_vectorized, self._array[:, outcome_idx]).real)
