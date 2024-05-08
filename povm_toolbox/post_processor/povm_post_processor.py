@@ -59,6 +59,7 @@ class POVMPostProcessor:
         """Optimize the dual inplace."""
         if self._dual is None:
             self._dual = self._dual_class.build_dual_from_frame(self.povm)
+        # TODO: improve efficiency, we are doing the heavy computation twice here
         self._dual = self.dual.optimize(self.povm, **options)
 
     def get_expectation_value(
