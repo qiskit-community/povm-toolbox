@@ -41,11 +41,25 @@ class POVMPostProcessor:
         elif not issubclass(dual_class, BaseDUAL):
             raise TypeError
 
-        self.dual = dual_class.build_dual_from_frame(self.povm)
+        self._dual_class = dual_class
+        self._dual: BaseDUAL | None = None
+
+    @property
+    def dual(self) -> BaseDUAL:
+        """Return the dual that is used.
+
+        CAREFUL: if the dual frame is not already computed, this could be computationally heavy.
+        TODO: use admonition.
+        """
+        if self._dual is None:
+            self._dual = self._dual_class.build_dual_from_frame(self.povm)
+        return self._dual
 
     def optimize(self, **options) -> None:
         """Optimize the dual inplace."""
-        self.dual.optimize(self.povm, **options)
+        if self._dual is None:
+            self._dual = self._dual_class.build_dual_from_frame(self.povm)
+        self._dual = self.dual.optimize(self.povm, **options)
 
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
