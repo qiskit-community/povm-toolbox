@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 
 class BaseFrame(ABC):
@@ -66,7 +66,7 @@ class BaseFrame(ABC):
     @abstractmethod
     def analysis(
         self,
-        operator: Operator,
+        operator: SparsePauliOp | Operator,
         effect_idx: Any | set[Any] | None = None,
     ) -> float | dict[Any, float] | np.ndarray:
         """Return the frame coefficients of `operator`."""

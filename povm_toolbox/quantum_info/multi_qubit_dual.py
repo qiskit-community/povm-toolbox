@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix, Operator, Statevector
+from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
@@ -30,7 +30,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
     """
 
     def get_omegas(
-        self, obs: Operator, outcome_idx: int | set[int] | None = None
+        self, obs: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
         r"""Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual.
 

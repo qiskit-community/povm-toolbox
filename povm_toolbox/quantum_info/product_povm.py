@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix, Operator
+from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
 from .base_povm import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
@@ -45,7 +45,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
 
     def get_prob(
         self,
-        rho: DensityMatrix,
+        rho: SparsePauliOp | DensityMatrix | Statevector,
         outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
         """Return the outcome probabilities given a state rho.
@@ -64,4 +64,6 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             ``ProductPOVM`` is returned. The length of each dimension is given by the number of outcomes
             of the POVM encoded along that axis.
         """
-        return self.analysis(Operator(rho), outcome_idx)
+        if not isinstance(rho, SparsePauliOp):
+            rho = SparsePauliOp.from_operator(rho)
+        return self.analysis(rho, outcome_idx)

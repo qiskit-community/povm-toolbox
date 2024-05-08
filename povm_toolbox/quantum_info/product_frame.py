@@ -261,7 +261,7 @@ class ProductFrame(BaseFrame, Generic[T]):
 
     def analysis(
         self,
-        operator: Operator,
+        operator: SparsePauliOp | Operator,
         effect_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
         """TODO.
@@ -285,8 +285,9 @@ class ProductFrame(BaseFrame, Generic[T]):
             ValueError: when the provided state ``operator`` does not act on the same number of qubits as
                 this ``ProductPOVM``.
         """
-        # Convert the provided state to a Pauli operator.
-        operator = SparsePauliOp.from_operator(operator)
+        if not isinstance(operator, SparsePauliOp):
+            # Convert the provided state to a Pauli operator.
+            operator = SparsePauliOp.from_operator(operator)
 
         # Assert matching operator and POVM sizes.
         if operator.num_qubits != self.n_subsystems:

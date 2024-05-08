@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix
+from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
@@ -35,7 +35,7 @@ class BasePOVM(BaseFrame, ABC):
     @abstractmethod
     def get_prob(
         self,
-        rho: DensityMatrix,
+        rho: SparsePauliOp | DensityMatrix | Statevector,
         outcome_idx: Any | set[Any] | None = None,
     ) -> float | dict[Any, float] | np.ndarray:
         """Return the outcome probabilities given a state rho."""

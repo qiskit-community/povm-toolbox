@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .base_frame import BaseFrame
 
@@ -32,7 +32,7 @@ class BaseDUAL(BaseFrame, ABC):
     @abstractmethod
     def get_omegas(
         self,
-        obs: Operator,
+        obs: SparsePauliOp | Operator,
         outcome_idx: Any | set[Any] | None = None,
     ) -> float | dict[Any, float] | np.ndarray:
         """Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual."""

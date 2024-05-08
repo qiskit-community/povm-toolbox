@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix
+from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
 
 from .base_povm import BasePOVM
 from .multi_qubit_dual import MultiQubitDUAL
@@ -53,7 +53,9 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
             raise ValueError(f"POVM operators not summing up to the identity : \n{summed_op}")
 
     def get_prob(
-        self, rho: DensityMatrix, outcome_idx: int | set[int] | None = None
+        self,
+        rho: SparsePauliOp | DensityMatrix | Statevector,
+        outcome_idx: int | set[int] | None = None,
     ) -> float | dict[int, float] | np.ndarray:
         r"""Return the outcome probabilities given a state ``rho``.
 
@@ -70,4 +72,6 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         Raises:
             TypeError: TODO.
         """
+        if not isinstance(rho, SparsePauliOp):
+            rho = Operator(rho)
         return self.analysis(rho, outcome_idx)
