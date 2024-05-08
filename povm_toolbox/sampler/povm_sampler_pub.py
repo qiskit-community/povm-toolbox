@@ -231,7 +231,7 @@ class POVMSamplerPub(ShapedMixin):
 
     def to_sampler_pub(
         self,
-        pass_manager: StagedPassManager,
+        pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, POVMMetadata]:
         """TODO."""
         return self.povm.to_sampler_pub(

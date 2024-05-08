@@ -12,7 +12,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 from dataclasses import dataclass
 
 import numpy as np
@@ -31,24 +30,3 @@ class RPMMetadata(POVMMetadata):
     where ``pv`` is the bindings array provided by the user to run with the
     parametrized quantum circuit supplied in the :meth:`.POVMSampler.run` method.
     """
-
-    def __repr__(self):
-        """Implement the default ``__repr__`` method to avoid printing large ``numpy.array``.
-
-        The attribute ``pvm_keys`` will typically be a large ``numpy.ndarray`` object.
-        With the default ``dataclass.__repr__``, it would be entirely printed. As this
-        is recursive, the full array would be printed when printing the :class:`.PrimitiveResult`
-        object returned by the :meth:`.POVMSampler.run` method. The redefinition here avoids this.
-        """
-        lst_fields = []
-        for field in dataclasses.fields(self):
-            f_name = field.name
-            f_val = getattr(self, field.name)
-            f_val = (
-                f_val
-                if not isinstance(f_val, np.ndarray)
-                else f'np.ndarray<{",".join(map(str, f_val.shape))}>'
-            )
-            lst_fields.append((f_name, f_val))
-        f_repr = ", ".join(f"{name}={value}" for name, value in lst_fields)
-        return f"{self.__class__.__name__}({f_repr})"

@@ -18,11 +18,12 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit
+from qiskit.circuit.exceptions import CircuitError
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
-from qiskit.transpiler import StagedPassManager
+from qiskit.transpiler import StagedPassManager, TranspileLayout
 
 from povm_toolbox.quantum_info.base_povm import BasePOVM
 
@@ -64,7 +65,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         circuit: QuantumCircuit,
         circuit_binding: BindingsArray,
         shots: int,
-        pass_manager: StagedPassManager,
+        pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, MetadataT]:
         """Append the measurement circuit(s) to the supplied circuit.
 
@@ -77,6 +78,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             circuit: A quantum circuit.
             parameter_values: A bindings array.
             shots: A specific number of shots to run with.
+            pass_manager: An optional pass manager. After the supplied circuit has
+                been composed with the measurement circuit, the pass manager will
+                transpile the composed circuit.
 
         Returns:
             A tuple of a sampler pub and a dictionary of metadata which include
@@ -89,6 +93,53 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
         # TODO: is it the right place to coerce the ``SamplerPub`` ? Or should
         # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
+
+    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
+        """Compose the circuit to sample from, with the measurement circuit.
+
+        Args:
+            circuit: Quantum circuit to be sampled from.
+
+        Returns:
+            The composition of the supplied quantum circuit with the measurement
+            circuit of this POVM implementation.
+        """
+        # Create a copy of the circuit and remove final measurements:
+        dest_circuit = circuit.remove_final_measurements(inplace=False)
+
+        if dest_circuit.layout is None:
+            # Basic one-to-one layout
+            index_layout = list(range(dest_circuit.num_qubits))
+
+        elif isinstance(dest_circuit.layout, TranspileLayout):
+            # Extract the final layout of the transpiled circuit (ancillas are filtered).
+            index_layout = dest_circuit.layout.final_index_layout(filter_ancillas=True)
+        else:
+            raise NotImplementedError
+
+        # Check that the number of qubits of the circuit (before the transpilation, if
+        # applicable) matches the number of qubits of the POVM implementation.
+        if self.n_qubit != len(index_layout):
+            raise ValueError(
+                f"The supplied circuit (acting on {len(index_layout)} qubits)"
+                " does not match this POVM implementation which acts on"
+                f" {self.n_qubit} qubits."
+            )
+
+        try:
+            dest_circuit.add_register(*self.msmt_qc.cregs)
+        except CircuitError as exc:
+            raise CircuitError(
+                f"{exc}\nNote: the supplied quantum circuit should not have a classical register"
+                " which has the same name as the classical register that the POVM"
+                " implementation uses to store measurement outcomes (creg name: "
+                f"'{self.classical_register_name}').\nTo fix it, either delete this register or "
+                " change the name of the register of the supplied circuit or of the"
+                " POVM implementation."
+            ) from exc
+
+        # Compose the two circuits with the correct routing.
+        return dest_circuit.compose(self.msmt_qc, qubits=index_layout, clbits=self.msmt_qc.clbits)
 
     @abstractmethod
     def reshape_data_bin(self, data: DataBin) -> DataBin:
