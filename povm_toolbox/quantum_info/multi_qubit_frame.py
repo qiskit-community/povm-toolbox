@@ -63,8 +63,9 @@ class MultiQubitFrame(BaseFrame):
         for k, frame_op in enumerate(list_operators):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
 
-        # TODO.
-        self._informationally_complete: bool
+        self._informationally_complete: bool = bool(
+            np.linalg.matrix_rank(self._array) == self.dimension**2
+        )
 
         self._check_validity()
 

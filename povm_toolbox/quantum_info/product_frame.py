@@ -85,8 +85,9 @@ class ProductFrame(BaseFrame, Generic[T]):
             self._n_operators *= povm.n_operators
             shape.append(povm.n_operators)
 
-        # TODO.
-        self._informationally_complete: bool
+        self._informationally_complete: bool = all(
+            [povm.informationally_complete for povm in povms.values()]
+        )
 
         self._povms = povms
         self._shape: tuple[int, ...] = tuple(shape)

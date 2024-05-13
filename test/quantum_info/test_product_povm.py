@@ -236,6 +236,51 @@ class TestProductPOVM(TestCase):
 
         self.assertTrue(dual.is_dual_to(prod_povm))
 
+    def test_informationally_complete(self):
+        """Test whether a POVM is informationally complete or not."""
+        import cmath
+
+        vecs = np.sqrt(1.0 / 2.0) * np.array(
+            [
+                [1, 0],
+                [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
+                [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(2.0j * np.pi / 3)],
+                [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(4.0j * np.pi / 3)],
+            ]
+        )
+        sic_povm = MultiQubitPOVM.from_vectors(vecs)
+
+        coef = 1.0 / 3.0
+        cs_povm = MultiQubitPOVM(
+            [
+                coef * Operator.from_label("0"),
+                coef * Operator.from_label("1"),
+                coef * Operator.from_label("+"),
+                coef * Operator.from_label("-"),
+                coef * Operator.from_label("r"),
+                coef * Operator.from_label("l"),
+            ]
+        )
+
+        coef = 1.0 / 2.0
+        non_ic_povm = MultiQubitPOVM(
+            [
+                coef * Operator.from_label("0"),
+                coef * Operator.from_label("1"),
+                coef * Operator.from_label("+"),
+                coef * Operator.from_label("-"),
+            ]
+        )
+
+        self.assertTrue(ProductPOVM.from_list([sic_povm, cs_povm]).informationally_complete)
+        self.assertFalse(ProductPOVM.from_list([sic_povm, non_ic_povm]).informationally_complete)
+        self.assertTrue(
+            ProductPOVM.from_list([sic_povm, cs_povm, cs_povm]).informationally_complete
+        )
+        self.assertFalse(
+            ProductPOVM.from_list([sic_povm, cs_povm, non_ic_povm]).informationally_complete
+        )
+
     # TODO
     def test_build_from_vectors(self):
         if True:

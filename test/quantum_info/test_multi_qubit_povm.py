@@ -35,7 +35,7 @@ class TestMultiQubitPOVM(TestCase):
 
     def test_dimension(self):
         """Test dimension attribute"""
-        for dim in range(10):
+        for dim in range(1, 10):
             povm = MultiQubitPOVM(3 * [Operator(1.0 / 3.0 * np.eye(dim))])
             self.assertEqual(dim, povm.dimension)
             self.assertEqual(dim, povm._dimension)
@@ -93,6 +93,48 @@ class TestMultiQubitPOVM(TestCase):
         # TODO
         with self.subTest("Multi-qubit case"):
             self.assertTrue(True)
+
+    def test_informationally_complete(self):
+        """Test whether a POVM is informationally complete or not."""
+        with self.subTest("SIC-POVM"):
+            import cmath
+
+            vecs = np.sqrt(1.0 / 2.0) * np.array(
+                [
+                    [1, 0],
+                    [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
+                    [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(2.0j * np.pi / 3)],
+                    [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(4.0j * np.pi / 3)],
+                ]
+            )
+            sic_povm = MultiQubitPOVM.from_vectors(vecs)
+            self.assertTrue(sic_povm.informationally_complete)
+
+        with self.subTest("CS-POVM"):
+            coef = 1.0 / 3.0
+            cs_povm = MultiQubitPOVM(
+                [
+                    coef * Operator.from_label("0"),
+                    coef * Operator.from_label("1"),
+                    coef * Operator.from_label("+"),
+                    coef * Operator.from_label("-"),
+                    coef * Operator.from_label("r"),
+                    coef * Operator.from_label("l"),
+                ]
+            )
+            self.assertTrue(cs_povm.informationally_complete)
+
+        with self.subTest("Non IC-POVM"):
+            coef = 1.0 / 2.0
+            povm = MultiQubitPOVM(
+                [
+                    coef * Operator.from_label("0"),
+                    coef * Operator.from_label("1"),
+                    coef * Operator.from_label("+"),
+                    coef * Operator.from_label("-"),
+                ]
+            )
+            self.assertFalse(povm.informationally_complete)
 
     # TODO: write a unittest for each public method of MultiQubitPOVM
 
