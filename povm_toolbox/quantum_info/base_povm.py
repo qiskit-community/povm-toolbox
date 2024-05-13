@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TypeVar
 
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
@@ -21,8 +21,11 @@ from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
 
+# type of the labels used to specify povm effects
+LabelT = TypeVar("LabelT")
 
-class BasePOVM(BaseFrame, ABC):
+
+class BasePOVM(BaseFrame[LabelT], ABC):
     """Abstract base class that contains all methods that any specific POVM subclass should implement."""
 
     default_dual_class: type[BaseDUAL]
@@ -36,7 +39,7 @@ class BasePOVM(BaseFrame, ABC):
     def get_prob(
         self,
         rho: SparsePauliOp | DensityMatrix | Statevector,
-        outcome_idx: Any | set[Any] | None = None,
-    ) -> float | dict[Any, float] | np.ndarray:
+        outcome_idx: LabelT | set[LabelT] | None = None,
+    ) -> float | dict[LabelT, float] | np.ndarray:
         """Return the outcome probabilities given a state rho."""
         return self.analysis(rho, outcome_idx)

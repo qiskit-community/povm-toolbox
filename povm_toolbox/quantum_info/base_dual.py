@@ -13,15 +13,18 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TypeVar
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .base_frame import BaseFrame
 
+# type of the labels used to specify dual operators
+LabelT = TypeVar("LabelT")
 
-class BaseDUAL(BaseFrame, ABC):
+
+class BaseDUAL(BaseFrame[LabelT], ABC):
     """Abstract base class that contains all methods that any specific DUAL subclass should implement."""
 
     @property
@@ -33,8 +36,8 @@ class BaseDUAL(BaseFrame, ABC):
     def get_omegas(
         self,
         obs: SparsePauliOp | Operator,
-        outcome_idx: Any | set[Any] | None = None,
-    ) -> float | dict[Any, float] | np.ndarray:
+        outcome_idx: LabelT | set[LabelT] | None = None,
+    ) -> float | dict[LabelT, float] | np.ndarray:
         """Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual."""
         return self.analysis(obs, outcome_idx)
 
@@ -44,9 +47,21 @@ class BaseDUAL(BaseFrame, ABC):
 
     @abstractmethod
     def optimize(self, frame: BaseFrame, **options) -> None:
-        """Optimize the dual to `frame` inplace."""
+        """Optimize the dual to `frame` inplace.
+
+        Args:
+            frame: The primal frame to which ``self`` is a dual.
+            options: keyword arguments specifying how to optimize ``self``.
+        """
 
     @classmethod
     @abstractmethod
     def build_dual_from_frame(cls, frame: BaseFrame) -> BaseDUAL:
-        """Construct a dual frame to another frame."""
+        """Construct a dual frame to another frame.
+
+        Args:
+            frame: The primal frame from which we will build the dual frame.
+
+        Returns:
+            A dual frame to the supplied ``frame``.
+        """

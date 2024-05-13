@@ -32,7 +32,7 @@ from .multi_qubit_frame import MultiQubitFrame
 T = TypeVar("T", bound=MultiQubitFrame)
 
 
-class ProductFrame(BaseFrame, Generic[T]):
+class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     r"""Class to represent a set of product POVM operators.
 
     A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting
@@ -196,24 +196,22 @@ class ProductFrame(BaseFrame, Generic[T]):
         """Return the number of outcomes of the POVM."""
         return self.n_operators
 
-    def _trace_of_prod(self, operator: SparsePauliOp, outcome_idx: tuple[int, ...]) -> float:
-        """Return the trace of the product of an operator with a specific effect (or its dual operator).
+    def _trace_of_prod(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
+        """Return the trace of the product of a Hermitian operator with a specific frame operator.
 
         Args:
-            operator: the input operator to multiply with an effect or dual operator.
-            outcome_idx: the label specifying the effect (or its dual) to use. The outcome is labeled
-                by a tuple of integers (one index per local POVM).
-            dual: False if the the POVM effects should be used. True if the corresponding dual operator
-                should be used instead.
+            operator: the input operator to multiply with a frame operator.
+            frame_op_idx: the label specifying the frame operator to use. The frame operator is labeled
+                by a tuple of integers (one index per local frame).
 
         Returns:
-            The trace of the product of the input operator with the specified effect (or its dual).
+            The trace of the product of the input operator with the specified frame operator.
 
         Raises:
             IndexError: when the provided outcome label (tuple of integers) has a number of integers
-                which does not correspond to the number of local POVMs making up the product POVM.
-            IndexError: when a local index exceed the number of outcomes of the corresponding local POVM.
-            ValueError: when the probability is not a real number.
+                which does not correspond to the number of local frames making up the product frame.
+            IndexError: when a local index exceed the number of operators of the corresponding local frame.
+            ValueError: when the output is not a real number.
         """
         p_idx = 0.0 + 0.0j
 
@@ -230,7 +228,7 @@ class ProductFrame(BaseFrame, Generic[T]):
                 sublabel = "".join(label[-(i + 1)] for i in idx)
                 # Try to obtain the coefficient of the local POVM for this local Pauli term.
                 try:
-                    coeff = povm.pauli_operators[outcome_idx[j]][sublabel]
+                    coeff = povm.pauli_operators[frame_op_idx[j]][sublabel]
                 except KeyError:
                     # If it does not exist, the current summand becomes 0 because it would be
                     # multiplied by 0.
@@ -238,14 +236,14 @@ class ProductFrame(BaseFrame, Generic[T]):
                     # In this case we can break the iteration over the remaining local POVMs.
                     break
                 except IndexError as exc:
-                    if len(outcome_idx) <= j:
+                    if len(frame_op_idx) <= j:
                         raise IndexError(
-                            f"The outcome label {outcome_idx} does not match the expected shape. It is"
-                            f" supposed to contain {len(self._povms)} integers, but has {len(outcome_idx)}."
+                            f"The outcome label {frame_op_idx} does not match the expected shape. It is"
+                            f" supposed to contain {len(self._povms)} integers, but has {len(frame_op_idx)}."
                         ) from exc
-                    if povm.n_operators <= outcome_idx[j]:
+                    if povm.n_operators <= frame_op_idx[j]:
                         raise IndexError(
-                            f"Outcome index '{outcome_idx[j]}' is out of range for the local POVM"
+                            f"Outcome index '{frame_op_idx[j]}' is out of range for the local POVM"
                             f" acting on subsystems {idx}. This POVM has {povm.n_operators} outcomes."
                         ) from exc
                     raise exc
@@ -262,42 +260,43 @@ class ProductFrame(BaseFrame, Generic[T]):
 
     def analysis(
         self,
-        operator: SparsePauliOp | Operator,
-        effect_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
+        hermitian_op: SparsePauliOp | Operator,
+        frame_op_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
         """TODO.
 
         Args:
-            operator: TODO.
-            effect_idx: the outcomes for which one queries the trace. Each outcome is labeled
+            hermitian_op: TODO.
+            frame_op_idx: the outcomes for which one queries the trace. Each outcome is labeled
                 by a tuple of integers (one index per local POVM). One can query a single outcome or a
                 set of outcomes. If ``None``, all outcomes are queried.
 
         Returns:
-            TODO: update return type.
-            An array of probabilities. If a specific set of outcomes was queried, the length of the array
-            is equal to the number of outcomes queried. If all outcomes were queried, its shape is a
-            high-dimensional array with one dimension per local POVM stored inside this ``ProductPOVM``.
-            The length of each dimension is given by the number of outcomes of the POVM encoded along that axis.
+            Frame coefficients, specified by ``frame_op_idx``, with respect to the Hermitian operator
+            ``hermitian_op``. If a specific coefficient was queried, a ``float`` is returned. If a
+            specific set of coefficients was queried, a dictionary mapping labels to coefficients
+            is returned. If all coefficients were queried, a high-dimensional array with one dimension
+            per local frame stored inside ``self`` is returned. The length of each dimension is given
+            by the number of operators of the frame encoded along that axis.
 
         Raises:
-            TypeError: when the provided single or sequence of outcomes indices ``effect_idx`` does not have
+            TypeError: when the provided single or sequence of labels ``frame_op_idx`` does not have
                 a valid type.
-            ValueError: when the provided state ``operator`` does not act on the same number of qubits as
-                this ``ProductPOVM``.
+            ValueError: when the provided ``operator`` does not act on the same number of qubits as
+                ``self``.
         """
-        if not isinstance(operator, SparsePauliOp):
-            # Convert the provided state to a Pauli operator.
-            operator = SparsePauliOp.from_operator(operator)
+        if not isinstance(hermitian_op, SparsePauliOp):
+            # Convert the provided operator to a Pauli operator.
+            hermitian_op = SparsePauliOp.from_operator(hermitian_op)
 
         # Assert matching operator and POVM sizes.
-        if operator.num_qubits != self.n_subsystems:
+        if hermitian_op.num_qubits != self.n_subsystems:
             raise ValueError(
-                f"Size of the operator {operator.n_qubits} does not match the size of the povm {len(self)}."
+                f"Size of the operator {hermitian_op.n_qubits} does not match the size of the povm {len(self)}."
             )
 
-        # If effect_idx is `None`, it means all outcomes are queried
-        if effect_idx is None:
+        # If frame_op_idx is `None`, it means all outcomes are queried
+        if frame_op_idx is None:
             # Extract the number of outcomes for each local POVM.
 
             # Create the output probability array as a high-dimensional matrix. This matrix will have
@@ -309,10 +308,10 @@ class ProductFrame(BaseFrame, Generic[T]):
             # probabilities for the different outcomes whose probability we want to compute.
             #   - `m` is the multi-dimensional index into the high-dimensional `p_init` array.
             for m, _ in np.ndenumerate(p_init):
-                p_init[m] = self._trace_of_prod(operator, m)
+                p_init[m] = self._trace_of_prod(hermitian_op, m)
             return p_init
-        if isinstance(effect_idx, set):
-            return {idx: self._trace_of_prod(operator, idx) for idx in effect_idx}
-        if isinstance(effect_idx, tuple):
-            return self._trace_of_prod(operator, effect_idx)
-        raise TypeError("wrong shape of effect_idx")
+        if isinstance(frame_op_idx, set):
+            return {idx: self._trace_of_prod(hermitian_op, idx) for idx in frame_op_idx}
+        if isinstance(frame_op_idx, tuple):
+            return self._trace_of_prod(hermitian_op, frame_op_idx)
+        raise TypeError("wrong shape of frame_op_idx")

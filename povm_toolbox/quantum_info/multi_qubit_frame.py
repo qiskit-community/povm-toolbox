@@ -28,7 +28,7 @@ from povm_toolbox.utilities import matrix_to_double_ket
 from .base_frame import BaseFrame
 
 
-class MultiQubitFrame(BaseFrame):
+class MultiQubitFrame(BaseFrame[int]):
     """Class that collects all information that any MultiQubit frame should specify.
 
     This is a representation of an operator-valued vector space frame. The effects are
@@ -39,13 +39,12 @@ class MultiQubitFrame(BaseFrame):
         r"""Initialize from explicit operators.
 
         Args:
-            list_operators: list that contains the explicit POVM operators. Each Operator
-                in the list corresponds to a POVM effect. The length of the list is
-                the number of outcomes of the POVM.
+            list_operators: list that contains the explicit frame operators. The
+                length of the list is the number of operators of the frame.
 
 
         Raises:
-            ValueError: if the POVM operators do not have a correct shape. They should all
+            ValueError: if the frame operators do not have a correct shape. They should all
                 be square and of the same dimension.
         """
         self._n_operators: int = len(list_operators)
@@ -53,7 +52,7 @@ class MultiQubitFrame(BaseFrame):
         for frame_op in list_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
                 raise ValueError(
-                    f"POVM operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and all of the same dimension."
+                    f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and all of the same dimension."
                 )
         self._operators: list[Operator] = list_operators
 
@@ -76,12 +75,12 @@ class MultiQubitFrame(BaseFrame):
 
     @property
     def dimension(self) -> int:
-        """Give the dimension of the Hilbert space on which the effects act."""
+        """Give the dimension of the Hilbert space on which the frame operators act."""
         return self._dimension
 
     @property
     def n_operators(self) -> int:
-        """Give the number of outcomes of the POVM."""
+        """Give the number of outcomes of the frame."""
         return self._n_operators
 
     @property
@@ -97,7 +96,7 @@ class MultiQubitFrame(BaseFrame):
         for frame_op in new_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
                 raise ValueError(
-                    f"POVM operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and all of the same dimension."
+                    f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and all of the same dimension."
                 )
 
         self._operators = new_operators
@@ -108,20 +107,18 @@ class MultiQubitFrame(BaseFrame):
         for k, frame_op in enumerate(new_operators):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
 
-        # TODO self._informationally_complete: bool
+        self._informationally_complete = bool(
+            np.linalg.matrix_rank(self._array) == self.dimension**2
+        )
 
         self._check_validity()
 
     @property
     def pauli_operators(self) -> list[dict[str, complex]]:
-        """Convert the internal POVM operators to Pauli form.
-
-        Args:
-            dual: False if the pauli decomposition of the effects should be returned.
-                True if the pauli decomposition of the dual operators should be returned.
+        """Convert the internal frame operators to Pauli form.
 
         Raises:
-            ValueError: when the POVM operators are not N-qubit operators.
+            ValueError: when the frame operators are not N-qubit operators.
         """
         if self._pauli_operators is None:
             try:
@@ -129,23 +126,21 @@ class MultiQubitFrame(BaseFrame):
                     dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.operators
                 ]
             except QiskitError as exc:
-                raise ValueError("Failed to convert POVM operators to Pauli form.") from exc
+                raise ValueError("Failed to convert frame operators to Pauli form.") from exc
         return self._pauli_operators
 
     def _check_validity(self) -> None:
-        r"""Check if POVM axioms are fulfilled.
+        r"""Check if frame axioms are fulfilled.
 
         Raises:
-            ValueError: if any of the POVM operators is not hermitian.
-            ValueError: if any of the POVM operators has a negative eigenvalue.
-            ValueError: if all POVM operators do not sum to the identity.
+            ValueError: if any of the frame operators is not hermitian.
         """
         for k, op in enumerate(self.operators):
             if not np.allclose(op, op.adjoint(), atol=1e-5):
                 raise ValueError(f"Frame operator {k} is not hermitian.")
 
     def __getitem__(self, index: slice) -> Operator | list[Operator]:
-        r"""Return a povm operator or a list of povm operators.
+        r"""Return a frame operator or a list of frame operators.
 
         Args:
             index: indicate the operator(s) to be returned.
@@ -156,7 +151,7 @@ class MultiQubitFrame(BaseFrame):
         return self.operators[index]
 
     def __len__(self) -> int:
-        """Return the number of outcomes of the POVM."""
+        """Return the number of operators of the frame."""
         return self.n_operators
 
     def __array__(self) -> np.ndarray:
@@ -167,49 +162,52 @@ class MultiQubitFrame(BaseFrame):
         return self._array
 
     def analysis(
-        self, op: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
+        self, hermitian_op: SparsePauliOp | Operator, frame_op_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
-        r"""Return the outcome probabilities given a state ``rho``.
+        r"""Return the frame coefficients given an operator ``hermitian_op``.
 
-        Each outcome :math:`k` is associated with an effect :math:`M_k` of the POVM. The probability of obtaining
-        the outcome :math:`k` when measuring a state ``rho`` is given by :math:`p_k = Tr[M_k \rho]`.
+        Given a Hermitian operator :math:`\mathcal{O}`, one can compute its frame
+        coefficients :math:`c_k = Tr[M_k \mathcal{O}]`, where :math:`M_k` is the
+        frame operator labelled by :math:`k`. In frame theory, this operation is
+        called the 'analysis operation'.
 
         Args:
-            rho: the input state over which to compute the outcome probabilities.
-            outcome_idx: TODO.
+            hermitian_op: the Hermitian operator whose frame coefficient(s) are queried.
+            frame_op_idx: label(s) indicating which frame coefficients are queried.
 
         Returns:
-            An array of probabilities. The length of the array is given by the number of outcomes of the POVM.
+            An array of coefficients. TODO: update.
 
         Raises:
-            TypeError: TODO.
+            TypeError: if the label(s) ``frame_op_idx`` do not have a valid type.
         """
-        if isinstance(op, SparsePauliOp):
-            op = op.to_operator()
-        op_vectorized = np.conj(matrix_to_double_ket(op.data))
-        if isinstance(outcome_idx, int):
-            return float(np.dot(op_vectorized, self._array[:, outcome_idx]).real)
-        if isinstance(outcome_idx, set):
+        if isinstance(hermitian_op, SparsePauliOp):
+            hermitian_op = hermitian_op.to_operator()
+        op_vectorized = np.conj(matrix_to_double_ket(hermitian_op.data))
+
+        if isinstance(frame_op_idx, int):
+            return float(np.dot(op_vectorized, self._array[:, frame_op_idx]).real)
+        if isinstance(frame_op_idx, set):
             return {
-                idx: float(np.dot(op_vectorized, self._array[:, idx]).real) for idx in outcome_idx
+                idx: float(np.dot(op_vectorized, self._array[:, idx]).real) for idx in frame_op_idx
             }
-        if outcome_idx is None:
+        if frame_op_idx is None:
             return np.array(np.dot(op_vectorized, self._array).real)
         raise TypeError(
-            f"The optional ``outcome_idx`` can either be a single or sequence of integers, not a {type(outcome_idx)}."
+            f"The optional ``frame_op_idx`` can either be a single or sequence of integers, not a {type(frame_op_idx)}."
         )
 
     @classmethod
-    def from_vectors(cls, povm_vectors: np.ndarray) -> Self:
-        r"""Initialize a POVM from non-normalized bloch vectors :math:``|psi>``.
+    def from_vectors(cls, frame_vectors: np.ndarray) -> Self:
+        r"""Initialize a frame from non-normalized bloch vectors :math:``|psi>``.
 
         Args:
-            povm_vectors: list of vectors :math:``|psi>``. The length of the list corresponds to
-                the number of outcomes of the POVM. Each vector is of shape ``(dim,)`` where ``dim``
-                is the dimension of the Hilbert space on which the POVM acts. The resulting POVM
-                effects :math:``Pi = |psi><psi|`` are of shape ``(dim, dim)`` as expected.
+            frame_vectors: list of vectors :math:``|psi>``. The length of the list corresponds to
+                the number of operators of the frame. Each vector is of shape ``(dim,)`` where ``dim``
+                is the dimension of the Hilbert space on which the frame acts. The resulting frame
+                operators :math:``Pi = |psi><psi|`` are of shape ``(dim, dim)`` as expected.
 
         Returns:
-            The POVM corresponding to the vectors.
+            The frame corresponding to the vectors.
         """
-        return cls([Operator(np.outer(vec, vec.conj())) for vec in povm_vectors])
+        return cls([Operator(np.outer(vec, vec.conj())) for vec in frame_vectors])

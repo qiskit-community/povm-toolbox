@@ -21,7 +21,7 @@ from .product_dual import ProductDUAL
 from .product_frame import ProductFrame
 
 
-class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
+class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM[tuple[int, ...]]):
     r"""Class to represent a set of product POVM operators.
 
     A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting

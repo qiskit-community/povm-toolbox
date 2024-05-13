@@ -20,7 +20,7 @@ from .multi_qubit_dual import MultiQubitDUAL
 from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
+class MultiQubitPOVM(MultiQubitFrame, BasePOVM[int]):
     """Class that collects all information that any MultiQubit POVM should specify.
 
     This is a representation of a positive operator-valued measure (POVM). The effects are
@@ -64,13 +64,10 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
 
         Args:
             rho: the input state over which to compute the outcome probabilities.
-            outcome_idx: TODO.
+            outcome_idx: label(s) indicating which outcome probabilities are queried.
 
         Returns:
             An array of probabilities. The length of the array is given by the number of outcomes of the POVM.
-
-        Raises:
-            TypeError: TODO.
         """
         if not isinstance(rho, SparsePauliOp):
             rho = Operator(rho)

@@ -22,7 +22,7 @@ from .base_frame import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
+class MultiQubitDUAL(MultiQubitFrame, BaseDUAL[int]):
     """Class that collects all information that any MultiQubit DUAL should specify.
 
     This is a representation of a dual frame. Its elements are specified as a list
@@ -42,6 +42,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
 
         Args:
             obs: the observable to be decomposed into the POVM effects.
+            outcome_idx: label(s) indicating which decomposition weights are queried.
 
         Returns:
             An array of decomposition weights.
@@ -55,14 +56,24 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         raise NotImplementedError
 
     def optimize(self, frame: BaseFrame, **options) -> None:
-        """Optimize the dual to `frame` inplace."""
+        """Optimize the dual to `frame` inplace.
+
+        Args:
+            frame: The primal frame to which ``self`` is a dual.
+            options: keyword arguments specifying how to optimize ``self``.
+        """
+        # If a state is provided, the state-optimal dual is computed.
         if (state := options.get("state", None)) is not None:
             if isinstance(state, (Statevector, DensityMatrix)):
                 state = Operator(state)
             elif not isinstance(state, Operator):
                 raise TypeError
+            # Compute the corresponding alpha-parameters.
             alphas = tuple(frame.analysis(state))  # type: ignore
             self.operators = self._build_dual_operators(frame, alphas)
+
+        # Otherwise if alpha-parameters are provided, they will be used to
+        # optimize ``self``.
         elif (alphas := options.get("alphas", None)) is not None:
             self.operators = self._build_dual_operators(frame, alphas)
 
@@ -70,10 +81,20 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
     def _build_dual_operators(
         frame: BaseFrame, alphas: tuple[float, ...] | None = None
     ) -> list[Operator]:
-        """Construct a dual frame to another frame."""
+        """Construct dual operators of a frame.
+
+        Args:
+            frame: The primal frame from which we will build dual operators.
+
+        Returns:
+            A list of dual operators to the ``frame`` operators.
+        """
         if isinstance(frame, MultiQubitFrame):
+            # Set default values for alphas if none is provided.
             if alphas is None:
                 alphas = tuple(np.trace(frame_op.data) for frame_op in frame.operators)
+            # Check that the number of alpha-parameters match the number of operators
+            # forming the ``frame``.
             elif len(alphas) != frame.n_operators:
                 raise ValueError(
                     f"The number of alpha-parameters should be equal to the number of"
@@ -81,28 +102,35 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
                     " parameters were provided."
                 )
 
+            # Set the weighting matrix according to the alpha-parameters
             diag_trace = np.diag([1.0 / alpha for alpha in alphas])
+            # Compute the weighed frame super-operator.
             superop = frame @ diag_trace @ np.conj(frame).T
 
+            # Solve the linear system to find the dual operators.
             dual_operators_array = np.linalg.solve(
                 superop,
                 frame @ diag_trace,
             )
+            # Convert dual operators from double-ket to operator representation.
             dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
 
             return dual_operators
 
+        # We could build a ``MultiQubitDUAL`` instance (i.e. joint dual frame) that
+        # is a dual frame to a ``ProductFrame``, but we have not implemented this yet.
         raise NotImplementedError(f"Not implemented for {type(frame)}")
 
     @classmethod
     def build_dual_from_frame(
         cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
     ) -> MultiQubitDUAL:
-        """Construct a dual frame to another frame."""
-        dual_operators = cls._build_dual_operators(frame, alphas)
+        """Construct a dual frame to another frame.
 
-        # TODO : move this test to unittest in the future and just return cls(dual_operators)
-        dual_frame = cls(dual_operators)
-        # if not dual_frame.is_dual_to(frame):
-        #     raise ValueError
-        return dual_frame
+        Args:
+            frame: The primal frame from which we will build the dual frame.
+
+        Returns:
+            A multi-qubit dual frame to the supplied ``frame``.
+        """
+        return cls(cls._build_dual_operators(frame, alphas))

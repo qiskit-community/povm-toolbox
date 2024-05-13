@@ -21,7 +21,7 @@ from .multi_qubit_dual import MultiQubitDUAL
 from .product_frame import ProductFrame
 
 
-class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
+class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL[tuple[int, ...]]):
     r"""Class to represent a set of product DUAL operators.
 
     A product DUAL :math:`D` is made of local DUAL :math:`D1, D2, ...` acting
@@ -70,7 +70,12 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         raise NotImplementedError
 
     def optimize(self, frame: BaseFrame, **options) -> None:
-        """Optimize the dual to `frame` inplace."""
+        """Optimize the dual to `frame` inplace.
+
+        Args:
+            frame: The primal frame to which ``self`` is a dual.
+            options: keyword arguments specifying how to optimize ``self``.
+        """
         state = options.get("state", None)
         if not isinstance(frame, ProductFrame):
             raise NotImplementedError
@@ -80,7 +85,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
                 state = Operator(state)
             elif not isinstance(state, Operator):
                 raise TypeError
-            joint_prob: np.ndarray = frame.analysis(rho=state)  # type: ignore
+            joint_prob: np.ndarray = frame.analysis(state)  # type: ignore
             for i, sub_system in enumerate(frame.sub_systems):
                 marg_prob = joint_prob.sum(axis=tuple(np.delete(axes, [i])))
                 if not all(marg_prob):
@@ -91,7 +96,14 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
     def build_dual_from_frame(
         cls, frame: BaseFrame, alphas: tuple[tuple[float, ...] | None, ...] | None = None
     ) -> ProductDUAL:
-        """Construct a dual frame to another frame."""
+        """Construct a dual frame to another frame.
+
+        Args:
+            frame: The primal frame from which we will build the dual frame.
+
+        Returns:
+            A product dual frame to the supplied ``frame``.
+        """
         dual_operators = {}
         if isinstance(frame, ProductFrame):
             if alphas is None:
@@ -105,9 +117,5 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
                 dual_operators[sub_system] = MultiQubitDUAL.build_dual_from_frame(
                     frame[sub_system], sub_alphas
                 )
-            # TODO : move this test to unittest in the future and just return cls(dual_operators)
-            dual_frame = cls(dual_operators)
-            # if not dual_frame.is_dual_to(frame):
-            #     raise ValueError
-            return dual_frame
+            return cls(dual_operators)
         raise NotImplementedError

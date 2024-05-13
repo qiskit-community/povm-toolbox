@@ -274,6 +274,8 @@ class TestProductPOVM(TestCase):
 
         self.assertTrue(ProductPOVM.from_list([sic_povm, cs_povm]).informationally_complete)
         self.assertFalse(ProductPOVM.from_list([sic_povm, non_ic_povm]).informationally_complete)
+        self.assertFalse(ProductPOVM.from_list([non_ic_povm, non_ic_povm]).informationally_complete)
+
         self.assertTrue(
             ProductPOVM.from_list([sic_povm, cs_povm, cs_povm]).informationally_complete
         )

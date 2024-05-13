@@ -13,13 +13,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Generic, TypeVar
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
+# type of the labels used to specify frame operators
+LabelT = TypeVar("LabelT")
 
-class BaseFrame(ABC):
+
+class BaseFrame(ABC, Generic[LabelT]):
     """Abstract base class that contains all methods that any specific frame should implement.
 
     A frame is a generalization of the notion of the basis of a vector space to sets that may
@@ -66,7 +69,7 @@ class BaseFrame(ABC):
     @abstractmethod
     def analysis(
         self,
-        operator: SparsePauliOp | Operator,
-        effect_idx: Any | set[Any] | None = None,
-    ) -> float | dict[Any, float] | np.ndarray:
-        """Return the frame coefficients of `operator`."""
+        hermitian_op: SparsePauliOp | Operator,
+        frame_op_idx: LabelT | set[LabelT] | None = None,
+    ) -> float | dict[LabelT, float] | np.ndarray:
+        """Return the frame coefficients of `hermitian_op`."""
