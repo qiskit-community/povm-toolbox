@@ -61,7 +61,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         Raises:
             ValueError: TODO.
-            TypeError: TODO.
+            TypeError: If the type of ``seed_rng`` is not valid.
         """
         super().__init__(n_qubit)
 
