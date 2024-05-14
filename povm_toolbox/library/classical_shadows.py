@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.random import Generator
 
 from .locally_biased_classical_shadows import LocallyBiasedClassicalShadows
 
@@ -24,6 +25,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
         self,
         n_qubit: int,
         shot_batch_size: int = 1,
+        seed_rng: int | Generator | None = None,
     ):
         """Construct a classical shadow POVM.
 
@@ -34,4 +36,5 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
             n_qubit=n_qubit,
             bias=bias,
             shot_batch_size=shot_batch_size,
+            seed_rng=seed_rng,
         )

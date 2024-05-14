@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.random import Generator
 
 from .randomized_projective_measurements import RandomizedProjectiveMeasurements
 
@@ -25,6 +26,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         n_qubit: int,
         bias: np.ndarray,
         shot_batch_size: int = 1,
+        seed_rng: int | Generator | None = None,
     ):
         """Construct a locally-biased classical shadow POVM.
 
@@ -37,4 +39,5 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
             bias=bias,
             angles=angles,
             shot_batch_size=shot_batch_size,
+            seed_rng=seed_rng,
         )

@@ -15,6 +15,7 @@ from __future__ import annotations
 from collections import Counter
 
 import numpy as np
+from numpy.random import Generator, default_rng
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin, make_data_bin
 from qiskit.primitives.containers.bindings_array import BindingsArray
@@ -38,6 +39,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         bias: np.ndarray,
         angles: np.ndarray,
         shot_batch_size: int = 1,
+        seed_rng: int | Generator | None = None,
     ) -> None:
         """Implement a product POVM through the randomization of single-qubit projective measurement.
 
@@ -59,6 +61,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         Raises:
             ValueError: TODO.
+            TypeError: TODO.
         """
         super().__init__(n_qubit)
 
@@ -87,6 +90,16 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         self.msmt_qc = self._build_qc()
 
         self.shot_batch_size = shot_batch_size
+
+        self._rng: Generator
+        if seed_rng is None:
+            self._rng = default_rng()
+        elif isinstance(seed_rng, int):
+            self._rng = default_rng(seed_rng)
+        elif isinstance(seed_rng, Generator):
+            self._rng = seed_rng
+        else:
+            raise TypeError(f"The type of `seed_rng` ({type(seed_rng)}) is not valid.")
 
     def _build_qc(self) -> QuantumCircuit:
         """Build the quantum circuit that implements the measurement.
@@ -206,7 +219,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             # this particular qubit. We draw a PVM for each batch of shots and for
             # each set of circuit parameter values supplied by the user through the
             # :method:``POVMSampler.run`` method.
-            pvm_idx[..., i] = np.random.choice(
+            pvm_idx[..., i] = self._rng.choice(
                 self._n_PVMs,
                 size=circuit_binding.size * num_batches,
                 replace=True,
