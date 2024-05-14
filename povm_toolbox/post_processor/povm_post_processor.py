@@ -31,6 +31,10 @@ class POVMPostProcessor:
 
         Args:
             povm_sample: a result from a POVM sampler run.
+            dual_class: the subclass of :class:`.BaseDUAL` that will be used to
+                build the dual frame to the POVM of ``povm_sample``. The dual
+                frame is then used to compute the decomposition weights of any
+                observable.
         """
         self.povm = povm_sample.metadata.povm_implementation.definition()
         self.counts: np.ndarray = povm_sample.get_counts()  # type: ignore
@@ -48,8 +52,8 @@ class POVMPostProcessor:
     def dual(self) -> BaseDUAL:
         """Return the dual that is used.
 
-        CAREFUL: if the dual frame is not already computed, this could be computationally heavy.
-        TODO: use admonition.
+        .. warning::
+            If the dual frame is not already built, this could be computationally demanding.
         """
         if self._dual is None:
             self._dual = self._dual_class.build_dual_from_frame(self.povm)
@@ -57,9 +61,9 @@ class POVMPostProcessor:
 
     def optimize(self, **options) -> None:
         """Optimize the dual inplace."""
-        if self._dual is None:
-            self._dual = self._dual_class.build_dual_from_frame(self.povm)
         # TODO: improve efficiency, we are doing the heavy computation twice here
+        # if the dual was not built before (first when we access :attr:`.dual` and
+        # second when we optimize it).
         self._dual = self.dual.optimize(self.povm, **options)
 
     def get_expectation_value(

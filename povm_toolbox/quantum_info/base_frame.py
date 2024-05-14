@@ -18,7 +18,9 @@ from typing import Generic, TypeVar
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
-# type of the labels used to specify frame operators
+# Each operator in the frame is identified by a label. ``LabelT`` is the type of
+# these labels. For instance, labels could be strings, integers, or it could be
+# tuples of integers among other possibilities.
 LabelT = TypeVar("LabelT")
 
 
@@ -26,7 +28,7 @@ class BaseFrame(ABC, Generic[LabelT]):
     """Abstract base class that contains all methods that any specific frame should implement.
 
     A frame is a generalization of the notion of the basis of a vector space to sets that may
-    not necessarily be linearly independent. Consider a Hilbert space of finite dimension :math:``d``,
+    not necessarily be linearly independent. Consider a Hilbert space of finite dimension :math:`d`,
     then the set of Hermitian operators is an operator-valued vector space on the Hilbert space.
     Therefore, a set of Hermitian operators that spans the entire Hilbert space is said to be a
     frame.
@@ -47,9 +49,9 @@ class BaseFrame(ABC, Generic[LabelT]):
 
     @property
     def n_subsystems(self) -> int:
-        """Return the number of subsystems which the effects act on.
+        r"""Return the number of subsystems which the effects act on.
 
-        For qubits, this is always :math:`log2(self.dimension)`.
+        For qubits, this is always :math:`\log_2(`:attr:`.dimension`:math:`)`.
         """
         return int(np.log2(self.dimension))
 
@@ -72,4 +74,4 @@ class BaseFrame(ABC, Generic[LabelT]):
         hermitian_op: SparsePauliOp | Operator,
         frame_op_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
-        """Return the frame coefficients of `hermitian_op`."""
+        """Return the frame coefficients of ``hermitian_op``."""

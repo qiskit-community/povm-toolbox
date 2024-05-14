@@ -21,7 +21,7 @@ from .multi_qubit_dual import MultiQubitDUAL
 from .product_frame import ProductFrame
 
 
-class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL[tuple[int, ...]]):
+class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
     r"""Class to represent a set of product DUAL operators.
 
     A product DUAL :math:`D` is made of local DUAL :math:`D1, D2, ...` acting
@@ -35,7 +35,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL[tuple[int, ...]]):
         obs: SparsePauliOp | Operator,
         outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        r"""Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual.
+        r"""Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual.
 
         Here the POVM itself is not explicitly needed, its dual is sufficient. Given
         an observable :math:`O` which is in the span of a given POVM, one can write the
@@ -51,21 +51,21 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL[tuple[int, ...]]):
             If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
             queried, a dictionary mapping outcome labels to weights is returned. If all outcomes were
             queried, a high-dimensional array with one dimension per local POVM stored inside this
-            ``ProductPOVM`` is returned. The length of each dimension is given by the number of outcomes
-            of the POVM encoded along that axis.
+            :class:`.ProductPOVM` instance is returned. The length of each dimension is given by
+            the number of outcomes of the POVM encoded along that axis.
         """
         # TODO: check that obs is Hermitian ?
         return self.analysis(obs, outcome_idx)
 
     def is_dual_to(self, frame: BaseFrame) -> bool:
-        """Check if `self` is a dual to another frame."""
+        """Check if ``self`` is a dual to another frame."""
         if isinstance(frame, ProductFrame) and set(self.sub_systems) == set(frame.sub_systems):
             return all([self[idx].is_dual_to(frame[idx]) for idx in self.sub_systems])
         # TODO: maybe differentiate two distinct cases:
-        #   1) the subsystems are not the same, e.g. `self` acts on (0,) and (1,) but `frame` acts
+        #   1) the subsystems are not the same, e.g. ``self`` acts on (0,) and (1,) but ``frame`` acts
         #      on (0,) and (2,). Then we should raise an ValueError
-        #   2) the subsystems are the same but differently allocated, e.g. `self` acts on (0,) and
-        #      (1,2) but `frame` on (0,1) and (2,). `self` could still be a valid dual frame but we
+        #   2) the subsystems are the same but differently allocated, e.g. ``self`` acts on (0,) and
+        #      (1,2) but ``frame`` on (0,1) and (2,). ``self`` could still be a valid dual frame but we
         #      have not implemented the check for this. Then we should raise an NotImplementedError.
         raise NotImplementedError
 

@@ -157,7 +157,7 @@ class MultiQubitFrame(BaseFrame[int]):
     def __array__(self) -> np.ndarray:
         """Return the array representation of the frame, with shape.
 
-        The array has a shape :math:``(self.dimension**2, self.n_operators)``.
+        The array has a shape :math:`(``self.dimension``**2, ``self.n_operators``)`.
         """
         return self._array
 
@@ -199,13 +199,13 @@ class MultiQubitFrame(BaseFrame[int]):
 
     @classmethod
     def from_vectors(cls, frame_vectors: np.ndarray) -> Self:
-        r"""Initialize a frame from non-normalized bloch vectors :math:``|psi>``.
+        r"""Initialize a frame from non-normalized bloch vectors :math:`|\psi \rangle`.
 
         Args:
-            frame_vectors: list of vectors :math:``|psi>``. The length of the list corresponds to
-                the number of operators of the frame. Each vector is of shape ``(dim,)`` where ``dim``
-                is the dimension of the Hilbert space on which the frame acts. The resulting frame
-                operators :math:``Pi = |psi><psi|`` are of shape ``(dim, dim)`` as expected.
+            frame_vectors: list of vectors :math:`|\psi \rangle`. The length of the list corresponds to
+                the number of operators of the frame. Each vector is of shape :math:`(\mathrm{dim},)` where :math:`\mathrm{dim}`
+                is the :attr:`.dimension` of the Hilbert space on which the frame acts. The resulting frame
+                operators :math:`\Pi = |\psi \rangle \langle \psi|` are of shape :math:`(\mathrm{dim}, \mathrm{dim})` as expected.
 
         Returns:
             The frame corresponding to the vectors.

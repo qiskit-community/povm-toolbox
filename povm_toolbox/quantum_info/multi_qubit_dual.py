@@ -22,7 +22,7 @@ from .base_frame import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitDUAL(MultiQubitFrame, BaseDUAL[int]):
+class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
     """Class that collects all information that any MultiQubit DUAL should specify.
 
     This is a representation of a dual frame. Its elements are specified as a list
@@ -32,7 +32,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL[int]):
     def get_omegas(
         self, obs: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
-        r"""Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual.
+        r"""Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual.
 
         Here the POVM itself is not explicitly needed, its dual is sufficient. Given
         an observable :math:`O` which is in the span of a given POVM, one can write the
@@ -50,13 +50,13 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL[int]):
         return self.analysis(obs, outcome_idx)
 
     def is_dual_to(self, frame: BaseFrame) -> bool:
-        """Check if `self` is a dual to another frame."""
+        """Check if ``self`` is a dual to another frame."""
         if isinstance(frame, MultiQubitFrame):
             return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
         raise NotImplementedError
 
     def optimize(self, frame: BaseFrame, **options) -> None:
-        """Optimize the dual to `frame` inplace.
+        """Optimize the dual to ``frame`` inplace.
 
         Args:
             frame: The primal frame to which ``self`` is a dual.

@@ -33,19 +33,19 @@ T = TypeVar("T", bound=MultiQubitFrame)
 
 
 class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
-    r"""Class to represent a set of product POVM operators.
+    r"""Class to represent a set of product frame operators.
 
-    A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting
+    A product frame :math:`M` is made of local frames :math:`M1, M2, ...` acting
     on respective subsystems. Each global effect can be written as the tensor
-    product of local effects,
+    product of local operators,
     :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
     """
 
     def __init__(self, povms: dict[tuple[int, ...], T]):
-        """Initialize a ``ProductPOVM`` instance.
+        """Initialize a :class:`.ProductFrame` instance.
 
         Args:
-            povms: a dictionary mapping from a tuple of subsystem indices to a ``MultiQubitFrame``
+            povms: a dictionary mapping from a tuple of subsystem indices to a :class:`.MultiQubitFrame`
                 object.
 
         Raises:
@@ -96,12 +96,12 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
     @classmethod
     def from_list(cls, povms: Sequence[T]) -> Self:
-        """Construct a ``ProductPOVM`` from a list of ``MultiQubitFrame`` objects.
+        """Construct a :class:`.ProductFrame` from a list of :class:`.MultiQubitFrame` objects.
 
-        This is a convenience method to simplify the construction of a ``ProductPOVM`` for the cases
+        This is a convenience method to simplify the construction of a :class:`.ProductPOVM` for the cases
         in which the POVM objects act on a sequential order of subsystems. In other words, this
         method converts the sequence of POVMs to a dictionary of POVMs in accordance with the input
-        to :meth:`ProductPOVM.__init__` by using the positions along the sequence as subsystem
+        to :meth:`.ProductFrame.__init__` by using the positions along the sequence as subsystem
         indices.
 
         Below are some examples:
@@ -134,10 +134,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             product = ProductPOVM({(0,): sqp, (1, 2): mqp, (3,): sqp})
 
         Args:
-            povms: a sequence of ``MultiQubitFrame`` objects.
+            povms: a sequence of :class:`.MultiQubitFrame` objects.
 
         Returns:
-            A new ``ProductPOVM`` instance.
+            A new :class:`.ProductPOVM` instance.
         """
         povm_dict = {}
         idx = 0
@@ -215,14 +215,14 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         """
         p_idx = 0.0 + 0.0j
 
-        # Second, we iterate over our input operator, `operator`.
+        # Second, we iterate over our input operator, ``operator``.
         for label, op_coeff in operator.label_iter():
             summand = op_coeff
             # Third, we iterate over the POVMs stored inside the ProductPOVM.
-            #   - `j` is the index of the POVM inside the `ProductPOVM`. This encodes the axis
-            #     of the high-dimensional array `p_init` along which this local POVM is encoded.
-            #   - `idx` are the qubit indices on which this local POVM acts.
-            #   - `povm` is the actual local POVM object.
+            #   - ``j`` is the index of the POVM inside the ``ProductPOVM``. This encodes the axis
+            #     of the high-dimensional array ``p_init`` along which this local POVM is encoded.
+            #   - ``idx`` are the qubit indices on which this local POVM acts.
+            #   - ``povm`` is the actual local POVM object.
             for j, (idx, povm) in enumerate(self._povms.items()):
                 # Extract the local Pauli term on the qubit indices of this local POVM.
                 sublabel = "".join(label[-(i + 1)] for i in idx)
@@ -252,7 +252,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                     # The factor 2*N_qubit comes from Tr[(P_1...P_N)^2] = 2*N.
                     summand *= coeff * 2 * povm.n_subsystems
 
-            # Once we have finished computing our summand, we add it into `p_init`.
+            # Once we have finished computing our summand, we add it into ``p_init``.
             p_idx += summand
         if abs(p_idx.imag) > operator.atol:
             warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
@@ -295,7 +295,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 f"Size of the operator {hermitian_op.n_qubits} does not match the size of the povm {len(self)}."
             )
 
-        # If frame_op_idx is `None`, it means all outcomes are queried
+        # If frame_op_idx is ``None``, it means all outcomes are queried
         if frame_op_idx is None:
             # Extract the number of outcomes for each local POVM.
 
@@ -304,9 +304,9 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             # length of each dimension is given by the number of outcomes of the POVM encoded along it.
             p_init: np.ndarray = np.zeros(self.shape, dtype=float)
 
-            # First, we iterate over all the positions of `p_init`. This corresponds to the different
+            # First, we iterate over all the positions of ``p_init``. This corresponds to the different
             # probabilities for the different outcomes whose probability we want to compute.
-            #   - `m` is the multi-dimensional index into the high-dimensional `p_init` array.
+            #   - ``m`` is the multi-dimensional index into the high-dimensional ``p_init`` array.
             for m, _ in np.ndenumerate(p_init):
                 p_init[m] = self._trace_of_prod(hermitian_op, m)
             return p_init

@@ -21,7 +21,7 @@ from .product_dual import ProductDUAL
 from .product_frame import ProductFrame
 
 
-class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM[tuple[int, ...]]):
+class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
     r"""Class to represent a set of product POVM operators.
 
     A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting
@@ -61,7 +61,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM[tuple[int, ...]]):
             If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
             queried, a dictionary mapping outcomes to probabilities is returned. If all outcomes were
             queried, a high-dimensional array with one dimension per local POVM stored inside this
-            ``ProductPOVM`` is returned. The length of each dimension is given by the number of outcomes
+            :class:`.`ProductPOVM` is returned. The length of each dimension is given by the number of outcomes
             of the POVM encoded along that axis.
         """
         if not isinstance(rho, SparsePauliOp):

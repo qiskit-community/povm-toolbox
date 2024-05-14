@@ -20,7 +20,7 @@ from .multi_qubit_dual import MultiQubitDUAL
 from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitPOVM(MultiQubitFrame, BasePOVM[int]):
+class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
     """Class that collects all information that any MultiQubit POVM should specify.
 
     This is a representation of a positive operator-valued measure (POVM). The effects are
