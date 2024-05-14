@@ -31,7 +31,7 @@ class TestSingleQubitPovm(TestCase):
             ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
 
         with self.assertRaises(ValueError):
-            povm1 = SingleQubitPOVM(povm_ops=[Operator(op) for op in ops])
+            povm1 = SingleQubitPOVM(list_operators=[Operator(op) for op in ops])
             povm1.check_validity()
 
     def test_pauli_decomposition(self):
@@ -39,16 +39,16 @@ class TestSingleQubitPovm(TestCase):
 
         # TODO : select a random POVM ...
         dim = 2
-        eival = np.random.uniform(low=-5, high=5, size=dim)
+        eigval = np.random.uniform(low=-5, high=5, size=dim)
         x = unitary_group.rvs(dim)  # , random_state=seed_obs[i])
-        obs = x @ np.diag(eival) @ x.T.conj()
+        obs = x @ np.diag(eigval) @ x.T.conj()
 
         _, V = np.linalg.eigh(obs)
 
         sqpovm = SingleQubitPOVM.from_vectors(V)
 
         summed = defaultdict(complex)
-        for pauli_op in sqpovm.pauli_operators():
+        for pauli_op in sqpovm.pauli_operators:
             for pauli, coeff in pauli_op.items():
                 summed[pauli] += coeff
 

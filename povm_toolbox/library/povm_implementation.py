@@ -49,6 +49,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """
         super().__init__()
         self.n_qubit = n_qubit
+        # TODO: add qubit_specifier or layout to apply, see issue #15
+
         self.msmt_qc: QuantumCircuit
 
     def __repr__(self) -> str:
@@ -57,7 +59,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
     @abstractmethod
     def _build_qc(self) -> QuantumCircuit:
-        """Return the parametetrized quantum circuit to implement the POVM."""
+        """Return the parametrized quantum circuit to implement the POVM."""
 
     @abstractmethod
     def to_sampler_pub(
@@ -85,7 +87,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Returns:
             A tuple of a sampler pub and a dictionary of metadata which include
             the ``POVMImplementation`` object itself. The metadata should contain
-            all the information neceassary to extract the POVM outcomes out of raw
+            all the information necessary to extract the POVM outcomes out of raw
             bitstrings.
         """
         # TODO: figure out if it would be better to pass these arguments as a
@@ -105,7 +107,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             circuit of this POVM implementation.
         """
         # Create a copy of the circuit and remove final measurements:
-        dest_circuit = circuit.remove_final_measurements(inplace=False)
+        dest_circuit = circuit.copy()
+        dest_circuit.remove_final_measurements(inplace=True)
 
         if dest_circuit.layout is None:
             # Basic one-to-one layout

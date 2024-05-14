@@ -115,7 +115,7 @@ class POVMSamplerPub(ShapedMixin):
                 and that no default number of shots is set or if the pub-like
                 object does not specify a povm and that no default povm is set.
             ValueError: If a tuple is supplied but its length exceed 4.
-            NotImplementedError: If parameter values to be bound to a paremetric
+            NotImplementedError: If parameter values to be bound to a parametric
                 circuit is passed as an argument in the pub-like object.
             TypeError: If the pub-like object does not have a valid type.
 

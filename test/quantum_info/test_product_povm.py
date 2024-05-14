@@ -14,9 +14,10 @@ from unittest import TestCase
 
 import numpy as np
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
+from povm_toolbox.quantum_info.product_dual import ProductDUAL
 from povm_toolbox.quantum_info.product_povm import ProductPOVM
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
-from qiskit.quantum_info import DensityMatrix, Operator, random_density_matrix
+from qiskit.quantum_info import DensityMatrix, Operator, random_density_matrix, random_hermitian
 
 
 class TestProductPOVM(TestCase):
@@ -66,21 +67,18 @@ class TestProductPOVM(TestCase):
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 8)
             self.assertEqual(product.n_outcomes, 8)
-            self.assertEqual(product.n_operators, 6)
             self.assertEqual(product.n_subsystems, 3)
         with self.subTest("MultiQubitPOVM objects"):
             povms = {(0, 1): mqp, (2, 3): mqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 16)
             self.assertEqual(product.n_outcomes, 16)
-            self.assertEqual(product.n_operators, 8)
             self.assertEqual(product.n_subsystems, 4)
         with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects"):
             povms = {(0,): sqp, (1,): sqp, (2, 3): mqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 16)
             self.assertEqual(product.n_outcomes, 16)
-            self.assertEqual(product.n_operators, 8)
             self.assertEqual(product.n_subsystems, 4)
         with self.subTest("Invalid POVM subsystem indices"), self.assertRaises(ValueError):
             _ = ProductPOVM({(0, 0): mqp})
@@ -205,6 +203,85 @@ class TestProductPOVM(TestCase):
             rho3 = DensityMatrix(0.5 * np.outer(rho3_vec, rho3_vec.conj()))
             self.assertTrue(np.allclose(prod_povm1.get_prob(rho3), npzfile["prob_1_3"]))
             self.assertTrue(np.allclose(prod_povm2.get_prob(rho3), npzfile["prob_2_3"]))
+
+    def test_build_dual(self):
+        seed = 12
+        n_qubit = 3
+        rng = np.random.RandomState(seed)
+        q = rng.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
+        q /= q.sum(axis=1)[:, np.newaxis]
+
+        povm_list = []
+        for i in range(n_qubit):
+            povm_list.append(
+                SingleQubitPOVM(
+                    [
+                        q[i, 0] * Operator.from_label("0"),
+                        q[i, 0] * Operator.from_label("1"),
+                        q[i, 1] * Operator.from_label("+"),
+                        q[i, 1] * Operator.from_label("-"),
+                        q[i, 2] * Operator.from_label("r"),
+                        q[i, 2] * Operator.from_label("l"),
+                    ]
+                )
+            )
+
+        prod_povm = ProductPOVM.from_list(povm_list)
+
+        dual = ProductDUAL.build_dual_from_frame(prod_povm)
+
+        obs = random_hermitian(dims=2**n_qubit)
+        omegas = dual.get_omegas(obs)
+        self.assertIsInstance(omegas[0, 0, 0], float)
+
+        self.assertTrue(dual.is_dual_to(prod_povm))
+
+    def test_informationally_complete(self):
+        """Test whether a POVM is informationally complete or not."""
+        import cmath
+
+        vecs = np.sqrt(1.0 / 2.0) * np.array(
+            [
+                [1, 0],
+                [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
+                [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(2.0j * np.pi / 3)],
+                [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(4.0j * np.pi / 3)],
+            ]
+        )
+        sic_povm = MultiQubitPOVM.from_vectors(vecs)
+
+        coef = 1.0 / 3.0
+        cs_povm = MultiQubitPOVM(
+            [
+                coef * Operator.from_label("0"),
+                coef * Operator.from_label("1"),
+                coef * Operator.from_label("+"),
+                coef * Operator.from_label("-"),
+                coef * Operator.from_label("r"),
+                coef * Operator.from_label("l"),
+            ]
+        )
+
+        coef = 1.0 / 2.0
+        non_ic_povm = MultiQubitPOVM(
+            [
+                coef * Operator.from_label("0"),
+                coef * Operator.from_label("1"),
+                coef * Operator.from_label("+"),
+                coef * Operator.from_label("-"),
+            ]
+        )
+
+        self.assertTrue(ProductPOVM.from_list([sic_povm, cs_povm]).informationally_complete)
+        self.assertFalse(ProductPOVM.from_list([sic_povm, non_ic_povm]).informationally_complete)
+        self.assertFalse(ProductPOVM.from_list([non_ic_povm, non_ic_povm]).informationally_complete)
+
+        self.assertTrue(
+            ProductPOVM.from_list([sic_povm, cs_povm, cs_povm]).informationally_complete
+        )
+        self.assertFalse(
+            ProductPOVM.from_list([sic_povm, cs_povm, non_ic_povm]).informationally_complete
+        )
 
     # TODO
     def test_build_from_vectors(self):

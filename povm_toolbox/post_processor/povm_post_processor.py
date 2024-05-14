@@ -15,28 +15,56 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
+from povm_toolbox.quantum_info.base_dual import BaseDUAL
 from povm_toolbox.sampler import POVMPubResult
 
 
-class POVMPostprocessor:
+class POVMPostProcessor:
     """A common POVM result post-processor."""
 
     def __init__(
         self,
         povm_sample: POVMPubResult,
-        alphas: np.ndarray | None = None,
+        dual_class: type[BaseDUAL] | None = None,
     ) -> None:
         """Initialize the POVM post-processor.
 
         Args:
             povm_sample: a result from a POVM sampler run.
-            alphas: parameters of the frame superoperator of the POVM.
+            dual_class: the subclass of :class:`.BaseDUAL` that will be used to
+                build the dual frame to the POVM of ``povm_sample``. The dual
+                frame is then used to compute the decomposition weights of any
+                observable.
         """
         self.povm = povm_sample.metadata.povm_implementation.definition()
         self.counts: np.ndarray = povm_sample.get_counts()  # type: ignore
         # TODO: find a way to avoid the type ignore
-        if alphas is not None:
-            self.povm.alphas = alphas
+
+        if dual_class is None:
+            dual_class = self.povm.default_dual_class
+        elif not issubclass(dual_class, BaseDUAL):
+            raise TypeError
+
+        self._dual_class = dual_class
+        self._dual: BaseDUAL | None = None
+
+    @property
+    def dual(self) -> BaseDUAL:
+        """Return the dual that is used.
+
+        .. warning::
+            If the dual frame is not already built, this could be computationally demanding.
+        """
+        if self._dual is None:
+            self._dual = self._dual_class.build_dual_from_frame(self.povm)
+        return self._dual
+
+    def optimize(self, **options) -> None:
+        """Optimize the dual inplace."""
+        # TODO: improve efficiency, we are doing the heavy computation twice here
+        # if the dual was not built before (first when we access :attr:`.dual` and
+        # second when we optimize it).
+        self._dual = self.dual.optimize(self.povm, **options)
 
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
@@ -75,7 +103,7 @@ class POVMPostprocessor:
         # TODO: performance gains to be made when computing the omegas here ?
         # like storing the dict of computed omegas and updating the dict with the
         # missing values that were still never computed.
-        omegas = dict(self.povm.get_omegas(observable, set(count.keys())))  # type: ignore
+        omegas = dict(self.dual.get_omegas(observable, set(count.keys())))  # type: ignore
         for outcome in count:
             exp_val += count[outcome] * omegas[outcome]
             std += count[outcome] * omegas[outcome] ** 2
