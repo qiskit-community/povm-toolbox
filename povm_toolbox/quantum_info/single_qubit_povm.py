@@ -13,6 +13,8 @@
 from __future__ import annotations
 
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from .multi_qubit_povm import MultiQubitPOVM
 
@@ -32,7 +34,8 @@ class SingleQubitPOVM(MultiQubitPOVM):
             )
         super()._check_validity()
 
-    def get_bloch_vectors(self):
+    def get_bloch_vectors(self) -> np.ndarray:
+        """TODO."""
         r = np.empty((self.n_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
             r[i, 0] = 2 * np.real_if_close(pauli_op.get("X", 0))
@@ -40,7 +43,23 @@ class SingleQubitPOVM(MultiQubitPOVM):
             r[i, 2] = 2 * np.real_if_close(pauli_op.get("Z", 0))
         return r
 
-    def draw_bloch(self, title="", fig=None, ax=None, figsize=None, font_size=None):
+    def draw_bloch(
+        self,
+        title: str = "",
+        fig: Figure | None = None,
+        ax: Axes | None = None,
+        figsize: tuple[float, float] | None = None,
+        font_size: float | None = None,
+    ) -> Figure:
+        """TODO.
+
+        Args:
+            title: TODO.
+            fig: TODO.
+            ax: TODO.
+            figsize: TODO.
+            font_size: TODO.
+        """
         from qiskit.visualization.bloch import Bloch
         from qiskit.visualization.utils import matplotlib_close_if_inline
 
@@ -54,5 +73,4 @@ class SingleQubitPOVM(MultiQubitPOVM):
             fig = B.fig
             fig.set_size_inches(figsize[0], figsize[1])
             matplotlib_close_if_inline(fig)
-            return fig
-        return None
+        return fig

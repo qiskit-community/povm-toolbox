@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
+from matplotlib.figure import Figure
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
 from .base_povm import BasePOVM
@@ -71,21 +72,28 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
 
     def draw_bloch(
         self,
-        title="",
-        figsize=None,
+        title: str = "",
+        figsize: tuple[float, float] | None = None,
         *,
-        font_size=None,
-        title_font_size=None,
-        title_pad=1,
-    ):
+        font_size: float | None = None,
+        title_font_size: float | None = None,
+        title_pad: float = 1,
+    ) -> Figure:
+        """Plot a Bloch sphere for each single-qubit POVM forming the product POVM.
+
+        Args:
+            title: a string that represents the plot title
+            figsize: size of each individual Bloch sphere figure, in inches.
+            font_size: Font size for the Bloch ball figures.
+            title_font_size: Font size for the title.
+            title_pad: Padding for the title (suptitle `y` position is `y=1+title_pad/100`).
+        """
         import matplotlib.pyplot as plt
         from qiskit.visualization.utils import matplotlib_close_if_inline
 
         num = self.n_subsystems
 
         if any([len(idx) > 1 for idx in self.sub_systems]):
-            raise NotImplementedError
-        if not all([isinstance(sqpovm, SingleQubitPOVM) for sqpovm in self._povms.values()]):
             raise NotImplementedError
 
         if figsize is not None:
@@ -100,7 +108,10 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         fig = plt.figure(figsize=(width, height))
         for i, idx in enumerate(self.sub_systems):
             ax = fig.add_subplot(1, num, i + 1, projection="3d")
-            self[idx].draw_bloch(
+
+            if not isinstance(sqpovm := self[idx], SingleQubitPOVM):
+                raise NotImplementedError
+            sqpovm.draw_bloch(
                 title="qubit " + str(idx[0]), fig=fig, ax=ax, figsize=figsize, font_size=font_size
             )
         fig.suptitle(title, fontsize=title_font_size, y=1.0 + title_pad / 100)
