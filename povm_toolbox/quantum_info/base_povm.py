@@ -13,16 +13,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TypeVar
 
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
 from .base_dual import BaseDUAL
-from .base_frame import BaseFrame
-
-# type of the labels used to specify povm effects
-LabelT = TypeVar("LabelT")
+from .base_frame import BaseFrame, LabelT
 
 
 class BasePOVM(BaseFrame[LabelT], ABC):

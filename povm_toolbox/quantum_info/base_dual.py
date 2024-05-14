@@ -13,15 +13,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TypeVar
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
-from .base_frame import BaseFrame
-
-# type of the labels used to specify dual operators
-LabelT = TypeVar("LabelT")
+from .base_frame import BaseFrame, LabelT
 
 
 class BaseDUAL(BaseFrame[LabelT], ABC):
@@ -38,7 +34,7 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
         obs: SparsePauliOp | Operator,
         outcome_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
-        """Return the decomposition weights of observable `obs` into the POVM effects to which `self` is a dual."""
+        """Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual."""
         return self.analysis(obs, outcome_idx)
 
     @abstractmethod
