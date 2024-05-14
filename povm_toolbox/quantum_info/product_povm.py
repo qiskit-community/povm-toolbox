@@ -19,6 +19,7 @@ from .base_povm import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
 from .product_dual import ProductDUAL
 from .product_frame import ProductFrame
+from .single_qubit_povm import SingleQubitPOVM
 
 
 class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
@@ -67,3 +68,41 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         if not isinstance(rho, SparsePauliOp):
             rho = SparsePauliOp.from_operator(rho)
         return self.analysis(rho, outcome_idx)
+
+    def draw_bloch(
+        self,
+        title="",
+        figsize=None,
+        *,
+        font_size=None,
+        title_font_size=None,
+        title_pad=1,
+    ):
+        import matplotlib.pyplot as plt
+        from qiskit.visualization.utils import matplotlib_close_if_inline
+
+        num = self.n_subsystems
+
+        if any([len(idx) > 1 for idx in self.sub_systems]):
+            raise NotImplementedError
+        if not all([isinstance(sqpovm, SingleQubitPOVM) for sqpovm in self._povms.values()]):
+            raise NotImplementedError
+
+        if figsize is not None:
+            width, height = figsize
+            width *= num
+        else:
+            width, height = plt.figaspect(1 / num)
+        default_title_font_size = font_size if font_size is not None else 16
+        title_font_size = (
+            title_font_size if title_font_size is not None else default_title_font_size
+        )
+        fig = plt.figure(figsize=(width, height))
+        for i, idx in enumerate(self.sub_systems):
+            ax = fig.add_subplot(1, num, i + 1, projection="3d")
+            self[idx].draw_bloch(
+                title="qubit " + str(idx[0]), fig=fig, ax=ax, figsize=figsize, font_size=font_size
+            )
+        fig.suptitle(title, fontsize=title_font_size, y=1.0 + title_pad / 100)
+        matplotlib_close_if_inline(fig)
+        return fig
