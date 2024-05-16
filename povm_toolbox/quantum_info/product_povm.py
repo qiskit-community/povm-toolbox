@@ -78,6 +78,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         font_size: float | None = None,
         title_font_size: float | None = None,
         title_pad: float = 1,
+        colorbar: bool = False,
     ) -> Figure:
         """Plot a Bloch sphere for each single-qubit POVM forming the product POVM.
 
@@ -87,6 +88,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             font_size: Font size for the Bloch ball figures.
             title_font_size: Font size for the title.
             title_pad: Padding for the title (suptitle `y` position is `y=1+title_pad/100`).
+            colorbar: TODO.
         """
         import matplotlib.pyplot as plt
         from qiskit.visualization.utils import matplotlib_close_if_inline
@@ -96,23 +98,35 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         if any([len(idx) > 1 for idx in self.sub_systems]):
             raise NotImplementedError
 
-        if figsize is not None:
-            width, height = figsize
-            width *= num
-        else:
-            width, height = plt.figaspect(1 / num)
+        w = int(np.sqrt(num) * 4 / 3)
+        h = int(np.sqrt(num) * 3 / 4) or 1
+        while w * h < num:
+            w += 1 if w * h < num else 0
+            h += 1 if w * h < num else 0
+            while (w - 1) * h >= num:
+                w -= 1
+        if figsize is None:
+            figsize = (5, 4) if colorbar else (5, 5)
+        width, height = figsize
+        width *= w
+        height *= h
         default_title_font_size = font_size if font_size is not None else 16
         title_font_size = (
             title_font_size if title_font_size is not None else default_title_font_size
         )
         fig = plt.figure(figsize=(width, height))
         for i, idx in enumerate(self.sub_systems):
-            ax = fig.add_subplot(1, num, i + 1, projection="3d")
+            ax = fig.add_subplot(h, w, i + 1, projection="3d")
 
             if not isinstance(sqpovm := self[idx], SingleQubitPOVM):
                 raise NotImplementedError
             sqpovm.draw_bloch(
-                title="qubit " + str(idx[0]), fig=fig, ax=ax, figsize=figsize, font_size=font_size
+                title="qubit " + str(idx[0]),
+                fig=fig,
+                ax=ax,
+                figsize=figsize,
+                font_size=font_size,
+                colorbar=colorbar,
             )
         fig.suptitle(title, fontsize=title_font_size, y=1.0 + title_pad / 100)
         matplotlib_close_if_inline(fig)
