@@ -28,9 +28,23 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         shot_batch_size: int = 1,
         seed_rng: int | Generator | None = None,
     ):
-        """Construct a locally-biased classical shadow POVM.
+        """Implement a locally-biased classical shadow POVM.
 
-        TODO: The same as above, but the angles are hard-coded to be X/Y/Z for all qubits.
+        This is a special case of a :class:`RandomizedProjectiveMeasurements`, where the PVMs are
+        chosen to be Z-, X- and Y-measurements.
+
+        Args:
+            n_qubits: the number of qubits.
+            bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
+                for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
+                These floats should sum to 1. If 2D, it will have a new set of biases for each
+                qubit.
+            shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
+                is sampled for each shot.
+            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
+                The Z-,X-,Y-measurements are sampled according to the probability distribution(s)
+                specified by ``bias``. The user can also directly provide a random generator. If
+                None, a random seed will be used.
         """
         angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
         assert bias.shape[-1] == 3
