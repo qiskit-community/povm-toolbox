@@ -68,30 +68,42 @@ class SingleQubitPOVM(MultiQubitPOVM):
             ax: TODO.
             figsize: TODO.
             font_size: TODO.
-            colorbar: TODO.
+            colorbar: If ``True``, normalize the vectors on the Bloch sphere and
+                add a colormap to keep track of the norm of the vectors. It can
+                help to visualize the vector if they have a small norm.
         """
         from qiskit.visualization.bloch import Bloch
         from qiskit.visualization.utils import matplotlib_close_if_inline
 
         if figsize is None:
             figsize = (5, 4) if colorbar else (5, 5)
+
+        # Initialize Bloch sphere
         B = Bloch(fig=fig, axes=ax, font_size=font_size)
+
+        # Compute Bloch vector
         vectors = self.get_bloch_vectors()
 
         if colorbar:
+            # Keep track of vector norms through colorbar
             import matplotlib as mpl
 
             cmap = mpl.colormaps["viridis"]
             B.vector_color = [cmap(np.linalg.norm(vec)) for vec in vectors]
+            # Normalize
             for i in range(len(vectors)):
                 vectors[i] /= np.linalg.norm(vectors[i])
+
         B.add_vectors(vectors)
         B.render(title=title)
+
         if fig is None:
             fig = B.fig
             ax = B.axes
             fig.set_size_inches(figsize[0], figsize[1])
             matplotlib_close_if_inline(fig)
+
         if colorbar:
             fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap), ax=ax, label="weight")
+
         return fig

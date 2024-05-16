@@ -87,36 +87,45 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             figsize: size of each individual Bloch sphere figure, in inches.
             font_size: Font size for the Bloch ball figures.
             title_font_size: Font size for the title.
-            title_pad: Padding for the title (suptitle `y` position is `y=1+title_pad/100`).
-            colorbar: TODO.
+            title_pad: Padding for the title.
+            colorbar: If ``True``, normalize the vectors on the Bloch sphere and
+                add a colormap to keep track of the norm of the vectors. It can
+                help to visualize the vector if they have a small norm.
         """
         import matplotlib.pyplot as plt
         from qiskit.visualization.utils import matplotlib_close_if_inline
 
+        # Number of subplots (one per qubit)
         num = self.n_subsystems
 
+        # Check that all local POVMs are single-qubit POVMs
         if any([len(idx) > 1 for idx in self.sub_systems]):
             raise NotImplementedError
 
-        w = int(np.sqrt(num) * 4 / 3)
-        h = int(np.sqrt(num) * 3 / 4) or 1
-        while w * h < num:
-            w += 1 if w * h < num else 0
-            h += 1 if w * h < num else 0
-            while (w - 1) * h >= num:
-                w -= 1
+        # Determine the number of rows and columns for the figure
+        n_cols = int(np.sqrt(num) * 4 / 3)
+        n_rows = int(np.sqrt(num) * 3 / 4) or 1
+        while n_cols * n_rows < num:
+            n_cols += 1 if n_cols * n_rows < num else 0
+            n_rows += 1 if n_cols * n_rows < num else 0
+            while (n_cols - 1) * n_rows >= num:
+                n_cols -= 1
+
+        # Set default values
         if figsize is None:
             figsize = (5, 4) if colorbar else (5, 5)
         width, height = figsize
-        width *= w
-        height *= h
+        width *= n_cols
+        height *= n_rows
         default_title_font_size = font_size if font_size is not None else 16
         title_font_size = (
             title_font_size if title_font_size is not None else default_title_font_size
         )
+
+        # Plot figure
         fig = plt.figure(figsize=(width, height))
         for i, idx in enumerate(self.sub_systems):
-            ax = fig.add_subplot(h, w, i + 1, projection="3d")
+            ax = fig.add_subplot(n_rows, n_cols, i + 1, projection="3d")
 
             if not isinstance(sqpovm := self[idx], SingleQubitPOVM):
                 raise NotImplementedError
@@ -130,4 +139,5 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             )
         fig.suptitle(title, fontsize=title_font_size, y=1.0 + title_pad / 100)
         matplotlib_close_if_inline(fig)
+
         return fig
