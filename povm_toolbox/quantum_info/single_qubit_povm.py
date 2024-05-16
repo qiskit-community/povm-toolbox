@@ -30,16 +30,22 @@ class SingleQubitPOVM(MultiQubitPOVM):
         """
         if not self.dimension == 2:
             raise ValueError(
-                f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}."
+                "Dimension of Single Qubit POVM operator space should be 2,"
+                f" not {self.dimension}."
             )
         super()._check_validity()
 
     def get_bloch_vectors(self) -> np.ndarray:
         """TODO."""
-
-        # TODO: check that all povm effects are rank-1.
         r = np.empty((self.n_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
+            # Check that the povm effect is rank-1:
+            if np.linalg.matrix_rank(self.operators[i]) > 1:
+                raise ValueError(
+                    "Bloch vector is only well-defined for single-qubit rank-1"
+                    f" POVMs. However, the effect number {i} of this POVM has"
+                    f" rank {np.linalg.matrix_rank(self.operators[i])}."
+                )
             r[i, 0] = 2 * np.real_if_close(pauli_op.get("X", 0))
             r[i, 1] = 2 * np.real_if_close(pauli_op.get("Y", 0))
             r[i, 2] = 2 * np.real_if_close(pauli_op.get("Z", 0))
