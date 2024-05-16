@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.random import Generator
 
 from .locally_biased_classical_shadows import LocallyBiasedClassicalShadows
 
@@ -24,14 +25,26 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
         self,
         n_qubit: int,
         shot_batch_size: int = 1,
+        seed_rng: int | Generator | None = None,
     ):
-        """Construct a classical shadow POVM.
+        """Implement a classical shadows POVM.
 
-        TODO: The same as above, but also hard-coding the biases to be equally distributed.
+        This is a special case of a :class:`LocallyBiasedClassicalShadows`, where
+        the bias are taken to be uniform. That is, there is an equal probability
+        to perform a measurement in the Z, X and Y bases.
+
+        Args:
+            n_qubits: the number of qubits.
+            shot_batch_size: number of shots assigned to each sampled measurement basis.
+                If set to 1, a new basis is sampled for each shot.
+            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to
+                sample measurement bases. The user can also directly provide a random
+                generator. If None, a random seed will be used.
         """
         bias = 1.0 / 3.0 * np.ones(3)
         super().__init__(
             n_qubit=n_qubit,
             bias=bias,
             shot_batch_size=shot_batch_size,
+            seed_rng=seed_rng,
         )

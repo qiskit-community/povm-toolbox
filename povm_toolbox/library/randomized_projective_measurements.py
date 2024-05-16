@@ -15,6 +15,7 @@ from __future__ import annotations
 from collections import Counter
 
 import numpy as np
+from numpy.random import Generator, default_rng
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin, make_data_bin
 from qiskit.primitives.containers.bindings_array import BindingsArray
@@ -38,6 +39,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         bias: np.ndarray,
         angles: np.ndarray,
         shot_batch_size: int = 1,
+        seed_rng: int | Generator | None = None,
     ) -> None:
         """Implement a product POVM through the randomization of single-qubit projective measurement.
 
@@ -56,20 +58,36 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 for each qubit.
             shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
                 is sampled for each shot.
+            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
+                The PVMs are sampled according to the probability distribution(s) specified by
+                ``bias``. The user can also directly provide a random generator. If None, a random
+                seed will be used.
 
         Raises:
-            ValueError: TODO.
+            ValueError: If the shape of ``bias`` is not compatible with the shape of ``angles``.
+            ValueError: If the shape of ``bias`` is not compatible with ``n_qubit``.
+            ValueError: If there is a negative value in the probability distribution(s) specified
+                by ``bias``.
+            ValueError: If the probability distribution(s) specified by ``bias`` don't sum up to 1.
+            ValueError: If the shape of ``angles`` is not compatible with ``n_qubit``.
+            TypeError: If the type of ``seed_rng`` is not valid.
         """
         super().__init__(n_qubit)
 
         if 2 * bias.shape[-1] != angles.shape[-1]:
-            raise ValueError(f"TODO: error message. {bias.shape[-1]}, {angles.shape[-1]}.")
+            raise ValueError(
+                f"The shape of ``bias`` ({bias.shape}) is not compatible with the shape"
+                f" of ``angles`` ({angles.shape})."
+            )
         self._n_PVMs = bias.shape[-1]
 
         if bias.ndim == 1:
             bias = np.tile(bias, (self.n_qubit, 1))
         elif (bias.ndim == 2 and bias.shape[0] != self.n_qubit) or bias.ndim > 2:
-            raise ValueError("TODO: error message.")
+            raise ValueError(
+                f"The shape of ``bias`` ({bias.shape}) is not compatible with"
+                f" ``n_qubit`` ({n_qubit})."
+            )
         if np.any(bias < 0.0):
             raise ValueError(
                 "There should not be any negative values in the probability distribution parameters."
@@ -81,12 +99,25 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         if angles.ndim == 1:
             angles = np.tile(angles, (self.n_qubit, 1))
         elif (angles.ndim == 2 and angles.shape[0] != self.n_qubit) or angles.ndim > 2:
-            raise ValueError("TODO: error message.")
+            raise ValueError(
+                f"The shape of ``angles`` ({angles.shape}) is not compatible with"
+                f" ``n_qubit`` ({n_qubit})."
+            )
         self.angles = angles.reshape((self.n_qubit, self._n_PVMs, 2))
 
         self.msmt_qc = self._build_qc()
 
         self.shot_batch_size = shot_batch_size
+
+        self._rng: Generator
+        if seed_rng is None:
+            self._rng = default_rng()
+        elif isinstance(seed_rng, int):
+            self._rng = default_rng(seed_rng)
+        elif isinstance(seed_rng, Generator):
+            self._rng = seed_rng
+        else:
+            raise TypeError(f"The type of `seed_rng` ({type(seed_rng)}) is not valid.")
 
     def _build_qc(self) -> QuantumCircuit:
         """Build the quantum circuit that implements the measurement.
@@ -206,7 +237,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             # this particular qubit. We draw a PVM for each batch of shots and for
             # each set of circuit parameter values supplied by the user through the
             # :method:``POVMSampler.run`` method.
-            pvm_idx[..., i] = np.random.choice(
+            pvm_idx[..., i] = self._rng.choice(
                 self._n_PVMs,
                 size=circuit_binding.size * num_batches,
                 replace=True,
