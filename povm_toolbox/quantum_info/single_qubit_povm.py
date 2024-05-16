@@ -36,6 +36,8 @@ class SingleQubitPOVM(MultiQubitPOVM):
 
     def get_bloch_vectors(self) -> np.ndarray:
         """TODO."""
+
+        # TODO: check that all povm effects are rank-1.
         r = np.empty((self.n_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
             r[i, 0] = 2 * np.real_if_close(pauli_op.get("X", 0))
