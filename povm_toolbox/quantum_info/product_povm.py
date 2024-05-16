@@ -126,7 +126,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         for i, idx in enumerate(self.sub_systems):
             ax = fig.add_subplot(n_rows, n_cols, i + 1, projection="3d")
             self[idx].draw_bloch(
-                title="qubit " + ", ".join(map(str,idx)),
+                title="qubit " + ", ".join(map(str, idx)),
                 fig=fig,
                 ax=ax,
                 figsize=figsize,

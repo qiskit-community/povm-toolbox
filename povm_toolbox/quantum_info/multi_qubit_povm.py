@@ -82,6 +82,7 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         ax: Axes | None = None,
         figsize: tuple[float, float] | None = None,
         font_size: float | None = None,
+        colorbar: bool = False,
     ) -> Figure:
         """TODO.
 
@@ -91,5 +92,8 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
             ax: User supplied Matplotlib axes to render the bloch sphere.
             figsize: Figure size in inches. Has no effect if passing ``ax``.
             font_size: Size of font used for Bloch sphere labels.
+            colorbar: If ``True``, normalize the vectors on the Bloch sphere and
+                add a colormap to keep track of the norm of the vectors. It can
+                help to visualize the vector if they have a small norm.
         """
         raise NotImplementedError
