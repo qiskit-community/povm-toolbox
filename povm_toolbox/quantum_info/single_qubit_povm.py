@@ -54,11 +54,11 @@ class SingleQubitPOVM(MultiQubitPOVM):
         """TODO.
 
         Args:
-            title: TODO.
-            fig: TODO.
-            ax: TODO.
-            figsize: TODO.
-            font_size: TODO.
+            title: A string that represents the plot title.
+            fig: User supplied Matplotlib Figure instance for plotting Bloch sphere.
+            ax: User supplied Matplotlib axes to render the bloch sphere.
+            figsize: Figure size in inches. Has no effect if passing ``ax``.
+            font_size: Size of font used for Bloch sphere labels.
         """
         from qiskit.visualization.bloch import Bloch
         from qiskit.visualization.utils import matplotlib_close_if_inline

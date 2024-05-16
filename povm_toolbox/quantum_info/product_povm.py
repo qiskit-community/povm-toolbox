@@ -20,7 +20,6 @@ from .base_povm import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
 from .product_dual import ProductDUAL
 from .product_frame import ProductFrame
-from .single_qubit_povm import SingleQubitPOVM
 
 
 class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
@@ -82,7 +81,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         """Plot a Bloch sphere for each single-qubit POVM forming the product POVM.
 
         Args:
-            title: a string that represents the plot title
+            title: a string that represents the plot title.
             figsize: size of each individual Bloch sphere figure, in inches.
             font_size: Font size for the Bloch ball figures.
             title_font_size: Font size for the title.
@@ -108,11 +107,8 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         fig = plt.figure(figsize=(width, height))
         for i, idx in enumerate(self.sub_systems):
             ax = fig.add_subplot(1, num, i + 1, projection="3d")
-
-            if not isinstance(sqpovm := self[idx], SingleQubitPOVM):
-                raise NotImplementedError
-            sqpovm.draw_bloch(
-                title="qubit " + str(idx[0]), fig=fig, ax=ax, figsize=figsize, font_size=font_size
+            self[idx].draw_bloch(
+                title="qubit " + ", ".join(map(str,idx)), fig=fig, ax=ax, figsize=figsize, font_size=font_size
             )
         fig.suptitle(title, fontsize=title_font_size, y=1.0 + title_pad / 100)
         matplotlib_close_if_inline(fig)
