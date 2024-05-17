@@ -36,7 +36,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
 
         Args:
             n_qubits: the number of qubits.
-            qubit_specifier: list of index specifiying on which qubits the POVM acts.
+            qubit_specifier: list of index specifying on which qubits the POVM acts.
             shot_batch_size: number of shots assigned to each sampled measurement basis.
                 If set to 1, a new basis is sampled for each shot.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to

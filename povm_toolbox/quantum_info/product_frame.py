@@ -93,10 +93,11 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         self._shape: tuple[int, ...] = tuple(shape)
 
         self._check_validity()
-    
-    def __repr__(self) -> str:
-        f_repr = "\n   "+"\n   ".join(f"{name}: {value}" for name, value in self._povms.items())
-        return f"{self.__class__.__name__}(n_subsystems={self.n_subsystems})<{",".join(map(str, self.shape))}>:{f_repr}"
+
+    def __repr__(self):
+        """Return the string representation of a :class:`.ProductFrame` instance."""
+        f_repr = "\n   " + "\n   ".join(f"{name}: {value}" for name, value in self._povms.items())
+        return f"{self.__class__.__name__}(n_subsystems={self.n_subsystems})<{','.join(map(str, self.shape))}>:{f_repr}"
 
     @classmethod
     def from_list(cls, povms: Sequence[T]) -> Self:

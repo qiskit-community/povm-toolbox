@@ -40,7 +40,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
-            qubit_specifier: list of index specifiying on which qubits the POVM acts.
+            qubit_specifier: list of index specifying on which qubits the POVM acts.
             shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
                 is sampled for each shot.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.

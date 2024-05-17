@@ -47,7 +47,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
         Args:
             n_qubit: number of logical qubits in the system.
-            qubit_specifier: list of index specifiying on which qubits the POVM acts.
+            qubit_specifier: list of index specifying on which qubits the POVM acts.
         """
         super().__init__()
         self.n_qubit = n_qubit
