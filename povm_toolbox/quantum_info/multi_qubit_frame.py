@@ -68,6 +68,10 @@ class MultiQubitFrame(BaseFrame[int]):
 
         self._check_validity()
 
+    def __repr__(self) -> str:
+        f_subsystems = f'(num_qubits={self.n_subsystems})' if self.n_subsystems>1 else ''
+        return f"{self.__class__.__name__}{f_subsystems}<{self.n_operators}> at {hex(id(self))}"
+
     @property
     def informationally_complete(self) -> bool:
         """Return if the frame spans the entire Hilbert space."""
