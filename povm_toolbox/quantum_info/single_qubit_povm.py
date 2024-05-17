@@ -36,7 +36,19 @@ class SingleQubitPOVM(MultiQubitPOVM):
         super()._check_validity()
 
     def get_bloch_vectors(self) -> np.ndarray:
-        """TODO."""
+        r"""Compute the Bloch vector of each effect of the POVM.
+
+        For a rank-1 POVM, each effect :math:`M_k` can be written as
+
+        .. math::
+            M_k = \\gamma_k |\\psi_k \rangle \\langle \\psi_k | = \\gamma_k
+            \frac{1}{2} \\left( \\mathbb{I} + \vec{a}_k \\cdot \vec{\\sigma} \right)
+
+        where :math:`\vec{\\sigma}` is the usual Pauli vector and
+        :math:`||\vec{a}_k||^2=1`. We then define the Bloch vector of a rank-1
+        effect as :math:`\vec{r}_k = \\gamma_k \vec{a}_k`, which uniquely defines
+        the rank-1 effect.
+        """
         r = np.empty((self.n_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
             # Check that the povm effect is rank-1:
@@ -60,7 +72,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
         font_size: float | None = None,
         colorbar: bool = False,
     ) -> Figure:
-        """TODO.
+        """Plot the Bloch vector of each effect of the POVM.
 
         Args:
             title: A string that represents the plot title.
