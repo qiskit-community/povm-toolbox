@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import matplotlib as mpl
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -41,12 +42,12 @@ class SingleQubitPOVM(MultiQubitPOVM):
         For a rank-1 POVM, each effect :math:`M_k` can be written as
 
         .. math::
-            M_k = \\gamma_k |\\psi_k \rangle \\langle \\psi_k | = \\gamma_k
-            \frac{1}{2} \\left( \\mathbb{I} + \vec{a}_k \\cdot \vec{\\sigma} \right)
+            M_k = \gamma_k |\psi_k \rangle \langle \psi_k | = \gamma_k
+            \frac{1}{2} \left( \mathbb{I} + \vec{a}_k \cdot \vec{\sigma} \right)
 
-        where :math:`\vec{\\sigma}` is the usual Pauli vector and
+        where :math:`\vec{\sigma}` is the usual Pauli vector and
         :math:`||\vec{a}_k||^2=1`. We then define the Bloch vector of a rank-1
-        effect as :math:`\vec{r}_k = \\gamma_k \vec{a}_k`, which uniquely defines
+        effect as :math:`\vec{r}_k = \gamma_k \vec{a}_k`, which uniquely defines
         the rank-1 effect.
         """
         r = np.empty((self.n_outcomes, 3))
@@ -98,8 +99,6 @@ class SingleQubitPOVM(MultiQubitPOVM):
 
         if colorbar:
             # Keep track of vector norms through colorbar
-            import matplotlib as mpl
-
             cmap = mpl.colormaps["viridis"]
             B.vector_color = [cmap(np.linalg.norm(vec)) for vec in vectors]
             # Normalize

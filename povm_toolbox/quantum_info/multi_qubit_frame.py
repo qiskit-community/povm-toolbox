@@ -199,13 +199,13 @@ class MultiQubitFrame(BaseFrame[int]):
 
     @classmethod
     def from_vectors(cls, frame_vectors: np.ndarray) -> Self:
-        r"""Initialize a frame from non-normalized bloch vectors :math:`|\psi \rangle`.
+        r"""Initialize a frame from non-normalized bloch vectors :math:`|\tilde{\psi} \rangle = \sqrt{\gamma} |\psi \rangle`.
 
         Args:
-            frame_vectors: list of vectors :math:`|\psi \rangle`. The length of the list corresponds to
+            frame_vectors: list of vectors :math:`|\tilde{\psi} \rangle`. The length of the list corresponds to
                 the number of operators of the frame. Each vector is of shape :math:`(\mathrm{dim},)` where :math:`\mathrm{dim}`
                 is the :attr:`.dimension` of the Hilbert space on which the frame acts. The resulting frame
-                operators :math:`\Pi = |\psi \rangle \langle \psi|` are of shape :math:`(\mathrm{dim}, \mathrm{dim})` as expected.
+                operators :math:`\Pi = \gamma |\psi \rangle \langle \psi|` are of shape :math:`(\mathrm{dim}, \mathrm{dim})` as expected.
 
         Returns:
             The frame corresponding to the vectors.

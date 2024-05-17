@@ -84,7 +84,7 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         font_size: float | None = None,
         colorbar: bool = False,
     ) -> Figure:
-        """TODO.
+        """Draw the Bloch vectors of a :class:`.MultiQubitPOVM` instance.
 
         Args:
             title: A string that represents the plot title.
