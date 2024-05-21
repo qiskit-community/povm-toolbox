@@ -24,7 +24,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
     def __init__(
         self,
         n_qubit: int,
-        qubit_specifier: list[int] | None = None,  # TODO: add | Layout
+        measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
         seed_rng: int | Generator | None = None,
     ):
@@ -36,7 +36,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
 
         Args:
             n_qubits: the number of qubits.
-            qubit_specifier: list of index specifying on which qubits the POVM acts.
+            measurement_layout: list of index specifying on which qubits the POVM acts.
             shot_batch_size: number of shots assigned to each sampled measurement basis.
                 If set to 1, a new basis is sampled for each shot.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to
@@ -47,7 +47,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
         super().__init__(
             n_qubit=n_qubit,
             bias=bias,
-            qubit_specifier=qubit_specifier,
+            measurement_layout=measurement_layout,
             shot_batch_size=shot_batch_size,
             seed_rng=seed_rng,
         )

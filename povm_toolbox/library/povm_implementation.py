@@ -41,18 +41,17 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     def __init__(
         self,
         n_qubit: int,
-        qubit_specifier: list[int] | None = None,  # TODO: add | Layout
+        measurement_layout: list[int] | None = None,  # TODO: add | Layout
     ) -> None:
         """Initialize the POVMImplementation.
 
         Args:
             n_qubit: number of logical qubits in the system.
-            qubit_specifier: list of index specifying on which qubits the POVM acts.
+            measurement_layout: list of index specifying on which qubits the POVM acts.
         """
         super().__init__()
         self.n_qubit = n_qubit
-        # TODO: add qubit_specifier or layout to apply, see issue #15
-        self.idx_layout = qubit_specifier
+        self.measurement_layout = measurement_layout
 
         self.msmt_qc: QuantumCircuit
 
@@ -113,7 +112,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         dest_circuit = circuit.copy()
         dest_circuit.remove_final_measurements(inplace=True)
 
-        if self.idx_layout is None:
+        if self.measurement_layout is None:
             if dest_circuit.layout is None:
                 # Basic one-to-one layout
                 index_layout = list(range(dest_circuit.num_qubits))
@@ -124,7 +123,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             else:
                 raise NotImplementedError
         else:
-            index_layout = self.idx_layout
+            index_layout = self.measurement_layout
 
         # Check that the number of qubits of the circuit (before the transpilation, if
         # applicable) matches the number of qubits of the POVM implementation.

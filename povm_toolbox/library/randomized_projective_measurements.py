@@ -38,7 +38,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         n_qubit: int,
         bias: np.ndarray,
         angles: np.ndarray,
-        qubit_specifier: list[int] | None = None,  # TODO: add | Layout
+        measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
         seed_rng: int | Generator | None = None,
     ) -> None:
@@ -57,7 +57,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 different angles of each effect. I.e. its length equals two times the number of
                 PVMs (since we have 2 angles per PVMs). If 2D, it will have a new set of angles
                 for each qubit.
-            qubit_specifier: list of index specifying on which qubits the POVM acts.
+            measurement_layout: list of index specifying on which qubits the POVM acts.
             shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
                 is sampled for each shot.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
@@ -74,7 +74,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             ValueError: If the shape of ``angles`` is not compatible with ``n_qubit``.
             TypeError: If the type of ``seed_rng`` is not valid.
         """
-        super().__init__(n_qubit, qubit_specifier)
+        super().__init__(n_qubit, measurement_layout)
 
         if 2 * bias.shape[-1] != angles.shape[-1]:
             raise ValueError(
