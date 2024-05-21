@@ -297,7 +297,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         # Assert matching operator and POVM sizes.
         if hermitian_op.num_qubits != self.n_subsystems:
             raise ValueError(
-                f"Size of the operator {hermitian_op.n_qubits} does not match the size of the povm {len(self)}."
+                f"Size of the operator ({hermitian_op.num_qubits}) does not match the size of the povm ({np.log2(self.dimension)})."
             )
 
         # If frame_op_idx is ``None``, it means all outcomes are queried

@@ -399,7 +399,4 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         for vecs in stabilizers:
             sq_povms.append(SingleQubitPOVM.from_vectors(vecs))
 
-        if self.idx_layout is None:
-            return ProductPOVM.from_list(sq_povms)
-
-        return ProductPOVM({(idx,): sqpovm for idx, sqpovm in zip(self.idx_layout, sq_povms)})
+        return ProductPOVM.from_list(sq_povms)
