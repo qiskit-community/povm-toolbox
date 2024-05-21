@@ -14,6 +14,7 @@ from collections import defaultdict
 from unittest import TestCase
 
 import numpy as np
+from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasurements
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator
 from scipy.stats import unitary_group
@@ -62,6 +63,69 @@ class TestSingleQubitPovm(TestCase):
             self.assertAlmostEqual(summed["Z"], 0.0)
 
         # also check that the decomposition is correct TODO
+
+    def test_get_bloch_vectors(self):
+        """Test the method :method:`.SingleQubitPOVM.get_bloch_vectors`."""
+
+        sqpovm = SingleQubitPOVM(
+            [
+                0.8 * Operator.from_label("0"),
+                0.8 * Operator.from_label("1"),
+                0.2 * Operator.from_label("+"),
+                0.2 * Operator.from_label("-"),
+            ]
+        )
+        vectors = np.array([[0, 0, 0.8], [0, 0, -0.8], [0.2, 0, 0], [-0.2, 0, 0]])
+        self.assertTrue(np.allclose(sqpovm.get_bloch_vectors(), vectors))
+
+        sqpovm = SingleQubitPOVM(
+            [
+                0.4 * Operator.from_label("-"),
+                0.4 * Operator.from_label("+"),
+                0.6 * Operator.from_label("r"),
+                0.6 * Operator.from_label("l"),
+            ]
+        )
+        vectors = np.array([[-0.4, 0, 0], [0.4, 0, 0], [0, 0.6, 0], [0, -0.6, 0]])
+        self.assertTrue(np.allclose(sqpovm.get_bloch_vectors(), vectors))
+
+        sqpovm = SingleQubitPOVM(
+            [
+                0.4 * Operator(np.eye(2)),
+                0.6 * Operator.from_label("r"),
+                0.6 * Operator.from_label("l"),
+            ]
+        )
+        with self.assertRaises(ValueError):
+            sqpovm.get_bloch_vectors()
+
+        sqpovm = ClassicalShadows(1).definition()[(0,)]
+        vectors = np.array(
+            [
+                [0, 0, 1 / 3],
+                [0, 0, -1 / 3],
+                [1 / 3, 0, 0],
+                [-1 / 3, 0, 0],
+                [0, 1 / 3, 0],
+                [0, -1 / 3, 0],
+            ]
+        )
+        self.assertTrue(np.allclose(sqpovm.get_bloch_vectors(), vectors))
+
+        sqpovm = RandomizedProjectiveMeasurements(
+            1,
+            bias=np.array([0.2, 0.8]),
+            angles=np.array([0.25 * np.pi, 0, 0.25 * np.pi, 0.25 * np.pi]),
+        ).definition()[(0,)]
+        vectors = np.sqrt(0.5) * np.array(
+            [
+                [0.2, 0, 0.2],
+                [-0.2, 0, -0.2],
+                [0.8 * np.sqrt(0.5), 0.8 * np.sqrt(0.5), 0.8],
+                [-0.8 * np.sqrt(0.5), -0.8 * np.sqrt(0.5), -0.8],
+            ]
+        )
+        self.assertTrue(np.allclose(sqpovm.get_bloch_vectors(), vectors))
 
     # TODO: write a unittest for each public method of SingleQubitPOVM
 
