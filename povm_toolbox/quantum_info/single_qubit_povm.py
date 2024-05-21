@@ -12,6 +12,13 @@
 
 from __future__ import annotations
 
+import matplotlib as mpl
+import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from qiskit.visualization.bloch import Bloch
+from qiskit.visualization.utils import matplotlib_close_if_inline
+
 from .multi_qubit_povm import MultiQubitPOVM
 
 
@@ -26,6 +33,88 @@ class SingleQubitPOVM(MultiQubitPOVM):
         """
         if not self.dimension == 2:
             raise ValueError(
-                f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}."
+                "Dimension of Single Qubit POVM operator space should be 2,"
+                f" not {self.dimension}."
             )
         super()._check_validity()
+
+    def get_bloch_vectors(self) -> np.ndarray:
+        r"""Compute the Bloch vector of each effect of the POVM.
+
+        For a rank-1 POVM, each effect :math:`M_k` can be written as
+
+        .. math::
+            M_k = \gamma_k |\psi_k \rangle \langle \psi_k | = \gamma_k
+            \frac{1}{2} \left( \mathbb{I} + \vec{a}_k \cdot \vec{\sigma} \right)
+
+        where :math:`\vec{\sigma}` is the usual Pauli vector and
+        :math:`||\vec{a}_k||^2=1`. We then define the Bloch vector of a rank-1
+        effect as :math:`\vec{r}_k = \gamma_k \vec{a}_k`, which uniquely defines
+        the rank-1 effect.
+        """
+        r = np.empty((self.n_outcomes, 3))
+        for i, pauli_op in enumerate(self.pauli_operators):
+            # Check that the povm effect is rank-1:
+            if np.linalg.matrix_rank(self.operators[i]) > 1:
+                raise ValueError(
+                    "Bloch vector is only well-defined for single-qubit rank-1"
+                    f" POVMs. However, the effect number {i} of this POVM has"
+                    f" rank {np.linalg.matrix_rank(self.operators[i])}."
+                )
+            r[i, 0] = 2 * np.real_if_close(pauli_op.get("X", 0))
+            r[i, 1] = 2 * np.real_if_close(pauli_op.get("Y", 0))
+            r[i, 2] = 2 * np.real_if_close(pauli_op.get("Z", 0))
+        return r
+
+    def draw_bloch(
+        self,
+        *,
+        title: str = "",
+        figure: Figure | None = None,
+        axes: Axes | list[Axes] | None = None,
+        figsize: tuple[float, float] | None = None,
+        font_size: float | None = None,
+        colorbar: bool = False,
+    ) -> Figure:
+        """Plot the Bloch vector of each effect of the POVM.
+
+        Args:
+            title: A string that represents the plot title.
+            figure: User supplied Matplotlib Figure instance for plotting Bloch sphere.
+            axes: User supplied Matplotlib axes to render the bloch sphere.
+            figsize: Figure size in inches. Has no effect if passing ``ax``.
+            font_size: Size of font used for Bloch sphere labels.
+            colorbar: If ``True``, normalize the vectors on the Bloch sphere and
+                add a colormap to keep track of the norm of the vectors. It can
+                help to visualize the vector if they have a small norm.
+        """
+        if figsize is None:
+            figsize = (5, 4) if colorbar else (5, 5)
+
+        # Initialize Bloch sphere
+        B = Bloch(fig=figure, axes=axes, font_size=font_size)
+
+        # Compute Bloch vector
+        vectors = self.get_bloch_vectors()
+
+        if colorbar:
+            # Keep track of vector norms through colorbar
+            cmap = mpl.colormaps["viridis"]
+            B.vector_color = [cmap(np.linalg.norm(vec)) for vec in vectors]
+            # Normalize
+            for i in range(len(vectors)):
+                vectors[i] /= np.linalg.norm(vectors[i])
+
+        B.add_vectors(vectors)
+        B.render(title=title)
+
+        if figure is None:
+            figure = B.fig
+            axes = B.axes
+            figure.set_size_inches(figsize[0], figsize[1])
+            matplotlib_close_if_inline(figure)
+
+        if colorbar:
+            figure.colorbar(mpl.cm.ScalarMappable(cmap=cmap), ax=axes, label="weight")
+
+        return figure

@@ -13,6 +13,8 @@
 from __future__ import annotations
 
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
 
 from .base_povm import BasePOVM
@@ -72,3 +74,27 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         if not isinstance(rho, SparsePauliOp):
             rho = Operator(rho)
         return self.analysis(rho, outcome_idx)
+
+    def draw_bloch(
+        self,
+        *,
+        title: str = "",
+        figure: Figure | None = None,
+        axes: Axes | list[Axes] | None = None,
+        figsize: tuple[float, float] | None = None,
+        font_size: float | None = None,
+        colorbar: bool = False,
+    ) -> Figure:
+        """Draw the Bloch vectors of a :class:`.MultiQubitPOVM` instance.
+
+        Args:
+            title: A string that represents the plot title.
+            figure: User supplied Matplotlib Figure instance for plotting Bloch sphere.
+            axes: User supplied Matplotlib axes to render the bloch sphere.
+            figsize: Figure size in inches. Has no effect if passing ``ax``.
+            font_size: Size of font used for Bloch sphere labels.
+            colorbar: If ``True``, normalize the vectors on the Bloch sphere and
+                add a colormap to keep track of the norm of the vectors. It can
+                help to visualize the vector if they have a small norm.
+        """
+        raise NotImplementedError

@@ -16,6 +16,7 @@ dependencies = [
     "qiskit>=1.0",
     "qiskit-ibm-runtime>=0.22",
     "qiskit-aer>=0.13",
+    "matplotlib",
 ]
 
 [project.optional-dependencies]
@@ -48,7 +49,6 @@ lint = [
 ]
 notebook-dependencies = [
     "povm_toolbox",
-    "matplotlib",
     "pylatexenc",
 ]
 docs = [
@@ -58,7 +58,6 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",
     "nbsphinx",
-    "matplotlib",
 ]
 
 [tool.coverage.run]
@@ -132,7 +131,7 @@ ignore = [
 explicit-preview-rules = true
 
 [tool.ruff.lint.pylint]
-max-args = 6
+max-args = 7
 
 [tool.ruff.lint.extend-per-file-ignores]
 "docs/**/*" = [
