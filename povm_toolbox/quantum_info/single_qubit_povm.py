@@ -16,6 +16,8 @@ import matplotlib as mpl
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from qiskit.visualization.bloch import Bloch
+from qiskit.visualization.utils import matplotlib_close_if_inline
 
 from .multi_qubit_povm import MultiQubitPOVM
 
@@ -66,9 +68,10 @@ class SingleQubitPOVM(MultiQubitPOVM):
 
     def draw_bloch(
         self,
+        *,
         title: str = "",
-        fig: Figure | None = None,
-        ax: Axes | None = None,
+        figure: Figure | None = None,
+        axes: Axes | list[Axes] | None = None,
         figsize: tuple[float, float] | None = None,
         font_size: float | None = None,
         colorbar: bool = False,
@@ -77,22 +80,19 @@ class SingleQubitPOVM(MultiQubitPOVM):
 
         Args:
             title: A string that represents the plot title.
-            fig: User supplied Matplotlib Figure instance for plotting Bloch sphere.
-            ax: User supplied Matplotlib axes to render the bloch sphere.
+            figure: User supplied Matplotlib Figure instance for plotting Bloch sphere.
+            axes: User supplied Matplotlib axes to render the bloch sphere.
             figsize: Figure size in inches. Has no effect if passing ``ax``.
             font_size: Size of font used for Bloch sphere labels.
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and
                 add a colormap to keep track of the norm of the vectors. It can
                 help to visualize the vector if they have a small norm.
         """
-        from qiskit.visualization.bloch import Bloch
-        from qiskit.visualization.utils import matplotlib_close_if_inline
-
         if figsize is None:
             figsize = (5, 4) if colorbar else (5, 5)
 
         # Initialize Bloch sphere
-        B = Bloch(fig=fig, axes=ax, font_size=font_size)
+        B = Bloch(fig=figure, axes=axes, font_size=font_size)
 
         # Compute Bloch vector
         vectors = self.get_bloch_vectors()
@@ -108,13 +108,13 @@ class SingleQubitPOVM(MultiQubitPOVM):
         B.add_vectors(vectors)
         B.render(title=title)
 
-        if fig is None:
-            fig = B.fig
-            ax = B.axes
-            fig.set_size_inches(figsize[0], figsize[1])
-            matplotlib_close_if_inline(fig)
+        if figure is None:
+            figure = B.fig
+            axes = B.axes
+            figure.set_size_inches(figsize[0], figsize[1])
+            matplotlib_close_if_inline(figure)
 
         if colorbar:
-            fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap), ax=ax, label="weight")
+            figure.colorbar(mpl.cm.ScalarMappable(cmap=cmap), ax=axes, label="weight")
 
-        return fig
+        return figure

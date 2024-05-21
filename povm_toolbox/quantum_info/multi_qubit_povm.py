@@ -77,9 +77,10 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
 
     def draw_bloch(
         self,
+        *,
         title: str = "",
-        fig: Figure | None = None,
-        ax: Axes | None = None,
+        figure: Figure | None = None,
+        axes: Axes | list[Axes] | None = None,
         figsize: tuple[float, float] | None = None,
         font_size: float | None = None,
         colorbar: bool = False,

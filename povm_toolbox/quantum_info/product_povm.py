@@ -12,9 +12,12 @@
 
 from __future__ import annotations
 
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
+from qiskit.visualization.utils import matplotlib_close_if_inline
 
 from .base_povm import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
@@ -71,12 +74,12 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
 
     def draw_bloch(
         self,
-        title: str = "",
-        figsize: tuple[float, float] | None = None,
         *,
+        title: str = "",
+        figure: Figure | None = None,
+        axes: Axes | list[Axes] | None = None,
+        figsize: tuple[float, float] | None = None,
         font_size: float | None = None,
-        title_font_size: float | None = None,
-        title_pad: float = 1,
         colorbar: bool = False,
     ) -> Figure:
         """Plot a Bloch sphere for each single-qubit POVM forming the product POVM.
@@ -85,15 +88,10 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             title: a string that represents the plot title.
             figsize: size of each individual Bloch sphere figure, in inches.
             font_size: Font size for the Bloch ball figures.
-            title_font_size: Font size for the title.
-            title_pad: Padding for the title.
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and
                 add a colormap to keep track of the norm of the vectors. It can
                 help to visualize the vector if they have a small norm.
         """
-        import matplotlib.pyplot as plt
-        from qiskit.visualization.utils import matplotlib_close_if_inline
-
         # Number of subplots (one per qubit)
         num = self.n_subsystems
 
@@ -116,24 +114,25 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         width, height = figsize
         width *= n_cols
         height *= n_rows
-        default_title_font_size = font_size if font_size is not None else 16
-        title_font_size = (
-            title_font_size if title_font_size is not None else default_title_font_size
-        )
+        title_font_size = font_size if font_size is not None else 16
 
         # Plot figure
-        fig = plt.figure(figsize=(width, height))
+        fig = figure if figure is not None else plt.figure(figsize=(width, height))
         for i, idx in enumerate(self.sub_systems):
-            ax = fig.add_subplot(n_rows, n_cols, i + 1, projection="3d")
+            ax = (
+                axes[i]
+                if isinstance(axes, list)
+                else fig.add_subplot(n_rows, n_cols, i + 1, projection="3d")
+            )
             self[idx].draw_bloch(
                 title="qubit " + ", ".join(map(str, idx)),
-                fig=fig,
-                ax=ax,
+                figure=fig,
+                axes=ax,
                 figsize=figsize,
                 font_size=font_size,
                 colorbar=colorbar,
             )
-        fig.suptitle(title, fontsize=title_font_size, y=1.0 + title_pad / 100)
+        fig.suptitle(title, fontsize=title_font_size, y=1.0)
         matplotlib_close_if_inline(fig)
 
         return fig
