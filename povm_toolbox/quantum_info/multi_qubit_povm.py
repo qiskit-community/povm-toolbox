@@ -89,8 +89,8 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
 
         Args:
             title: A string that represents the plot title.
-            fig: User supplied Matplotlib Figure instance for plotting Bloch sphere.
-            ax: User supplied Matplotlib axes to render the bloch sphere.
+            figure: User supplied Matplotlib Figure instance for plotting Bloch sphere.
+            axes: User supplied Matplotlib axes to render the bloch sphere.
             figsize: Figure size in inches. Has no effect if passing ``ax``.
             font_size: Size of font used for Bloch sphere labels.
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and

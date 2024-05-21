@@ -86,6 +86,8 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
 
         Args:
             title: a string that represents the plot title.
+            figure: User supplied Matplotlib Figure instance for plotting Bloch sphere.
+            axes: User supplied Matplotlib axes to render the bloch sphere.
             figsize: size of each individual Bloch sphere figure, in inches.
             font_size: Font size for the Bloch ball figures.
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and
