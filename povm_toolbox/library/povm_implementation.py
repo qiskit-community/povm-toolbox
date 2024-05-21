@@ -47,7 +47,11 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
         Args:
             n_qubit: number of logical qubits in the system.
-            measurement_layout: list of index specifying on which qubits the POVM acts.
+            measurement_layout: list of indices specifying on which qubits the POVM
+                acts. If None, two cases can be distinguished: 1) if a circuit supplied
+                to the :meth:`.compose_circuits` has been transpiled, its final
+                transpile layout will be used as default value, 2) otherwise, a
+                simple one-to-one layout ``list(range(n_qubits))`` is used.
         """
         super().__init__()
         self.n_qubit = n_qubit
