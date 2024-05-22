@@ -157,7 +157,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             qc.sx(qubit=i)
             qc.rz(np.pi - self._qc_theta[i], qubit=i)
             qc.sx(qubit=i)
-            qc.rz(3 * np.pi, qubit=i)
+            # qc.rz(3 * np.pi, qubit=i)
 
         qc.measure(qr, cr)
 

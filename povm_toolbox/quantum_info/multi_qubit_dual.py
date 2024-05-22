@@ -92,7 +92,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         if isinstance(frame, MultiQubitFrame):
             # Set default values for alphas if none is provided.
             if alphas is None:
-                alphas = tuple(np.trace(frame_op.data) for frame_op in frame.operators)
+                alphas = tuple(np.real(np.trace(frame_op.data)) for frame_op in frame.operators)
             # Check that the number of alpha-parameters match the number of operators
             # forming the ``frame``.
             elif len(alphas) != frame.n_operators:

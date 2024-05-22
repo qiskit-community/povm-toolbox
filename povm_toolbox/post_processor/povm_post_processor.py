@@ -64,7 +64,7 @@ class POVMPostProcessor:
         # TODO: improve efficiency, we are doing the heavy computation twice here
         # if the dual was not built before (first when we access :attr:`.dual` and
         # second when we optimize it).
-        self._dual = self.dual.optimize(self.povm, **options)
+        self.dual.optimize(self.povm, **options)
 
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
