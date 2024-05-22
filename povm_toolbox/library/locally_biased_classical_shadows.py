@@ -25,6 +25,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         self,
         n_qubit: int,
         bias: np.ndarray,
+        measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
         seed_rng: int | Generator | None = None,
     ):
@@ -39,6 +40,11 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
+            measurement_layout: list of indices specifying on which qubits the POVM
+                acts. If None, two cases can be distinguished: 1) if a circuit supplied
+                to the :meth:`.compose_circuits` has been transpiled, its final
+                transpile layout will be used as default value, 2) otherwise, a
+                simple one-to-one layout ``list(range(n_qubits))`` is used.
             shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
                 is sampled for each shot.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
@@ -52,6 +58,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
             n_qubit=n_qubit,
             bias=bias,
             angles=angles,
+            measurement_layout=measurement_layout,
             shot_batch_size=shot_batch_size,
             seed_rng=seed_rng,
         )

@@ -41,15 +41,21 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     def __init__(
         self,
         n_qubit: int,
+        measurement_layout: list[int] | None = None,  # TODO: add | Layout
     ) -> None:
         """Initialize the POVMImplementation.
 
         Args:
             n_qubit: number of logical qubits in the system.
+            measurement_layout: list of indices specifying on which qubits the POVM
+                acts. If None, two cases can be distinguished: 1) if a circuit supplied
+                to the :meth:`.compose_circuits` has been transpiled, its final
+                transpile layout will be used as default value, 2) otherwise, a
+                simple one-to-one layout ``list(range(n_qubits))`` is used.
         """
         super().__init__()
         self.n_qubit = n_qubit
-        # TODO: add qubit_specifier or layout to apply, see issue #15
+        self.measurement_layout = measurement_layout
 
         self.msmt_qc: QuantumCircuit
 
@@ -110,15 +116,18 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         dest_circuit = circuit.copy()
         dest_circuit.remove_final_measurements(inplace=True)
 
-        if dest_circuit.layout is None:
-            # Basic one-to-one layout
-            index_layout = list(range(dest_circuit.num_qubits))
+        if self.measurement_layout is None:
+            if dest_circuit.layout is None:
+                # Basic one-to-one layout
+                index_layout = list(range(dest_circuit.num_qubits))
 
-        elif isinstance(dest_circuit.layout, TranspileLayout):
-            # Extract the final layout of the transpiled circuit (ancillas are filtered).
-            index_layout = dest_circuit.layout.final_index_layout(filter_ancillas=True)
+            elif isinstance(dest_circuit.layout, TranspileLayout):
+                # Extract the final layout of the transpiled circuit (ancillas are filtered).
+                index_layout = dest_circuit.layout.final_index_layout(filter_ancillas=True)
+            else:
+                raise NotImplementedError
         else:
-            raise NotImplementedError
+            index_layout = self.measurement_layout
 
         # Check that the number of qubits of the circuit (before the transpilation, if
         # applicable) matches the number of qubits of the POVM implementation.

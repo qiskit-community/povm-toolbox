@@ -94,6 +94,11 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         self._check_validity()
 
+    def __repr__(self):
+        """Return the string representation of a :class:`.ProductFrame` instance."""
+        f_repr = "\n   " + "\n   ".join(f"{name}: {value}" for name, value in self._povms.items())
+        return f"{self.__class__.__name__}(n_subsystems={self.n_subsystems})<{','.join(map(str, self.shape))}>:{f_repr}"
+
     @classmethod
     def from_list(cls, povms: Sequence[T]) -> Self:
         """Construct a :class:`.ProductFrame` from a list of :class:`.MultiQubitFrame` objects.
@@ -292,7 +297,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         # Assert matching operator and POVM sizes.
         if hermitian_op.num_qubits != self.n_subsystems:
             raise ValueError(
-                f"Size of the operator {hermitian_op.n_qubits} does not match the size of the povm {len(self)}."
+                f"Size of the operator ({hermitian_op.num_qubits}) does not match the size of the povm ({np.log2(self.dimension)})."
             )
 
         # If frame_op_idx is ``None``, it means all outcomes are queried
