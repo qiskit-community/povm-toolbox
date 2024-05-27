@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .base_dual import BaseDUAL
 from .base_frame import BaseFrame
@@ -68,29 +68,6 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         #      (1,2) but ``frame`` on (0,1) and (2,). ``self`` could still be a valid dual frame but we
         #      have not implemented the check for this. Then we should raise an NotImplementedError.
         raise NotImplementedError
-
-    def optimize(self, frame: BaseFrame, **options) -> None:
-        """Optimize the dual to `frame` inplace.
-
-        Args:
-            frame: The primal frame to which ``self`` is a dual.
-            options: keyword arguments specifying how to optimize ``self``.
-        """
-        state = options.get("state", None)
-        if not isinstance(frame, ProductFrame):
-            raise NotImplementedError
-        if state is not None:
-            axes = np.arange(len(frame.sub_systems), dtype=int)
-            if isinstance(state, (Statevector, DensityMatrix)):
-                state = Operator(state)
-            elif not isinstance(state, Operator):
-                raise TypeError
-            joint_prob: np.ndarray = frame.analysis(state)  # type: ignore
-            for i, sub_system in enumerate(frame.sub_systems):
-                marg_prob = joint_prob.sum(axis=tuple(np.delete(axes, [i])))
-                if not all(marg_prob):
-                    marg_prob += 1e-3
-                self[sub_system].optimize(frame=frame[sub_system], alphas=tuple(marg_prob))
 
     @classmethod
     def build_dual_from_frame(
