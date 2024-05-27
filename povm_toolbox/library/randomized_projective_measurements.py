@@ -247,18 +247,26 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             # For each qubit, we sample PVMs according to the local bias defined on
             # this particular qubit. We draw a PVM for each batch of shots and for
             # each set of circuit parameter values supplied by the user through the
-            # :method:``POVMSampler.run`` method. If the twirling option is turned on
-            # we double the number of PVMs because each PVM can be twirled. The encoding
-            # works as follows : `pvm_idx % self._n_PVMS` is the index of the PVM used
-            # and `pvm_idx // self._n_PVMS` indicates if the PVM has been twirled.
+            # :method:``POVMSampler.run`` method.
             pvm_idx[..., i] = self._rng.choice(
-                2 * self._n_PVMs if self.measurement_twirl else self._n_PVMs,
+                self._n_PVMs,
                 size=circuit_binding.size * num_batches,
                 replace=True,
                 p=self.bias[i],
             ).reshape(  # Reshape to match the shape of ``pvm_idx``.
                 (*circuit_binding.shape, num_batches)
             )
+            # If the twirling option is turned on we double the number of PVMs
+            # because each PVM can be twirled. The encoding works as follows :
+            # `pvm_idx % self._n_PVMS` is the index of the PVM used and
+            # `pvm_idx // self._n_PVMS` indicates if the PVM has been twirled.
+            if self.measurement_twirl:
+                pvm_idx[..., i] += self._n_PVMs * self._rng.integers(
+                    2,
+                    size=circuit_binding.size * num_batches,
+                ).reshape(  # Reshape to match the shape of ``pvm_idx``.
+                    (*circuit_binding.shape, num_batches)
+                )
 
         # Transform the PVM indices into actual measurement parameters that are
         # then coerced into a :class:``BindingsArray`` object.
