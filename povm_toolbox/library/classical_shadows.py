@@ -24,6 +24,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
     def __init__(
         self,
         n_qubit: int,
+        measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
         seed_rng: int | Generator | None = None,
@@ -36,6 +37,8 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
 
         Args:
             n_qubits: the number of qubits.
+            measurement_twirl : option to randomly twirl the measurements. TODO: be
+                more precise.
             measurement_layout: list of indices specifying on which qubits the POVM
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
@@ -51,6 +54,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
         super().__init__(
             n_qubit=n_qubit,
             bias=bias,
+            measurement_twirl=measurement_twirl,
             measurement_layout=measurement_layout,
             shot_batch_size=shot_batch_size,
             seed_rng=seed_rng,

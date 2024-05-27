@@ -38,6 +38,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         n_qubit: int,
         bias: np.ndarray,
         angles: np.ndarray,
+        measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
         seed_rng: int | Generator | None = None,
@@ -57,6 +58,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 different angles of each effect. I.e. its length equals two times the number of
                 PVMs (since we have 2 angles per PVMs). If 2D, it will have a new set of angles
                 for each qubit.
+            measurement_twirl : option to randomly twirl the measurements. TODO: be
+                more precise.
             measurement_layout: list of indices specifying on which qubits the POVM
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
@@ -110,6 +113,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 f" ``n_qubit`` ({n_qubit})."
             )
         self.angles = angles.reshape((self.n_qubit, self._n_PVMs, 2))
+        self.measurement_twirl = measurement_twirl
 
         self.msmt_qc = self._build_qc()
 
@@ -244,7 +248,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             # each set of circuit parameter values supplied by the user through the
             # :method:``POVMSampler.run`` method.
             pvm_idx[..., i] = self._rng.choice(
-                self._n_PVMs,
+                2 * self._n_PVMs if self.measurement_twirl else self._n_PVMs,
                 size=circuit_binding.size * num_batches,
                 replace=True,
                 p=self.bias[i],
@@ -358,10 +362,12 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         theta: np.ndarray = np.empty(pvm_idx.shape)
         phi: np.ndarray = np.empty(pvm_idx.shape)
         for multi_index in np.ndindex(pvm_idx.shape):
-            # multi_index.shape = (*pv, num_batches, n_qubit)
+            # multi_index.shape is (*pv, num_batches, n_qubit)
             i_qubit = multi_index[-1]
-            theta[multi_index] = self.angles[i_qubit, pvm_idx[multi_index], 0]
-            phi[multi_index] = self.angles[i_qubit, pvm_idx[multi_index], 1]
+            theta[multi_index] = self.angles[i_qubit, pvm_idx[multi_index] % self._n_PVMs, 0]
+            if pvm_idx[multi_index] // self._n_PVMs > 0:
+                theta[multi_index] += np.pi
+            phi[multi_index] = self.angles[i_qubit, pvm_idx[multi_index] % self._n_PVMs, 1]
 
         return BindingsArray(data={self._qc_theta: theta, self._qc_phi: phi})
 
@@ -381,7 +387,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             A tuple of indices indicating the POVM outcomes on each qubit. For each qubit,
             the index goes from :math:``0`` to :math:``2 * self.n_PVM - 1``.
         """
-        return tuple(pvm_idx[i] * 2 + int(bit) for i, bit in enumerate(bitstring_outcome[::-1]))
+        return tuple(
+            (pvm_idx[i] % self._n_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._n_PVMs) % 2
+            for i, bit in enumerate(bitstring_outcome[::-1])
+        )
 
     def definition(self) -> ProductPOVM:
         """Return the POVM corresponding to this implementation."""
