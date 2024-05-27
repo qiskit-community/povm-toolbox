@@ -58,8 +58,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 different angles of each effect. I.e. its length equals two times the number of
                 PVMs (since we have 2 angles per PVMs). If 2D, it will have a new set of angles
                 for each qubit.
-            measurement_twirl : option to randomly twirl the measurements. TODO: be
-                more precise.
+            measurement_twirl : option to randomly twirl the measurements. For each single-qubit
+                projective measurement, twirling is equivalent to flipping the measurement. This
+                is equivalent to taking the opposite Bloch vector in the Bloch sphere representation.
             measurement_layout: list of indices specifying on which qubits the POVM
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
@@ -246,7 +247,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             # For each qubit, we sample PVMs according to the local bias defined on
             # this particular qubit. We draw a PVM for each batch of shots and for
             # each set of circuit parameter values supplied by the user through the
-            # :method:``POVMSampler.run`` method.
+            # :method:``POVMSampler.run`` method. If the twirling option is turned on
+            # we double the number of PVMs because each PVM can be twirled. The encoding
+            # works as follows : `pvm_idx % self._n_PVMS` is the index of the PVM used
+            # and `pvm_idx // self._n_PVMS` indicates if the PVM has been twirled.
             pvm_idx[..., i] = self._rng.choice(
                 2 * self._n_PVMs if self.measurement_twirl else self._n_PVMs,
                 size=circuit_binding.size * num_batches,
@@ -365,6 +369,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             # multi_index.shape is (*pv, num_batches, n_qubit)
             i_qubit = multi_index[-1]
             theta[multi_index] = self.angles[i_qubit, pvm_idx[multi_index] % self._n_PVMs, 0]
+            # If the PVM is twirled, we flip the measurement:
             if pvm_idx[multi_index] // self._n_PVMs > 0:
                 theta[multi_index] += np.pi
             phi[multi_index] = self.angles[i_qubit, pvm_idx[multi_index] % self._n_PVMs, 1]
@@ -387,6 +392,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             A tuple of indices indicating the POVM outcomes on each qubit. For each qubit,
             the index goes from :math:``0`` to :math:``2 * self.n_PVM - 1``.
         """
+        # Take into account the possible twirling of the measurements and un-do
+        # its effect. For single-qubit projective measurements, it means to
+        # perform a bit-flip of the classical outcome for each twirled projective
+        # measurement.
         return tuple(
             (pvm_idx[i] % self._n_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._n_PVMs) % 2
             for i, bit in enumerate(bitstring_outcome[::-1])
