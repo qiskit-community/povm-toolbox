@@ -42,8 +42,9 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
             measurement_twirl : option to randomly twirl the measurements. For each single-qubit
-                projective measurement, twirling is equivalent to flipping the measurement. This
-                is equivalent to taking the opposite Bloch vector in the Bloch sphere representation.
+                projective measurement, random twirling is equivalent to randomly flipping the
+                measurement. This is equivalent to randomly taking the opposite Bloch vector in
+                the Bloch sphere representation.
             measurement_layout: list of indices specifying on which qubits the POVM
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
