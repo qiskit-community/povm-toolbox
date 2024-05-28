@@ -53,9 +53,10 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
             shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
                 is sampled for each shot.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
-                The Z-,X-,Y-measurements are sampled according to the probability distribution(s)
-                specified by ``bias``. The user can also directly provide a random generator. If
-                None, a random seed will be used.
+                The PVMs are sampled according to the probability distribution(s) specified by
+                ``bias``. The user can also directly provide a random generator. They can also
+                provide, as a ``dict``, the state of the ``BitGenerator`` to use. If None, a random
+                seed will be used.
         """
         angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
         assert bias.shape[-1] == 3
@@ -68,3 +69,16 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
             shot_batch_size=shot_batch_size,
             seed_rng=seed_rng,
         )
+
+    @property
+    def kwargs(self):
+        """TODO."""
+        kwargs = {
+            "n_qubit": self.n_qubit,
+            "bias": self.bias,
+            "measurement_twirl": self.measurement_twirl,
+            "measurement_layout": self.measurement_layout,
+            "shot_batch_size": self.shot_batch_size,
+            "seed_rng": self._rng.bit_generator.state,
+        }
+        return kwargs

@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections import Counter
 
 import numpy as np
-from numpy.random import Generator, default_rng
+from numpy.random import BitGenerator, Generator, default_rng
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin, make_data_bin
 from qiskit.primitives.containers.bindings_array import BindingsArray
@@ -41,7 +41,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
-        seed_rng: int | Generator | None = None,
+        seed_rng: int | Generator | dict | None = None,
     ) -> None:
         """Implement a product POVM through the randomization of single-qubit projective measurement.
 
@@ -71,7 +71,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 is sampled for each shot.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The PVMs are sampled according to the probability distribution(s) specified by
-                ``bias``. The user can also directly provide a random generator. If None, a random
+                ``bias``. The user can also directly provide a random generator. They can also
+                provide, as a ``dict``, the state of the ``BitGenerator`` to use. If None, a random
                 seed will be used.
 
         Raises:
@@ -128,6 +129,11 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             self._rng = default_rng(seed_rng)
         elif isinstance(seed_rng, Generator):
             self._rng = seed_rng
+        elif isinstance(seed_rng, dict):
+            bit_generator_class = getattr(np.random, seed_rng["bit_generator"])
+            bit_generator: BitGenerator = bit_generator_class()
+            bit_generator.state = seed_rng
+            self._rng = Generator(bit_generator)
         else:
             raise TypeError(f"The type of `seed_rng` ({type(seed_rng)}) is not valid.")
 
@@ -440,3 +446,17 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             sq_povms.append(SingleQubitPOVM.from_vectors(vecs))
 
         return ProductPOVM.from_list(sq_povms)
+
+    @property
+    def kwargs(self):
+        """TODO."""
+        kwargs = {
+            "n_qubit": self.n_qubit,
+            "bias": self.bias,
+            "angles": self.angles.reshape((self.n_qubit, 2 * self._n_PVMs)),
+            "measurement_twirl": self.measurement_twirl,
+            "measurement_layout": self.measurement_layout,
+            "shot_batch_size": self.shot_batch_size,
+            "seed_rng": self._rng.bit_generator.state,
+        }
+        return kwargs

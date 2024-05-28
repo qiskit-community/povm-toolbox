@@ -194,3 +194,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     @abstractmethod
     def definition(self) -> BasePOVM:
         """Return the corresponding POVM."""
+
+    @property
+    def kwargs(self):
+        """TODO."""
+        kwargs = {"n_qubit": self.n_qubit, "measurement_layout": self.measurement_layout}
+        return kwargs
