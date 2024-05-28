@@ -25,6 +25,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         self,
         n_qubit: int,
         bias: np.ndarray,
+        measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
         seed_rng: int | Generator | None = None,
@@ -40,6 +41,10 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
+            measurement_twirl : option to randomly twirl the measurements. For each single-qubit
+                projective measurement, random twirling is equivalent to randomly flipping the
+                measurement. This is equivalent to randomly taking the opposite Bloch vector in
+                the Bloch sphere representation.
             measurement_layout: list of indices specifying on which qubits the POVM
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
@@ -58,6 +63,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
             n_qubit=n_qubit,
             bias=bias,
             angles=angles,
+            measurement_twirl=measurement_twirl,
             measurement_layout=measurement_layout,
             shot_batch_size=shot_batch_size,
             seed_rng=seed_rng,
