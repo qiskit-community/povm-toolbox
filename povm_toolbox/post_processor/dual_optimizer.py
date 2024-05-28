@@ -16,7 +16,6 @@ from typing import Any
 
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
-from scipy.optimize import minimize
 
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.quantum_info import MultiQubitPOVM, ProductPOVM
@@ -153,119 +152,99 @@ class DUALOptimizer(POVMPostProcessor):
                 omegas[outcome] += self._scalar_gauge(outcome)
         return omegas
 
-    def optimize_scalar_gauge(self, obs, loc):
-        """TODO."""
+    # def greedy_optimize_scalar_gauge(
+    #     self, obs, outcomes: set[tuple[int, ...]] | None = None, loc=0
+    # ):
+    #     """TODO."""
+    #     if not (isinstance(self.povm, ProductPOVM) and isinstance(self.dual, ProductDUAL)):
+    #         raise NotImplementedError
+    #     gauge_matrices = [
+    #         np.empty((self.povm[sub_system].n_outcomes, self.povm[sub_system].n_outcomes))
+    #         for sub_system in self.povm.sub_systems
+    #     ]
+    #     for i, sub_system in enumerate(self.povm.sub_systems):
+    #         for k_i, l_i in np.ndindex(gauge_matrices[i].shape):
+    #             gauge_matrices[i][k_i, l_i] = np.real(
+    #                 np.trace(self.dual[sub_system][k_i] @ self.povm[sub_system][l_i])  # type: ignore
+    #             )
 
-        def fun(x):
-            count = self.counts[loc]
-            gammas = {}
-            for outcome, x_i in zip(count.keys(), x):
-                gammas[outcome] = x_i
-            self.gammas = gammas
-            _, std = self.get_single_exp_value_and_std(observable=obs, loc=loc)
-            return std
+    #     def F(gauge_matrices, outcome_k: tuple[int, ...], outcome_l: tuple[int, ...]):
+    #         F_kl = float(outcome_k == outcome_l)
+    #         trace_kl = 1.0
+    #         for gauge_matrix_i, k_i, l_i in zip(gauge_matrices, outcome_k, outcome_l):
+    #             trace_kl *= gauge_matrix_i[k_i, l_i]
+    #         F_kl -= trace_kl
+    #         return F_kl
 
-        def callback(x):
-            print(fun(x))
+    #     counts = self.counts[loc]
+    #     weights = self.get_decomposition_weights(obs, set(counts.keys()))
 
-        x1 = np.zeros(len(self.counts[loc]))
-        res = minimize(fun, x1, method="BFGS", tol=1e-3, callback=callback)
-        print(f'   {"Optimized":<10}{res.fun}')
-        return res.x
+    #     def get_pw2(gammas, counts, weights, gauge_matrices):
+    #         pw2 = 0.0
+    #         for outcome in counts:
+    #             w = weights[outcome]
+    #             for l_idx, gamma_l in gammas.items():
+    #                 w += F(gauge_matrices, outcome, l_idx) * gamma_l
+    #             pw2 += counts[outcome] * w**2
+    #         return pw2
 
-    def greedy_optimize_scalar_gauge(
-        self, obs, outcomes: set[tuple[int, ...]] | None = None, loc=0
-    ):
-        """TODO."""
-        if not (isinstance(self.povm, ProductPOVM) and isinstance(self.dual, ProductDUAL)):
-            raise NotImplementedError
-        gauge_matrices = [
-            np.empty((self.povm[sub_system].n_outcomes, self.povm[sub_system].n_outcomes))
-            for sub_system in self.povm.sub_systems
-        ]
-        for i, sub_system in enumerate(self.povm.sub_systems):
-            for k_i, l_i in np.ndindex(gauge_matrices[i].shape):
-                gauge_matrices[i][k_i, l_i] = np.real(
-                    np.trace(self.dual[sub_system][k_i] @ self.povm[sub_system][l_i])  # type: ignore
-                )
+    #     if outcomes is None:
+    #         n = 5
+    #         outcomes_all = np.empty(shape=len(counts), dtype=object)
+    #         pw2 = np.empty(shape=len(counts), dtype=float)
+    #         for i, outcome in enumerate(counts):
+    #             outcomes_all[i] = outcome
+    #             pw2[i] = counts[outcome] * weights[outcome] ** 2
+    #         ind = np.argpartition(pw2, -n)[-n:]
+    #         outcomes_array = outcomes_all[ind]
+    #     else:
+    #         outcomes_all = np.empty(shape=len(outcomes), dtype=object)
+    #         for i, outcome in enumerate(outcomes):
+    #             outcomes_all[i] = outcome
+    #         outcomes_array = outcomes_all
 
-        def F(gauge_matrices, outcome_k: tuple[int, ...], outcome_l: tuple[int, ...]):
-            F_kl = float(outcome_k == outcome_l)
-            trace_kl = 1.0
-            for gauge_matrix_i, k_i, l_i in zip(gauge_matrices, outcome_k, outcome_l):
-                trace_kl *= gauge_matrix_i[k_i, l_i]
-            F_kl -= trace_kl
-            return F_kl
+    #     n = len(outcomes_array)
 
-        counts = self.counts[loc]
-        weights = self.get_decomposition_weights(obs, set(counts.keys()))
+    #     b = np.zeros(n)
+    #     hess_matrix = np.zeros((n, n))
 
-        def get_pw2(gammas, counts, weights, gauge_matrices):
-            pw2 = 0.0
-            for outcome in counts:
-                w = weights[outcome]
-                for l_idx, gamma_l in gammas.items():
-                    w += F(gauge_matrices, outcome, l_idx) * gamma_l
-                pw2 += counts[outcome] * w**2
-            return pw2
+    #     for outcome_k in counts:
+    #         F_k = np.array(
+    #             [F(gauge_matrices, outcome_k, outcome_i) for outcome_i in outcomes_array]
+    #         )
+    #         for i, F_ki in enumerate(F_k):
+    #             b[i] += 2 * counts[outcome_k] * weights[outcome_k] * F_ki
+    #             for j, F_kj in enumerate(F_k):
+    #                 hess_matrix[i, j] += 2 * counts[outcome_k] * F_ki * F_kj
 
-        if outcomes is None:
-            n = 5
-            outcomes_all = np.empty(shape=len(counts), dtype=object)
-            pw2 = np.empty(shape=len(counts), dtype=float)
-            for i, outcome in enumerate(counts):
-                outcomes_all[i] = outcome
-                pw2[i] = counts[outcome] * weights[outcome] ** 2
-            ind = np.argpartition(pw2, -n)[-n:]
-            outcomes_array = outcomes_all[ind]
-        else:
-            outcomes_all = np.empty(shape=len(outcomes), dtype=object)
-            for i, outcome in enumerate(outcomes):
-                outcomes_all[i] = outcome
-            outcomes_array = outcomes_all
+    #     def jac(x, counts, omegas, gauge_matrices, outcomes_ind, hess_matrix, b):
+    #         return hess_matrix @ x + b
 
-        n = len(outcomes_array)
+    #     def hess(x, counts, omegas, gauge_matrices, outcomes_ind, hess_matrix, b):
+    #         return hess_matrix
 
-        b = np.zeros(n)
-        hess_matrix = np.zeros((n, n))
+    #     def fun(x, counts, omegas, gauge_matrices, outcomes_ind, hess_matrix, b):
+    #         gammas = {outcome: x_i for outcome, x_i in zip(outcomes_ind, x)}
+    #         return get_pw2(gammas, counts, omegas, gauge_matrices)
 
-        for outcome_k in counts:
-            F_k = np.array(
-                [F(gauge_matrices, outcome_k, outcome_i) for outcome_i in outcomes_array]
-            )
-            for i, F_ki in enumerate(F_k):
-                b[i] += 2 * counts[outcome_k] * weights[outcome_k] * F_ki
-                for j, F_kj in enumerate(F_k):
-                    hess_matrix[i, j] += 2 * counts[outcome_k] * F_ki * F_kj
+    #     def callback(x):
+    #         print(fun(x, counts, weights, gauge_matrices, outcomes_array, hess_matrix, b))
 
-        def jac(x, counts, omegas, gauge_matrices, outcomes_ind, hess_matrix, b):
-            return hess_matrix @ x + b
+    #     print(outcomes_array)
 
-        def hess(x, counts, omegas, gauge_matrices, outcomes_ind, hess_matrix, b):
-            return hess_matrix
+    #     x1 = np.zeros(n)
+    #     res = minimize(
+    #         fun,
+    #         x1,
+    #         args=(counts, weights, gauge_matrices, outcomes_array, hess_matrix, b),
+    #         method="trust-exact",
+    #         jac=jac,
+    #         hess=hess,
+    #         tol=1e-5,
+    #         callback=callback,
+    #         options={"gtol": 1e-6, "disp": True},
+    #     )
+    #     print(f'   {"Optimized":<10}{res.fun}')
+    #     self.gammas.update({outcome: x_i for outcome, x_i in zip(outcomes_array, res.x)})
 
-        def fun(x, counts, omegas, gauge_matrices, outcomes_ind, hess_matrix, b):
-            gammas = {outcome: x_i for outcome, x_i in zip(outcomes_ind, x)}
-            return get_pw2(gammas, counts, omegas, gauge_matrices)
-
-        def callback(x):
-            print(fun(x, counts, weights, gauge_matrices, outcomes_array, hess_matrix, b))
-
-        print(outcomes_array)
-
-        x1 = np.zeros(n)
-        res = minimize(
-            fun,
-            x1,
-            args=(counts, weights, gauge_matrices, outcomes_array, hess_matrix, b),
-            method="trust-exact",
-            jac=jac,
-            hess=hess,
-            tol=1e-5,
-            callback=callback,
-            options={"gtol": 1e-6, "disp": True},
-        )
-        print(f'   {"Optimized":<10}{res.fun}')
-        self.gammas.update({outcome: x_i for outcome, x_i in zip(outcomes_array, res.x)})
-
-        return {outcome: x_i for outcome, x_i in zip(outcomes_array, res.x)}
+    #     return {outcome: x_i for outcome, x_i in zip(outcomes_array, res.x)}
