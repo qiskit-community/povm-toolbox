@@ -13,9 +13,11 @@
 from __future__ import annotations
 
 import dataclasses
+import importlib
 from dataclasses import dataclass
 
 import numpy as np
+from qiskit import qasm3
 from qiskit.circuit import QuantumCircuit
 
 from ..povm_implementation import POVMImplementation
@@ -56,3 +58,43 @@ class POVMMetadata:
             lst_fields.append((f_name, f_val))
         f_repr = ", ".join(f"{name}={value}" for name, value in lst_fields)
         return f"{self.__class__.__name__}({f_repr})"
+
+    def to_dict(self):
+        """TODO."""
+        povm_module = self.povm_implementation.__module__
+        povm_class = self.povm_implementation.__class__.__name__
+        povm_kwargs = self.povm_implementation.kwargs
+        composed_circuit_qasm3 = qasm3.dumps(self.composed_circuit)
+
+        metadata_kwargs = {
+            "povm_module": povm_module,
+            "povm_class": povm_class,
+            "povm_kwargs": povm_kwargs,
+            "composed_circuit_qasm3": composed_circuit_qasm3,
+        }
+
+        return {
+            "metadata_module": self.__module__,
+            "metadata_class": self.__class__.__name__,
+            "metadata_as_dict": metadata_kwargs,
+        }
+
+    @classmethod
+    def _kwargs_from_dict(cls, metadata_as_dict):
+        """TODO."""
+        povm_module = importlib.import_module(metadata_as_dict["povm_module"])
+        povm_class = getattr(povm_module, metadata_as_dict["povm_class"])
+        povm_kwargs = metadata_as_dict["povm_kwargs"]
+        povm_implementation = povm_class(**povm_kwargs)
+        composed_circuit = qasm3.loads(metadata_as_dict["composed_circuit_qasm3"])
+        return {"povm_implementation": povm_implementation, "composed_circuit": composed_circuit}
+
+    @staticmethod
+    def from_dict(dictionary):
+        """TODO."""
+        metadata_module = importlib.import_module(dictionary["metadata_module"])
+        metadata_class = getattr(metadata_module, dictionary["metadata_class"])
+        metadata = metadata_class(
+            **metadata_class._kwargs_from_dict(dictionary["metadata_as_dict"])
+        )
+        return metadata

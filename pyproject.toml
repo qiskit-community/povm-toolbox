@@ -14,6 +14,7 @@ dependencies = [
     "numpy>=1.23",
     "numba>=0.59",
     "qiskit>=1.0",
+    "qiskit_qasm3_import",
     "qiskit-ibm-runtime>=0.22",
     "qiskit-aer>=0.13",
     "matplotlib",

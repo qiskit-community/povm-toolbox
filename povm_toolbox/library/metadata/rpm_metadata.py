@@ -30,3 +30,16 @@ class RPMMetadata(POVMMetadata):
     where ``pv`` is the bindings array provided by the user to run with the
     parametrized quantum circuit supplied in the :meth:`.POVMSampler.run` method.
     """
+
+    def to_dict(self):
+        """TODO."""
+        dictionary = super().to_dict()
+        dictionary["metadata_as_dict"]["pvm_keys"] = self.pvm_keys.tolist()
+        return dictionary
+
+    @classmethod
+    def _kwargs_from_dict(cls, metadata_as_dict):
+        """TODO."""
+        kwargs = super()._kwargs_from_dict(metadata_as_dict)
+        kwargs["pvm_keys"] = np.array(metadata_as_dict["pvm_keys"])
+        return kwargs
