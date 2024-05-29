@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import json
 import uuid
 
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
@@ -75,6 +76,22 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
             )
 
         return PrimitiveResult(povm_pub_results, metadata={"raw_results": raw_results})
+
+    def serializable_povm_metadata(self) -> list[dict]:
+        """Return a serializable list of dictionaries storing all the metadata."""
+        return [pub_metadata.to_dict() for pub_metadata in self.metadata]
+
+    def save_povm_metadata(self, filename: str):
+        """Save the metadata of the job into a JSON file."""
+        with open(f"{filename}.json", "w") as file:
+            json.dump(self.serializable_povm_metadata(), file)
+
+    @staticmethod
+    def load_povm_metadata(filename: str) -> list[POVMMetadata]:
+        """Load the metadata of the job from a JSON file."""
+        with open(f"{filename}.json") as file:
+            data = json.load(file)
+        return [POVMMetadata.from_dict(pub_dict) for pub_dict in data]
 
     def status(self) -> JobStatus:
         """Return the status of the job."""

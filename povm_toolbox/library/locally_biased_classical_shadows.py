@@ -28,7 +28,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_batch_size: int = 1,
-        seed_rng: int | Generator | None = None,
+        seed_rng: int | Generator | dict | None = None,
     ):
         """Implement a locally-biased classical shadow POVM.
 
