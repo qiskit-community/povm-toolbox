@@ -74,8 +74,8 @@ class DUALOptimizer(POVMPostProcessor):
         alphas = []
         for qubit_idx in self.povm.sub_systems:
             marg_prob = joint_prob.sum(axis=tuple(np.delete(axes, [qubit_idx])))
-            if not all(marg_prob):
-                marg_prob += 1e-3
+            if np.any(np.absolute(marg_prob) < 1e-5):
+                marg_prob += 1e-5
             alphas.append(tuple(marg_prob))
         self._dual = ProductDUAL.build_dual_from_frame(self.povm, alphas=tuple(alphas))
 
