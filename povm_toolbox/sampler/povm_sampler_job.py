@@ -84,7 +84,11 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         return [pub_metadata.to_dict() for pub_metadata in self.metadata]
 
     def save_metadata(self, filename: str | None = None):
-        """Save the metadata of the job into a JSON file."""
+        """Save the metadata of the :class:`.POVMSamplerJob` instance into a JSON file.
+
+        Args:
+            filename: name of the file where to store the metadata.
+        """
         if filename is None:
             filename = f"job_metadata_{self.base_job.job_id()}"
         with open(f"{filename}.json", "w") as file:
@@ -98,7 +102,16 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
 
     @staticmethod
     def load_metadata(filename: str) -> tuple[str, list[POVMMetadata]]:
-        """Load the metadata of the job from a JSON file."""
+        """Load the metadata of a :class:`.POVMSamplerJob` instance from a JSON file.
+
+        Args:
+            filename: name of the file where the metadata is stored.
+
+        Returns:
+            The ID of the internal :class:`.qiskit.primitives.BasePrimitiveJob` object
+            and the list of :class:`.POVMMetadata` objects associated to the originally
+            submitted pubs.
+        """
         with open(f"{filename}.json") as file:
             data = json.load(file)
         return tuple(
@@ -111,36 +124,32 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
     @classmethod
     def recover_job(
         cls,
-        job_id: str | None = None,
-        metadata_filename: str | None = None,
+        metadata_filename: str,
         base_job: BasePrimitiveJob | None = None,
         job_loader: Callable[[str], BasePrimitiveJob] | None = None,
     ) -> POVMSamplerJob:
-        """TODO."""
-        # Check that either a job ID or a filename was provided:
-        if (job_id is None) and (metadata_filename is None):
-            raise ValueError
+        """Recover a :class:`.POVMSamplerJob` instance.
 
-        # If ``metadata_filename`` is None, construct the default filename
-        # from the job ID:
-        metadata_filename = metadata_filename or f"job_metadata_{job_id}"
+        Args:
+            metadata_filename: name of the file where the metadata is stored.
+            base_job:  internal :class:`.qiskit.primitives.BasePrimitiveJob` object
+                that was stored inside the original :class:`.POVMSamplerJob` object.
+                If None, the internal job ID stored in the metadata will be used to
+                recover the internal job through the ``job_loader`` function.
+            job_loader: function that returns the internal job from its ID. If None,
+                the Qiskit Runtime Service is used to recover the job from its ID.
+
+        Returns:
+            The recovered :class:`.POVMSamplerJob` instance.
+        """
         # Load the saved metadata:
-        loaded_job_id, metadata = cls.load_metadata(metadata_filename)
+        job_id, metadata = cls.load_metadata(metadata_filename)
 
         if base_job is None:
-            # If the job ID was not provided, use the one saved in the metadata:
-            if job_id is None:
-                job_id = loaded_job_id
-            # If the job ID was provided, check that it matches with the one saved
-            # in the metadata:
-            elif job_id != loaded_job_id:
-                raise ValueError
-
             # Use the default Qiskit Runtime Service loader if none were provided:
             if job_loader is None:
                 service = QiskitRuntimeService()
                 job_loader = service.job
-
             # Load the ``BasePrimitiveJob`` object:
             base_job = job_loader(job_id)
 
