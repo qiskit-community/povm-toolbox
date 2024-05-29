@@ -13,11 +13,16 @@
 from unittest import TestCase
 
 from povm_toolbox.library import ClassicalShadows
+from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
+from qiskit import QuantumCircuit
 from qiskit.circuit.random import random_circuit
+from qiskit.primitives import BasePrimitiveJob
+from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import SamplerV2 as Sampler
+from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 
 
 class TestPOVMSamplerJob(TestCase):
@@ -47,3 +52,37 @@ class TestPOVMSamplerJob(TestCase):
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
         result = cs_job.result()[0]
         self.assertIsInstance(result, POVMPubResult)
+
+    def test_recover_job(self):
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.cx(0, 1)
+
+        backend = FakeSherbrooke()
+        backend.set_options(seed_simulator=25)
+        pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
+
+        qc_isa = pm.run(qc)
+
+        measurement = ClassicalShadows(2, seed_rng=13)
+        runtime_sampler = Sampler(backend=backend)
+        povm_sampler = POVMSampler(runtime_sampler)
+        job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
+        job.save_metadata(filename="saved_metadata")
+        tmp = job.base_job
+
+        def job_loader(job_id: str) -> BasePrimitiveJob:
+            if job_id != tmp.job_id():
+                raise ValueError
+            return tmp
+
+        job_recovered = POVMSamplerJob.recover_job(
+            metadata_filename="saved_metadata", job_loader=job_loader
+        )
+        self.assertIsInstance(job_recovered, POVMSamplerJob)
+        result = job_recovered.result()
+        pub_result = result[0]
+        observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
+        post_processor = POVMPostProcessor(pub_result)
+        exp_value = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, 3.53125)

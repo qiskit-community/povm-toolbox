@@ -69,7 +69,7 @@ class TestPOVMImplementation(TestCase):
             "Error when adding already existing classical register."
         ) and self.assertRaises(CircuitError):
             qc2 = self.circuit.copy()
-            qc2.add_register(ClassicalRegister(self.n_qubits, self.povm.classical_register_name))
+            qc2.add_register(ClassicalRegister(self.n_qubits, self.povm._classical_register_name))
             self.povm.compose_circuits(qc2)
 
         with self.subTest("Error when number of qubits is not matching."):

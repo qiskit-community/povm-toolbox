@@ -36,7 +36,7 @@ MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 class POVMImplementation(ABC, Generic[MetadataT]):
     """The abstract base interface for all POVM implementations in this library."""
 
-    classical_register_name = "povm_measurement_creg"
+    _classical_register_name = "povm_measurement_creg"
 
     def __init__(
         self,
@@ -145,7 +145,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 f"{exc}\nNote: the supplied quantum circuit should not have a classical register"
                 " which has the same name as the classical register that the POVM"
                 " implementation uses to store measurement outcomes (creg name: "
-                f"'{self.classical_register_name}').\nTo fix it, either delete this register or "
+                f"'{self._classical_register_name}').\nTo fix it, either delete this register or "
                 " change the name of the register of the supplied circuit or of the"
                 " POVM implementation."
             ) from exc
@@ -159,7 +159,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
     def _get_bitarray(self, data: DataBin) -> BitArray:
         """TODO."""
-        return getattr(data, self.classical_register_name)
+        return getattr(data, self._classical_register_name)
 
     @abstractmethod
     def _counter(

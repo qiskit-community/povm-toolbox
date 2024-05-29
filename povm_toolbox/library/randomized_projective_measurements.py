@@ -156,7 +156,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         self._qc_phi = ParameterVector("phi", length=self.n_qubit)
 
         qr = QuantumRegister(self.n_qubit, name="povm_qr")
-        cr = ClassicalRegister(self.n_qubit, name=self.classical_register_name)
+        cr = ClassicalRegister(self.n_qubit, name=self._classical_register_name)
         qc = QuantumCircuit(qr, cr, name="msmt_qc")
         for i in range(self.n_qubit):
             # We apply ``U_dag``, where ``U`` is the unitary operation to go from the computational basis
@@ -329,10 +329,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             array=raw_bit_array.array.reshape(new_shape), num_bits=raw_bit_array.num_bits
         )
         data_bin_cls = make_data_bin(
-            [(self.classical_register_name, BitArray)],
+            [(self._classical_register_name, BitArray)],
             shape=bit_array.shape,
         )
-        data_bin = data_bin_cls(**{self.classical_register_name: bit_array})
+        data_bin = data_bin_cls(**{self._classical_register_name: bit_array})
         return data_bin
 
     def _counter(
