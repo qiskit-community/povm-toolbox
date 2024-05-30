@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+import logging
+import time
 import uuid
 
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
@@ -20,6 +22,8 @@ from qiskit.providers import JobStatus
 from povm_toolbox.library.metadata import POVMMetadata
 
 from .povm_sampler_result import POVMPubResult
+
+LOGGER = logging.getLogger(__name__)
 
 
 class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
@@ -55,6 +59,9 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         Raises:
             ValueError: TODO.
         """
+        t1 = time.time()
+        LOGGER.info("Obtaining POVM job result")
+
         raw_results = self.base_job.result()
 
         if len(raw_results) != len(self.metadata):
@@ -74,7 +81,12 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
                 )
             )
 
-        return PrimitiveResult(povm_pub_results, metadata={"raw_results": raw_results})
+        res = PrimitiveResult(povm_pub_results, metadata={"raw_results": raw_results})
+
+        t2 = time.time()
+        LOGGER.info(f"Finished obtaining POVM result. Took {t2 - t1:.6f}s")
+
+        return res
 
     def status(self) -> JobStatus:
         """Return the status of the job."""
