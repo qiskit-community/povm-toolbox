@@ -62,7 +62,10 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         """Construct a dual frame to another frame.
 
         Args:
-            frame: The primal frame from which we will build the dual frame.
+            frame: the primal frame from which we will build the dual frame.
+            alphas: parameters of the frame super-operator used to build the
+                dual frame. If None, the parameters are set as the traces of
+                each operator in the primal frame.
 
         Returns:
             A multi-qubit dual frame to the supplied ``frame``.

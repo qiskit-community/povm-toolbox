@@ -76,7 +76,11 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         """Construct a dual frame to another frame.
 
         Args:
-            frame: The primal frame from which we will build the dual frame.
+            frame: the primal frame from which we will build the dual frame.
+            alphas: parameters of the local frame super-operators used to build
+                the local dual frames which form together the product dual frame.
+                If None, the parameters are set as the traces of each local operator
+                in each of the primal frames.
 
         Returns:
             A product dual frame to the supplied ``frame``.

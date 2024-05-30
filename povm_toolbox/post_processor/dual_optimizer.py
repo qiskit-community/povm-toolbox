@@ -240,9 +240,8 @@ class DUALOptimizer(POVMPostProcessor):
     #         method="trust-exact",
     #         jac=jac,
     #         hess=hess,
-    #         tol=1e-5,
     #         callback=callback,
-    #         options={"gtol": 1e-6, "disp": True},
+    #         options={"gtol": 1e-4, "disp": True},
     #     )
     #     print(f'   {"Optimized":<10}{res.fun}')
     #     self.gammas.update({outcome: x_i for outcome, x_i in zip(outcomes_array, res.x)})
