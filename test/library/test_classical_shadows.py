@@ -59,3 +59,13 @@ class TestClassicalShadows(TestCase):
                 self.assertEqual(cs_povm._povms[(i,)].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
                     self.assertAlmostEqual(cs_povm._povms[(i,)][k], sqpovm[k])
+
+    def test_kwargs(self):
+        """Test if we can build a copy of a :class:`.ClassicalShadows` from the `.kwargs` attribute."""
+
+        cs = ClassicalShadows(
+            n_qubit=5, measurement_twirl=True, measurement_layout=[3, 2, 1, 4, 0], seed_rng=None
+        )
+        cs_copy = ClassicalShadows(**cs.kwargs)
+        self.assertIsInstance(cs_copy, ClassicalShadows)
+        self.assertEqual(cs.kwargs, cs_copy.kwargs)

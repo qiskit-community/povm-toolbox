@@ -90,6 +90,24 @@ class TestRandomizedPMs(TestCase):
         exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
         self.assertAlmostEqual(exp_value, 1.1718749999999998)
 
+    def test_kwargs(self):
+        """Test if we can build a copy of a :class:`.RandomizedProjectiveMeasurements` from the `.kwargs` attribute."""
+
+        rpm = RandomizedProjectiveMeasurements(
+            n_qubit=2,
+            bias=np.array([[0.3, 0.7], [0.5, 0.5]]),
+            angles=np.array([0.0, 0.0, 1.2, -0.3]),
+        )
+        kwargs = rpm.kwargs
+        rpm_copy = RandomizedProjectiveMeasurements(**kwargs)
+        self.assertIsInstance(rpm_copy, RandomizedProjectiveMeasurements)
+        kwargs_copy = rpm_copy.kwargs
+        for key in kwargs:
+            if isinstance(kwargs[key], np.ndarray):
+                self.assertTrue(np.array_equal(kwargs[key], kwargs_copy[key]))
+            else:
+                self.assertEqual(kwargs[key], kwargs_copy[key])
+
     # TODO: write a unittest for each public method of RandomizedProjectiveMeasurements
 
     # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that

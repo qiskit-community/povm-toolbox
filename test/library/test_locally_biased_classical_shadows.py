@@ -60,3 +60,11 @@ class TestRandomizedPMs(TestCase):
                 self.assertEqual(cs_povm._povms[(i,)].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
                     self.assertTrue(np.allclose(cs_povm._povms[(i,)][k], sqpovm[k]))
+
+    def test_kwargs(self):
+        """Test if we can build a copy of a :class:`.LocallyBiasedClassicalShadows` from the `.kwargs` attribute."""
+
+        lbcs = LocallyBiasedClassicalShadows(n_qubit=5, bias=np.array([0.2, 0.7, 0.1]), seed_rng=34)
+        lbcs_copy = LocallyBiasedClassicalShadows(**lbcs.kwargs)
+        self.assertIsInstance(lbcs_copy, LocallyBiasedClassicalShadows)
+        self.assertEqual(lbcs.kwargs, lbcs_copy.kwargs)
