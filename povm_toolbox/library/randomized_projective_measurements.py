@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+import logging
+import time
 from collections import Counter
 
 import numpy as np
@@ -28,6 +30,8 @@ from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 
 from .metadata import RPMMetadata
 from .povm_implementation import POVMImplementation
+
+LOGGER = logging.getLogger(__name__)
 
 
 class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
@@ -152,6 +156,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         Returns:
             Parametrized quantum circuit that can implement any product of single-qubit projective measurements.
         """
+        t1 = time.time()
+        LOGGER.info("Building POVM circuit")
+
         self._qc_theta = ParameterVector("theta", length=self.n_qubit)
         self._qc_phi = ParameterVector("phi", length=self.n_qubit)
 
@@ -172,6 +179,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             qc.rz(3 * np.pi, qubit=i)
 
         qc.measure(qr, cr)
+
+        t2 = time.time()
+        LOGGER.info(f"Finished circuit construction. Took {t2 - t1:.6f}s")
 
         return qc
 
@@ -210,6 +220,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             ValueError: If the number of shots is not compatible with the batch size.
                 It should be a multiple of the batch size.
         """
+        t1 = time.time()
+        LOGGER.info("Piecing together SamplerPub")
+
         if shots % self.shot_batch_size != 0:
             raise ValueError(
                 f"The number of shots ({shots}) is not a multiple of "
@@ -305,10 +318,16 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             povm_implementation=self, composed_circuit=composed_circuit, pvm_keys=pvm_idx
         )
 
+        t2 = time.time()
+        LOGGER.info(f"Finished building SamplerPub. Took {t2 - t1:.6f}s")
+
         return (pub, metadata)
 
     def reshape_data_bin(self, data: DataBin) -> DataBin:
         """TODO."""
+        t1 = time.time()
+        LOGGER.info("Reshaping result DataBin")
+
         # We extract the raw ``BitArray``
         raw_bit_array = self._get_bitarray(data)
         # Next we reshape the array such that the number of shots is correct.
@@ -333,6 +352,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             shape=bit_array.shape,
         )
         data_bin = data_bin_cls(**{self._classical_register_name: bit_array})
+
+        t2 = time.time()
+        LOGGER.info(f"Finished reshaping DataBin. Took {t2 - t1:.6f}s")
+
         return data_bin
 
     def _counter(
@@ -342,6 +365,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         loc: int | tuple[int, ...] | None = None,
     ) -> Counter:
         """TODO."""
+        t1 = time.time()
+        LOGGER.info("Counting POVM outcomes")
+
         # povm_metadata.pvm_keys.shape is (*pv.shape, num_batches, n_qubit)
         # loc is assumed to have a length of at most pv.ndim = len(pv.shape)
 
@@ -372,7 +398,12 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 )
             )
 
-        return Counter(povm_outcomes)
+        counter = Counter(povm_outcomes)
+
+        t2 = time.time()
+        LOGGER.info(f"Finished counting POVM outcomes. Took {t2 - t1:.6f}s")
+
+        return counter
 
     def _get_pvm_bindings_array(self, pvm_idx: np.ndarray) -> BindingsArray:
         """Return the concrete parameter values associated to a PVM label.
@@ -383,6 +414,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         Returns:
             Parameter values for the specified PVM.
         """
+        t1 = time.time()
+        LOGGER.info("Building PVM bindings array")
+
         # shape is assumed to be (*pv, num_batches, n_qubit)
         if pvm_idx.shape[-1] != self.n_qubit:
             raise ValueError
@@ -397,7 +431,12 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             theta[multi_index] = self.angles[i_qubit, actual_pvm_idx, 0] + np.pi * (twirl > 0)
             phi[multi_index] = self.angles[i_qubit, actual_pvm_idx, 1]
 
-        return BindingsArray(data={self._qc_theta: theta, self._qc_phi: phi})
+        arr = BindingsArray(data={self._qc_theta: theta, self._qc_phi: phi})
+
+        t2 = time.time()
+        LOGGER.info(f"Finished building PVM bindings array. Took {t2 - t1:.6f}s")
+
+        return arr
 
     def _get_outcome_label(
         self,
@@ -427,6 +466,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
     def definition(self) -> ProductPOVM:
         """Return the POVM corresponding to this implementation."""
+        t1 = time.time()
+        LOGGER.info("Building POVM definition")
+
         stabilizers: np.ndarray = np.zeros((self.n_qubit, self._n_PVMs, 2, 2), dtype=complex)
 
         stabilizers[:, :, 0, 0] = np.cos(self.angles[:, :, 0] / 2.0)
@@ -445,7 +487,12 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         for vecs in stabilizers:
             sq_povms.append(SingleQubitPOVM.from_vectors(vecs))
 
-        return ProductPOVM.from_list(sq_povms)
+        prod = ProductPOVM.from_list(sq_povms)
+
+        t2 = time.time()
+        LOGGER.info(f"Finished POVM definition. Took {t2 - t1:.6f}s")
+
+        return prod
 
     @property
     def kwargs(self):

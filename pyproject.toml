@@ -86,6 +86,7 @@ ignore_missing_imports = true
 
 [tool.pylint.main]
 py-version = "3.9"
+load-plugins=["pylint.extensions.docparams"]
 
 [tool.pylint."messages control"]
 disable = ["all"]
@@ -101,6 +102,18 @@ enable = [
     "attribute-defined-outside-init",
     "no-else-return",
     "signature-differs",
+    "differing-param-doc",
+    "differing-type-doc",
+    "missing-param-doc",
+    "missing-type-doc",
+    "missing-raises-doc",
+    "useless-param-doc",
+    "useless-type-doc",
+    "missing-any-param-doc",
+    "missing-return-doc",
+    "missing-return-type-doc",
+    "missing-yield-doc",
+    "missing-yield-type-doc",
 ]
 
 [tool.pytest.ini_options]

@@ -85,6 +85,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
 
         Args:
             frame: The primal frame from which we will build dual operators.
+            alphas: TODO.
 
         Returns:
             A list of dual operators to the ``frame`` operators.
@@ -129,6 +130,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
 
         Args:
             frame: The primal frame from which we will build the dual frame.
+            alphas: TODO.
 
         Returns:
             A multi-qubit dual frame to the supplied ``frame``.
