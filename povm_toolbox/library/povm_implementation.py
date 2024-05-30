@@ -89,7 +89,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
         Args:
             circuit: A quantum circuit.
-            parameter_values: A bindings array.
+            circuit_binding: A bindings array.
             shots: A specific number of shots to run with.
             pass_manager: An optional pass manager. After the supplied circuit has
                 been composed with the measurement circuit, the pass manager will

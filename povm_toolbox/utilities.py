@@ -29,7 +29,7 @@ def matrix_to_double_ket(op_matrix: np.ndarray) -> np.ndarray:
     """Return the double-ket representation of an operator.
 
     Args:
-        op: an operator in matrix representation.
+        op_matrix: an operator in matrix representation.
 
     Returns:
         The double-ket representation of the operator ``op``.
@@ -43,7 +43,7 @@ def double_ket_to_matrix(op_ket: np.ndarray) -> np.ndarray:
     """Return the matrix representation of an operator.
 
     Args:
-        op: an operator in the double-ket representation.
+        op_ket: an operator in the double-ket representation.
 
     Returns:
         The matrix representation of the operator ``op``.
