@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from numpy.random import Generator
 
@@ -71,8 +73,8 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         )
 
     @property
-    def kwargs(self):
-        """TODO."""
+    def kwargs(self) -> dict[str, Any]:
+        """Return the attributes of ``self`` needed to build a copy of ``self``."""
         kwargs = {
             "n_qubit": self.n_qubit,
             "bias": self.bias,

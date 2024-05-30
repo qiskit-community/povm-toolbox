@@ -95,7 +95,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         """Return a serializable list of dictionaries storing all the metadata."""
         return [pub_metadata.to_dict() for pub_metadata in self.metadata]
 
-    def save_metadata(self, filename: str | None = None):
+    def save_metadata(self, filename: str | None = None) -> None:
         """Save the metadata of the :class:`.POVMSamplerJob` instance into a JSON file.
 
         Args:
@@ -111,6 +111,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
                 },
                 file,
             )
+        print(f"Job metadata successfully saved in the '{filename}.json' file.")
 
     @staticmethod
     def load_metadata(filename: str) -> tuple[str, list[POVMMetadata]]:

@@ -16,7 +16,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections import Counter
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit
@@ -208,7 +208,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """Return the corresponding POVM."""
 
     @property
-    def kwargs(self):
-        """TODO."""
+    def kwargs(self) -> dict[str, Any]:
+        """Return the attributes of ``self`` needed to build a copy of ``self``."""
         kwargs = {"n_qubit": self.n_qubit, "measurement_layout": self.measurement_layout}
         return kwargs

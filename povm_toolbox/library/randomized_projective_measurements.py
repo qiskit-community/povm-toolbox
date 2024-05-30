@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import time
 from collections import Counter
+from typing import Any
 
 import numpy as np
 from numpy.random import BitGenerator, Generator, default_rng
@@ -496,8 +497,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         return prod
 
     @property
-    def kwargs(self):
-        """TODO."""
+    def kwargs(self) -> dict[str, Any]:
+        """Return the attributes of ``self`` needed to build a copy of ``self``."""
         kwargs = {
             "n_qubit": self.n_qubit,
             "bias": self.bias,

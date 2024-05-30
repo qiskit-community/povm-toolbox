@@ -15,6 +15,7 @@ from __future__ import annotations
 import dataclasses
 import importlib
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from qiskit import qasm3
@@ -59,8 +60,12 @@ class POVMMetadata:
         f_repr = ", ".join(f"{name}={value}" for name, value in lst_fields)
         return f"{self.__class__.__name__}({f_repr})"
 
-    def to_dict(self):
-        """TODO."""
+    def to_dict(self) -> dict[str, Any]:
+        """Convert ``self`` into a serializable :class:`dict` object.
+
+        This dictionary contains all the information needed to build a
+        copy of ``self``.
+        """
         povm_module = self.povm_implementation.__module__
         povm_class = self.povm_implementation.__class__.__name__
         povm_kwargs = self.povm_implementation.kwargs
@@ -80,8 +85,15 @@ class POVMMetadata:
         }
 
     @classmethod
-    def _kwargs_from_dict(cls, metadata_as_dict):
-        """TODO."""
+    def _kwargs_from_dict(cls, metadata_as_dict: dict[str, Any]) -> dict[str, Any]:
+        """Convert a serializable dictionary into arguments compatible with :meth:.`POVMMetadata.__init__`.
+
+        Args:
+            metadata_as_dict: metadata stored as a serializable :class:.dict` object.
+
+        Returns:
+            dictionary of key-word arguments compatible with :meth:.`POVMMetadata.__init__`.
+        """
         povm_module = importlib.import_module(metadata_as_dict["povm_module"])
         povm_class = getattr(povm_module, metadata_as_dict["povm_class"])
         povm_kwargs = metadata_as_dict["povm_kwargs"]
@@ -90,11 +102,19 @@ class POVMMetadata:
         return {"povm_implementation": povm_implementation, "composed_circuit": composed_circuit}
 
     @staticmethod
-    def from_dict(dictionary):
-        """TODO."""
+    def from_dict(dictionary: dict[str, Any]) -> POVMMetadata:
+        """Return a :class:`.POVMMetadata` object built from the information stored in a serializable dictionary.
+
+        Args:
+            dictionary: stores all the information necessary to instantiate a :class:`.POVMMetadata` (or
+                a sub-class) object.
+
+        Returns:
+            A :class:`.POVMMetadata` built from the information stored in ``dictionary``.
+        """
         metadata_module = importlib.import_module(dictionary["metadata_module"])
         metadata_class = getattr(metadata_module, dictionary["metadata_class"])
-        metadata = metadata_class(
+        metadata: POVMMetadata = metadata_class(
             **metadata_class._kwargs_from_dict(dictionary["metadata_as_dict"])
         )
         return metadata
