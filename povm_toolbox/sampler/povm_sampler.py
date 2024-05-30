@@ -74,16 +74,15 @@ class POVMSampler:
 
         coerced_sampler_pubs: list[SamplerPub] = []
         metadata: list[POVMMetadata] = []
-        num_pubs = len(pubs)
         for idx, pub in enumerate(pubs):
             t1_inner = time.time()
-            LOGGER.info(f"Preparing pub {idx}/{num_pubs}")
+            LOGGER.info(f"Preparing pub #{idx}")
             povm_sampler_pub = POVMSamplerPub.coerce(pub=pub, shots=shots, povm=povm)
             sampler_pub, pub_metadata = povm_sampler_pub.to_sampler_pub(pass_manager=pass_manager)
             coerced_sampler_pubs.append(sampler_pub)
             metadata.append(pub_metadata)
             t2_inner = time.time()
-            LOGGER.info(f"Finished preparation {idx}/{num_pubs}. Took {t2_inner - t1_inner:.6f}s")
+            LOGGER.info(f"Finished preparation #{idx}. Took {t2_inner - t1_inner:.6f}s")
 
         job = self.sampler.run(coerced_sampler_pubs)
         povm_job = POVMSamplerJob(job, metadata)
