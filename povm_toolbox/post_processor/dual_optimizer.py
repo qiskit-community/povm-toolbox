@@ -158,6 +158,7 @@ class DUALOptimizer(POVMPostProcessor):
     #     """TODO."""
     #     if not (isinstance(self.povm, ProductPOVM) and isinstance(self.dual, ProductDUAL)):
     #         raise NotImplementedError
+
     #     gauge_matrices = [
     #         np.empty((self.povm[sub_system].n_outcomes, self.povm[sub_system].n_outcomes))
     #         for sub_system in self.povm.sub_systems
@@ -205,6 +206,14 @@ class DUALOptimizer(POVMPostProcessor):
 
     #     n = len(outcomes_array)
 
+    #     old_gammas = np.zeros(n)
+
+    #     for i, outcome in enumerate(outcomes_array):
+    #         old_gammas[i] = self.gammas.get(outcome, 0.0)
+    #         self.gammas[outcome] = 0.0
+
+    #     weights = self.get_decomposition_weights(obs, set(counts.keys()))
+
     #     b = np.zeros(n)
     #     hess_matrix = np.zeros((n, n))
 
@@ -232,10 +241,9 @@ class DUALOptimizer(POVMPostProcessor):
 
     #     print(outcomes_array)
 
-    #     x1 = np.zeros(n)
     #     res = minimize(
     #         fun,
-    #         x1,
+    #         old_gammas,
     #         args=(counts, weights, gauge_matrices, outcomes_array, hess_matrix, b),
     #         method="trust-exact",
     #         jac=jac,
@@ -244,6 +252,64 @@ class DUALOptimizer(POVMPostProcessor):
     #         options={"gtol": 1e-4, "disp": True},
     #     )
     #     print(f'   {"Optimized":<10}{res.fun}')
-    #     self.gammas.update({outcome: x_i for outcome, x_i in zip(outcomes_array, res.x)})
+
+    #     for outcome, x_i in zip(outcomes_array, res.x):
+    #         self.gammas[outcome] = self.gammas.get(outcome, 0.0) + x_i
 
     #     return {outcome: x_i for outcome, x_i in zip(outcomes_array, res.x)}
+
+    # def greedy_exact_scalar_gauge(
+    #     self, obs, outcomes: set[tuple[int, ...]] | None = None, loc=0
+    # ):
+    #     """TODO."""
+    #     if not (isinstance(self.povm, ProductPOVM) and isinstance(self.dual, ProductDUAL)):
+    #         raise NotImplementedError
+
+    #     for outcome in outcomes:
+    #         self.gammas[outcome] = 0.0
+
+    #     gauge_matrices = [
+    #         np.empty((self.povm[sub_system].n_outcomes, self.povm[sub_system].n_outcomes))
+    #         for sub_system in self.povm.sub_systems
+    #     ]
+    #     for i, sub_system in enumerate(self.povm.sub_systems):
+    #         for k_i, l_i in np.ndindex(gauge_matrices[i].shape):
+    #             gauge_matrices[i][k_i, l_i] = np.real(
+    #                 np.trace(self.dual[sub_system][k_i] @ self.povm[sub_system][l_i])  # type: ignore
+    #             )
+
+    #     def F(gauge_matrices, outcome_k: tuple[int, ...], outcome_l: tuple[int, ...]):
+    #         F_kl = float(outcome_k == outcome_l)
+    #         trace_kl = 1.0
+    #         for gauge_matrix_i, k_i, l_i in zip(gauge_matrices, outcome_k, outcome_l):
+    #             trace_kl *= gauge_matrix_i[k_i, l_i]
+    #         F_kl -= trace_kl
+    #         return F_kl
+    #     outcomes_all = np.empty(shape=len(outcomes), dtype=object)
+    #     for i, outcome in enumerate(outcomes):
+    #         outcomes_all[i] = outcome
+    #     outcomes_array = outcomes_all
+
+    #     counts = self.counts[loc]
+    #     weights = self.get_decomposition_weights(obs, set(counts.keys()))
+
+    #     n = len(outcomes_array)
+
+    #     b = np.zeros(n)
+    #     hess_matrix = np.zeros((n, n))
+
+    #     for outcome_k in counts:
+    #         F_k = np.array(
+    #             [F(gauge_matrices, outcome_k, outcome_i) for outcome_i in outcomes_array]
+    #         )
+    #         for i, F_ki in enumerate(F_k):
+    #             b[i] += 2 * counts[outcome_k] * weights[outcome_k] * F_ki
+    #             for j, F_kj in enumerate(F_k):
+    #                 hess_matrix[i, j] += 2 * counts[outcome_k] * F_ki * F_kj
+
+    #     x = solve(hess_matrix, b)
+
+    #     for outcome, x_i in zip(outcomes_array, x):
+    #         self.gammas[outcome] = self.gammas.get(outcome, 0.0) + x_i
+
+    #     return {outcome: x_i for outcome, x_i in zip(outcomes_array, x)}
