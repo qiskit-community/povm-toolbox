@@ -351,6 +351,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             [(self._classical_register_name, BitArray)],
             shape=bit_array.shape,
         )
+        
         data_bin = data_bin_cls(**{self._classical_register_name: bit_array})
 
         t2 = time.time()
