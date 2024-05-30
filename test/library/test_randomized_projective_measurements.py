@@ -13,7 +13,13 @@
 from unittest import TestCase
 
 import numpy as np
-from povm_toolbox.library import RandomizedProjectiveMeasurements
+from numpy.random import default_rng
+from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasurements
+from povm_toolbox.post_processor import POVMPostProcessor
+from povm_toolbox.sampler import POVMSampler
+from qiskit import QuantumCircuit
+from qiskit.primitives import StatevectorSampler
+from qiskit.quantum_info import SparsePauliOp
 
 
 class TestRandomizedPMs(TestCase):
@@ -50,6 +56,39 @@ class TestRandomizedPMs(TestCase):
             qc = cs_implementation._build_qc()
 
             self.assertEqual(qc.num_qubits, n_qubit)
+
+    def test_twirling(self):
+        """Test if the twirling option works correctly."""
+        rng = default_rng(13)
+
+        qc = QuantumCircuit(2)
+        qc.h(0)
+
+        n_qubit = qc.num_qubits
+        measurement = ClassicalShadows(n_qubit, seed_rng=rng, measurement_twirl=True)
+
+        rng2 = default_rng(26)
+
+        sampler = StatevectorSampler(seed=rng2)
+        povm_sampler = POVMSampler(sampler=sampler)
+
+        job = povm_sampler.run([qc], shots=128, povm=measurement)
+        pub_result = job.result()[0]
+
+        post_processor = POVMPostProcessor(pub_result)
+
+        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        self.assertAlmostEqual(exp_value, 0.9843749999999998)
+        observable = SparsePauliOp(["IZ"], coeffs=[1.0])
+        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        self.assertAlmostEqual(exp_value, 0.07031249999999983)
+        observable = SparsePauliOp(["ZY"], coeffs=[1.0])
+        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        self.assertAlmostEqual(exp_value, 0.0)
+        observable = SparsePauliOp(["IX"], coeffs=[1.0])
+        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        self.assertAlmostEqual(exp_value, 1.1718749999999998)
 
     # TODO: write a unittest for each public method of RandomizedProjectiveMeasurements
 

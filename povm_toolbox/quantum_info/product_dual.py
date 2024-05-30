@@ -45,6 +45,10 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
 
         Args:
             obs: the observable to be decomposed into the POVM effects.
+            outcome_idx: the outcomes for which one queries the probability. Each outcome is labeled
+                by a tuple of integers (one index per local POVM). One can query a single outcome or a
+                set of outcomes. If ``None``, all outcomes are queried.
+
 
         Returns:
             Decomposition weight(s) associated to the effect(s) specified by ``outcome_idx``.
@@ -77,6 +81,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
 
         Args:
             frame: The primal frame from which we will build the dual frame.
+            alphas: TODO.
 
         Returns:
             A product dual frame to the supplied ``frame``.
