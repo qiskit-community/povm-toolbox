@@ -12,6 +12,9 @@
 
 from __future__ import annotations
 
+import logging
+import time
+
 from abc import ABC, abstractmethod
 from collections import Counter
 from typing import TYPE_CHECKING, Generic, TypeVar
@@ -29,6 +32,8 @@ from povm_toolbox.quantum_info.base_povm import BasePOVM
 
 if TYPE_CHECKING:
     from .metadata import POVMMetadata
+
+LOGGER = logging.getLogger(__name__)
 
 MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
 
@@ -112,6 +117,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             The composition of the supplied quantum circuit with the measurement
             circuit of this POVM implementation.
         """
+        t1 = time.time()
+        LOGGER.info("Starting circuit composition")
+
         # Create a copy of the circuit and remove final measurements:
         dest_circuit = circuit.copy()
         dest_circuit.remove_final_measurements(inplace=True)
@@ -151,7 +159,12 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             ) from exc
 
         # Compose the two circuits with the correct routing.
-        return dest_circuit.compose(self.msmt_qc, qubits=index_layout, clbits=self.msmt_qc.clbits)
+        ret = dest_circuit.compose(self.msmt_qc, qubits=index_layout, clbits=self.msmt_qc.clbits)
+
+        t2 = time.time()
+        LOGGER.info(f"Finished circuit composition. Took {t2 - t1:.6f}s")
+
+        return ret
 
     @abstractmethod
     def reshape_data_bin(self, data: DataBin) -> DataBin:

@@ -12,6 +12,9 @@
 
 from __future__ import annotations
 
+import logging
+import time
+
 from collections.abc import Iterable
 
 from qiskit.primitives import BaseSamplerV2
@@ -23,6 +26,8 @@ from povm_toolbox.library.povm_implementation import POVMImplementation
 
 from .povm_sampler_job import POVMSamplerJob
 from .povm_sampler_pub import POVMSamplerPub, POVMSamplerPubLike
+
+LOGGER = logging.getLogger(__name__)
 
 
 class POVMSampler:
@@ -65,13 +70,26 @@ class POVMSampler:
         Returns:
             The POVM sampler job object.
         """
+        t1_outer = time.time()
+        LOGGER.info("Running POVM jobs")
+
         coerced_sampler_pubs: list[SamplerPub] = []
         metadata: list[POVMMetadata] = []
-        for pub in pubs:
+        num_pubs = len(pubs)
+        for idx, pub in enumerate(pubs):
+            t1_inner = time.time()
+            LOGGER.info(f"Preparing pub {idx}/{num_pubs}")
             povm_sampler_pub = POVMSamplerPub.coerce(pub=pub, shots=shots, povm=povm)
             sampler_pub, pub_metadata = povm_sampler_pub.to_sampler_pub(pass_manager=pass_manager)
             coerced_sampler_pubs.append(sampler_pub)
             metadata.append(pub_metadata)
+            t2_inner = time.time()
+            LOGGER.info(f"Finished preparation {idx}/{num_pubs}. Took {t2_inner - t1_inner:.6f}s")
 
         job = self.sampler.run(coerced_sampler_pubs)
-        return POVMSamplerJob(job, metadata)
+        povm_job = POVMSamplerJob(job, metadata)
+
+        t2_outer = time.time()
+        LOGGER.info(f"Ran job. Took {t2_outer - t1_outer:.6f}s")
+
+        return povm_job
