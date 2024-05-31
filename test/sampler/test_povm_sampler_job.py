@@ -80,3 +80,16 @@ class TestPOVMSamplerJob(TestCase):
         post_processor = POVMPostProcessor(pub_result)
         exp_value = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 3.53125)
+
+        job.save_metadata()
+
+        job_recovered = POVMSamplerJob.recover_job(
+            metadata_filename=f"job_metadata_{job.base_job.job_id()}.pkl", base_job=tmp
+        )
+        self.assertIsInstance(job_recovered, POVMSamplerJob)
+        result = job_recovered.result()
+        pub_result = result[0]
+        observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
+        post_processor = POVMPostProcessor(pub_result)
+        exp_value = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, 3.53125)
