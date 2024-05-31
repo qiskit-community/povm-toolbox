@@ -91,10 +91,11 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         return res
 
     def save_metadata(self, filename: str | None = None) -> None:
-        """Save the metadata of the :class:`.POVMSamplerJob` instance into a JSON file.
+        """Save the metadata of the :class:`.POVMSamplerJob` instance into a pickle file.
 
         Args:
-            filename: name of the file where to store the metadata.
+            filename: name of the file where to store the metadata. If None, the default
+                 filename is 'job_metadata_<:meth:`self.base_job.job_id`>.pkl'.
         """
         if filename is None:
             filename = f"job_metadata_{self.base_job.job_id()}.pkl"
@@ -110,7 +111,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
 
     @staticmethod
     def load_metadata(filename: str) -> tuple[str, list[POVMMetadata]]:
-        """Load the metadata of a :class:`.POVMSamplerJob` instance from a JSON file.
+        """Load the metadata of a :class:`.POVMSamplerJob` instance from a pickle file.
 
         Args:
             filename: name of the file where the metadata is stored.
@@ -122,11 +123,9 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         """
         with open(filename, "rb") as file:
             data = pickle.load(file)
-        return tuple(
-            [
-                data["base_job_id"],
-                data["metadata"],
-            ]
+        return (
+            data["base_job_id"],
+            data["metadata"],
         )
 
     @classmethod
@@ -142,7 +141,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
             base_job:  internal :class:`.qiskit.primitives.BasePrimitiveJob` object
                 that was stored inside the original :class:`.POVMSamplerJob` object.
                 If None, the internal job ID stored in the metadata will be used to
-                recover the internal job through Qiskit Runtime Service.
+                recover the internal job from the :class:`.QiskitRuntimeService`.
 
         Raises:
             ValueError : if a ``base_job`` is supplied and its ID does not match with
