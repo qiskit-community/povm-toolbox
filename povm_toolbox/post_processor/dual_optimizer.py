@@ -15,13 +15,11 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
+from qiskit.quantum_info import SparsePauliOp
 
 from povm_toolbox.post_processor import POVMPostProcessor
-from povm_toolbox.quantum_info import MultiQubitPOVM, ProductPOVM
+from povm_toolbox.quantum_info import ProductPOVM
 from povm_toolbox.quantum_info.base_dual import BaseDUAL
-from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
-from povm_toolbox.quantum_info.product_dual import ProductDUAL
 from povm_toolbox.sampler.povm_sampler_result import POVMPubResult
 
 
@@ -32,90 +30,6 @@ class DUALOptimizer(POVMPostProcessor):
         """TODO."""
         super().__init__(povm_sample, dual)
         self._gammas: dict[tuple[int, ...], float] = {}
-
-    def optimize(self, **options) -> None:
-        """TODO."""
-        if (state := options.get("state", None)) is not None:
-            if options.get("use_marginal", False):
-                self.set_marginal_probabilities_dual(state)
-            else:
-                self.set_state_optimal_dual(state)
-        elif (alphas := options.get("alphas", None)) is not None:
-            dual_class = self.povm.default_dual_class
-            self._dual = dual_class.build_dual_from_frame(self.povm, alphas=alphas)
-        elif options.get("empirical_frequencies", False):
-            self.set_empirical_frequencies_dual(0)
-
-        if not self.dual.is_dual_to(self.povm):
-            raise ValueError
-
-    def set_state_optimal_dual(
-        self,
-        state: SparsePauliOp | DensityMatrix | Statevector,
-    ) -> None:
-        """TODO."""
-        if isinstance(self.povm, MultiQubitPOVM):
-            alphas = tuple(self.povm.get_prob(state))  # type: ignore
-            self._dual = MultiQubitDUAL.build_dual_from_frame(self.povm, alphas=alphas)
-            return
-        if isinstance(self.povm, ProductPOVM):
-            raise NotImplementedError
-        raise TypeError
-
-    def set_marginal_probabilities_dual(
-        self,
-        state: SparsePauliOp | DensityMatrix | Statevector,
-    ) -> None:
-        """TODO."""
-        if not isinstance(self.povm, ProductPOVM):
-            raise NotImplementedError
-        axes = np.arange(len(self.povm.sub_systems), dtype=int)
-        joint_prob: np.ndarray = self.povm.get_prob(state)  # type: ignore
-        alphas = []
-        for qubit_idx in self.povm.sub_systems:
-            marg_prob = joint_prob.sum(axis=tuple(np.delete(axes, [qubit_idx])))
-            if np.any(np.absolute(marg_prob) < 1e-5):
-                marg_prob += 1e-5
-            alphas.append(tuple(marg_prob))
-        self._dual = ProductDUAL.build_dual_from_frame(self.povm, alphas=tuple(alphas))
-
-    def set_empirical_frequencies_dual(
-        self,
-        loc,
-        bias: float | list[float] | None = None,
-        ansatz: list[SparsePauliOp | DensityMatrix | Statevector] | None = None,
-    ) -> None:
-        """TODO."""
-        if not isinstance(self.povm, ProductPOVM):
-            raise NotImplementedError(
-                "This method is only implemented for `povm_toolbox.quantum_info.product_povm.ProductPOVM`."
-            )
-
-        counts = self.counts[loc]
-        marginals = [np.zeros(subsystem_shape) for subsystem_shape in self.povm.shape]
-
-        # Computing marginals
-        shots = sum(counts.values())
-        for outcome, count in counts.items():
-            for i, k_i in enumerate(outcome):
-                marginals[i][k_i] += count
-
-        alphas = []
-        # Computing alphas for each subsystem
-        for i, sub_system in enumerate(self.povm.sub_systems):
-            sub_povm = self.povm[sub_system]
-            dim = sub_povm.dimension
-            ansatz_state = DensityMatrix(np.eye(dim) / dim) if ansatz is None else ansatz[i]
-            sub_bias = (
-                sub_povm.n_outcomes
-                if bias is None
-                else (bias[i] if isinstance(bias, list) else bias)
-            )
-            sub_alphas = marginals[i] + sub_bias * sub_povm.get_prob(ansatz_state)  # type: ignore
-            alphas.append(tuple(sub_alphas / (shots + sub_bias)))
-
-        # Building ProductDUAL from marginals
-        self._dual = ProductDUAL.build_dual_from_frame(self.povm, alphas=tuple(alphas))
 
     @property
     def gammas(self) -> dict[tuple[int, ...], float]:
