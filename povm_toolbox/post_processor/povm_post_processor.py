@@ -87,47 +87,43 @@ class POVMPostProcessor:
 
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
-    ) -> np.ndarray | float:
-        """Return the expectation value of a given observable."""
+    ) -> tuple[np.ndarray, np.ndarray] | tuple[float, float]:
+        """Return the expectation value of a given observable and standard deviation of the estimator."""
         if loc is not None:
-            return self._single_exp_val(observable, loc)
+            return self._single_exp_value_and_std(observable, loc)
         if self.counts.shape == (1,):
-            return self._single_exp_val(observable, 0)
+            return self._single_exp_value_and_std(observable, 0)
 
         exp_val = np.zeros(shape=self.counts.shape, dtype=float)
+        std = np.zeros(shape=self.counts.shape, dtype=float)
         for idx in np.ndindex(self.counts.shape):
-            exp_val[idx] = self._single_exp_val(observable, idx)
-        return exp_val
+            exp_val[idx], std[idx] = self._single_exp_value_and_std(observable, idx)
+        return exp_val, std
 
-    def _single_exp_val(self, observable: SparsePauliOp, loc: int | tuple[int, ...]) -> float:
-        """Return the expectation value of an observable for a given circuit."""
-        exp_value, _ = self.get_single_exp_value_and_std(observable, loc)
-        return exp_value
-
-    def get_single_exp_value_and_std(
+    def _single_exp_value_and_std(
         self,
         observable: SparsePauliOp,
-        loc: int | tuple[int, ...] | None = None,
+        loc: int | tuple[int, ...],
     ) -> tuple[float, float]:
-        """Return the expectation value of a given observable."""
-        # loc is allowed to be None only if there's only one counter in the counter array
-        if loc is None:
-            if self.counts.shape == (1,):
-                loc = (0,)
-            else:
-                raise ValueError
-        exp_val = 0.0
-        std = 0.0
+        """Return the expectation value of a given observable and standard deviation of the estimator."""
         count = self.counts[loc]
+        shots = sum(count.values())
         # TODO: performance gains to be made when computing the omegas here ?
         # like storing the dict of computed omegas and updating the dict with the
         # missing values that were still never computed.
         omegas = self.get_decomposition_weights(observable, set(count.keys()))
+
+        exp_val = 0.0
+        pw2 = 0.0
+
         for outcome in count:
             exp_val += count[outcome] * omegas[outcome]
-            std += count[outcome] * omegas[outcome] ** 2
-        shots = sum(count.values())
+            pw2 += count[outcome] * omegas[outcome] ** 2
+
+        # Normalize
         exp_val /= shots
-        std /= shots
-        std = np.sqrt((std - exp_val**2) / (shots - 1))
+        pw2 /= shots
+
+        std = np.sqrt((pw2 - exp_val**2) / (shots - 1))
+
         return exp_val, std

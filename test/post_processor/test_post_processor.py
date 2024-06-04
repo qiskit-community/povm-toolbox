@@ -47,4 +47,7 @@ class TestPostProcessor(TestCase):
 
         post_processor = POVMPostProcessor(pub_result)
 
-        self.assertIsInstance(post_processor.get_expectation_value(observable), float)
+        exp_val, std = post_processor.get_expectation_value(observable)
+
+        self.assertIsInstance(exp_val, float)
+        self.assertIsInstance(std, float)
