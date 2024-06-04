@@ -74,7 +74,15 @@ class POVMPostProcessor:
     def get_decomposition_weights(
         self, observable: SparsePauliOp, outcome_idx: set[Any]
     ) -> dict[Any, float]:
-        """TODO."""
+        """Get the decomposition weights of ``observable`` into the elements of ``self.povm``.
+
+        Args:
+            observable: the observable to be decomposed into the POVM effects.
+            outcome_idx: set of labels indicating which decomposition weights are queried.
+
+        Returns:
+            An dictionary of decomposition weights.
+        """
         return dict(self.dual.get_omegas(observable, outcome_idx))  # type: ignore
 
     def get_expectation_value(

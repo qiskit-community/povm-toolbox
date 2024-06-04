@@ -15,21 +15,35 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
-from povm_toolbox.post_processor.dual_optimizer import DUALOptimizer
+from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.quantum_info import ProductPOVM
 from povm_toolbox.quantum_info.product_dual import ProductDUAL
 
 
-class PPPStateMarginal(DUALOptimizer):
-    """A common POVM result post-processor."""
+class PPPStateMarginal(POVMPostProcessor):
+    """A POVM post-processor that leverages the marginal outcome distributions to set the dual frame."""
 
     def set_marginal_probabilities_dual(
         self,
         state: SparsePauliOp | DensityMatrix | Statevector,
     ) -> None:
-        """TODO."""
+        """Set the dual frame based on the marginal distribution of a supplied state.
+
+        This methods constructs a product dual frame where each local dual frame
+        is parametrized  with the alpha-parameters set as the marginal outcome
+        probabilities of the supplied state.
+
+        Args:
+            state: state from which to compute the marginal outcome probabilities.
+
+        Raises:
+            NotImplementedError: if ``self.povm`` is not a :class:`povm_toolbox.quantum_info.product_povm.ProductPOVM`
+                instance.
+        """
         if not isinstance(self.povm, ProductPOVM):
-            raise NotImplementedError
+            raise NotImplementedError(
+                "This method is only implemented for `povm_toolbox.quantum_info.product_povm.ProductPOVM`."
+            )
         axes = np.arange(len(self.povm.sub_systems), dtype=int)
         joint_prob: np.ndarray = self.povm.get_prob(state)  # type: ignore
         alphas = []
