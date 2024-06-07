@@ -13,11 +13,13 @@
 from __future__ import annotations
 
 import logging
+import pickle
 import time
 import uuid
 
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
 from qiskit.providers import JobStatus
+from qiskit_ibm_runtime import QiskitRuntimeService
 
 from povm_toolbox.library.metadata import POVMMetadata
 
@@ -37,13 +39,9 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         """Initialize the job.
 
         Args:
-            povm: The list of POVMs that were submitted for each pub.
-            base_job: The raw job from which to extract results.
-            pvm_keys: The length of the list is equal to the number of pubs that
-                were submitted. Each element of the list is a list of tuples, where
-                each tuple indicates which PVM from the randomized ``povm`` was
-                used for a specific shot. The length of each nested list is equal
-                the number of shots associated with the corresponding pub.
+            base_job: the raw job from which to extract results.
+            metadata: the list of :class:`.POVMMetadata` instances associated
+                to each submitted pub.
         """
         super().__init__(job_id=str(uuid.uuid4()))
 
@@ -87,6 +85,87 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         LOGGER.info(f"Finished obtaining POVM result. Took {t2 - t1:.6f}s")
 
         return res
+
+    def save_metadata(self, filename: str | None = None) -> None:
+        """Save the metadata of the :class:`.POVMSamplerJob` instance into a pickle file.
+
+        Args:
+            filename: name of the file where to store the metadata. If None, the default
+                 filename is 'job_metadata_<:meth:`self.base_job.job_id`>.pkl'.
+        """
+        if filename is None:
+            filename = f"job_metadata_{self.base_job.job_id()}.pkl"
+        with open(filename, "wb") as file:
+            pickle.dump(
+                {
+                    "base_job_id": self.base_job.job_id(),
+                    "metadata": self.metadata,
+                },
+                file,
+            )
+        print(f"Job metadata successfully saved in the '{filename}' file.")
+
+    @staticmethod
+    def _load_metadata(filename: str) -> tuple[str, list[POVMMetadata]]:
+        """Load the metadata of a :class:`.POVMSamplerJob` instance from a pickle file.
+
+        This is a utility method for loading metadata, which is a part of the job
+        recovery process. If you want to perform a full job recovery, this can be
+        achieved through the :meth:`.POVMSamplerJob.recover_job` method.
+
+        Args:
+            filename: name of the file where the metadata is stored.
+
+        Returns:
+            The ID of the internal :class:`.qiskit.primitives.BasePrimitiveJob` object
+            and the list of :class:`.POVMMetadata` objects associated to the originally
+            submitted pubs.
+        """
+        with open(filename, "rb") as file:
+            data = pickle.load(file)
+        return (
+            data["base_job_id"],
+            data["metadata"],
+        )
+
+    @classmethod
+    def recover_job(
+        cls,
+        filename: str,
+        base_job: BasePrimitiveJob | None = None,
+    ) -> POVMSamplerJob:
+        """Recover a :class:`.POVMSamplerJob` instance.
+
+        Args:
+            filename: name of the file where the metadata is stored.
+            base_job:  internal :class:`.qiskit.primitives.BasePrimitiveJob` object
+                that was stored inside the original :class:`.POVMSamplerJob` object.
+                If None, the internal job ID stored in the metadata will be used to
+                recover the internal job from the :class:`.QiskitRuntimeService`.
+
+        Raises:
+            ValueError : if a ``base_job`` is supplied and its ID does not match with
+                the ID stored in the metadata file ``metadata_filename``.
+
+        Returns:
+            The recovered :class:`.POVMSamplerJob` instance.
+        """
+        # Load the saved metadata:
+        job_id, metadata = cls._load_metadata(filename)
+
+        if base_job is None:
+            # Use Qiskit Runtime Service to recover the ``BasePrimitiveJob``:
+            service = QiskitRuntimeService()
+            # Load the ``BasePrimitiveJob`` object:
+            base_job = service.job(job_id)
+        elif base_job.job_id() != job_id:
+            raise ValueError(
+                f"The ID of the supplied job ({base_job.job_id()}) does not"
+                f" match the ID stored in the metadata file ({job_id})."
+            )
+
+        # Return the corresponding :class:`.POVMSampler` object:
+        return cls(base_job, metadata)
 
     def status(self) -> JobStatus:
         """Return the status of the job."""
