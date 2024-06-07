@@ -70,9 +70,7 @@ class TestPOVMSamplerJob(TestCase):
         job.save_metadata(filename="saved_metadata.pkl")
         tmp = job.base_job
 
-        job_recovered = POVMSamplerJob.recover_job(
-            metadata_filename="saved_metadata.pkl", base_job=tmp
-        )
+        job_recovered = POVMSamplerJob.recover_job(filename="saved_metadata.pkl", base_job=tmp)
         self.assertIsInstance(job_recovered, POVMSamplerJob)
         result = job_recovered.result()
         pub_result = result[0]
@@ -84,7 +82,7 @@ class TestPOVMSamplerJob(TestCase):
         job.save_metadata()
 
         job_recovered = POVMSamplerJob.recover_job(
-            metadata_filename=f"job_metadata_{job.base_job.job_id()}.pkl", base_job=tmp
+            filename=f"job_metadata_{job.base_job.job_id()}.pkl", base_job=tmp
         )
         self.assertIsInstance(job_recovered, POVMSamplerJob)
         result = job_recovered.result()
