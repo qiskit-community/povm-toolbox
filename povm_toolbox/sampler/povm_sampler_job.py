@@ -39,13 +39,9 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         """Initialize the job.
 
         Args:
-            povm: The list of POVMs that were submitted for each pub.
-            base_job: The raw job from which to extract results.
-            pvm_keys: The length of the list is equal to the number of pubs that
-                were submitted. Each element of the list is a list of tuples, where
-                each tuple indicates which PVM from the randomized ``povm`` was
-                used for a specific shot. The length of each nested list is equal
-                the number of shots associated with the corresponding pub.
+            base_job: the raw job from which to extract results.
+            metadata: the list of :class:`.POVMMetadata` instances associated
+                to each submitted pub.
         """
         super().__init__(job_id=str(uuid.uuid4()))
 
@@ -110,8 +106,12 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         print(f"Job metadata successfully saved in the '{filename}' file.")
 
     @staticmethod
-    def load_metadata(filename: str) -> tuple[str, list[POVMMetadata]]:
+    def _load_metadata(filename: str) -> tuple[str, list[POVMMetadata]]:
         """Load the metadata of a :class:`.POVMSamplerJob` instance from a pickle file.
+
+        This is a utility method for loading metadata, which is a part of the job
+        recovery process. If you want to perform a full job recovery, this can be
+        achieved through the :meth:`.POVMSamplerJob.recover_job` method.
 
         Args:
             filename: name of the file where the metadata is stored.
@@ -131,13 +131,13 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
     @classmethod
     def recover_job(
         cls,
-        metadata_filename: str,
+        filename: str,
         base_job: BasePrimitiveJob | None = None,
     ) -> POVMSamplerJob:
         """Recover a :class:`.POVMSamplerJob` instance.
 
         Args:
-            metadata_filename: name of the file where the metadata is stored.
+            filename: name of the file where the metadata is stored.
             base_job:  internal :class:`.qiskit.primitives.BasePrimitiveJob` object
                 that was stored inside the original :class:`.POVMSamplerJob` object.
                 If None, the internal job ID stored in the metadata will be used to
@@ -151,7 +151,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
             The recovered :class:`.POVMSamplerJob` instance.
         """
         # Load the saved metadata:
-        job_id, metadata = cls.load_metadata(metadata_filename)
+        job_id, metadata = cls._load_metadata(filename)
 
         if base_job is None:
             # Use Qiskit Runtime Service to recover the ``BasePrimitiveJob``:
