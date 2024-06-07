@@ -71,8 +71,11 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
                 simple one-to-one layout ``list(range(n_qubits))`` is used.
-            shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
-                is sampled for each shot.
+            shot_batch_size: number of shots assigned to each sampled PVM. If set
+                to 1, a new PVM is sampled for each shot. Note that the ``shots``
+                argument of the method :meth:`.POVMSampler.run` is effectively the
+                number of batches (i.e., the number of sampled PVMs). The actual
+                total number of shots is then ``shots``  multiplied by ``shot_batch_size``.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The PVMs are sampled according to the probability distribution(s) specified by
                 ``bias``. The user can also directly provide a random generator. If None, a random
@@ -199,7 +202,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         Args:
             circuit: A quantum circuit.
             circuit_binding: A bindings array.
-            shots: A specific number of shots to run with.
+            shots: A specific number of shots to run with. Note that ``shots`` is
+                effectively the number of measurement batches (i.e., the number
+                of sampled PVMs). The actual total number of shots is then
+                ``shots``  multiplied by ``self.shot_batch_size``.
             pass_manager: An optional pass manager. After the supplied circuit has
                 been composed with the measurement circuit, the pass manager will
                 transpile the composed circuit.
@@ -209,27 +215,18 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             the ``POVMImplementation`` object itself. The metadata should contain
             all the information necessary to extract the POVM outcomes out of raw
             bitstrings. (TODO: explain what is it exactly)
-
-        Raises:
-            ValueError: If the number of shots is not compatible with the batch size.
-                It should be a multiple of the batch size.
         """
         t1 = time.time()
         LOGGER.info("Piecing together SamplerPub")
 
-        if shots % self.shot_batch_size != 0:
-            raise ValueError(
-                f"The number of shots ({shots}) is not a multiple of "
-                f"the batch size ({self.shot_batch_size})."
-            )
-
-        num_batches = shots // self.shot_batch_size
+        num_batches = shots
+        shots *= self.shot_batch_size
 
         # We combine the parameter values from the supplied circuit and from the
         # the measurement circuit.
         binding_data = {}
 
-        # We tile the circuit parameter values such that it is duplicated for each measurement shot.
+        # We tile the circuit parameter values such that it is duplicated for each measurement batch.
         # E.g., if the supplied circuit has 3 parameters and 5 different set of values are supplied,
         # the corresponding `BindingsArray` has :
         #   .shape = (5,)
@@ -324,16 +321,16 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         # We extract the raw ``BitArray``
         raw_bit_array = self._get_bitarray(data)
-        # Next we reshape the array such that the number of shots is correct.
+        # Next we reshape the array such that the actual number of shots is correct.
         # For RandomizedPMs, the raw `BitArray` has the following properties :
-        #   .shape == (*pub.parameter_values.shape, pub.shots/n)
+        #   .shape == (*pub.parameter_values.shape, pub.shots)
         #   .num_shots == batch_size
-        # -> the internal numpy array has shape (*pub.parameter_values.shape, pub.shots/batch_size, batch_size, num_bits)
+        # -> the internal numpy array has shape (*pub.parameter_values.shape, pub.shots, batch_size, num_bits)
         # where `pub` is the corresponding `POVMSamplerPub` supplied to the `run`
         # method. We now reshape the raw `BitArray` such that :
         #   .shape == pub.parameter_values.shape
-        #   .num_shots == pub.shots
-        # -> internal array with shape (*pub.parameter_values.shape, pub.shots, num_bits)
+        #   .num_shots == pub.shots * batch_size
+        # -> internal array with shape (*pub.parameter_values.shape, pub.shots*batch_size, num_bits)
         # `BitArray.reshape` method does not handle the n=1 case properly,
         # so we have to do it "manually":
         shape = raw_bit_array.array.shape

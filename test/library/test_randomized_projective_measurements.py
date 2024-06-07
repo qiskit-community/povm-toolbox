@@ -90,6 +90,33 @@ class TestRandomizedPMs(TestCase):
         exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
         self.assertAlmostEqual(exp_value, 1.1718749999999998)
 
+    def test_batch_size(self):
+        """Test if the twirling option works correctly."""
+        rng = default_rng(65)
+
+        qc = QuantumCircuit(2)
+        qc.h(0)
+
+        n_qubit = qc.num_qubits
+        measurement = ClassicalShadows(n_qubit, seed_rng=rng, shot_batch_size=7)
+
+        rng2 = default_rng(56)
+
+        sampler = StatevectorSampler(seed=rng2)
+        povm_sampler = POVMSampler(sampler=sampler)
+
+        job = povm_sampler.run([qc], shots=128, povm=measurement)
+        pub_result = job.result()[0]
+
+        self.assertEqual(sum(pub_result.get_counts()[0].values()), 128 * 7)
+        self.assertEqual(pub_result.data.povm_measurement_creg.num_shots, 128 * 7)
+
+        post_processor = POVMPostProcessor(pub_result)
+
+        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        self.assertAlmostEqual(exp_value, 1.0312499999999998)
+
     # TODO: write a unittest for each public method of RandomizedProjectiveMeasurements
 
     # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that

@@ -50,8 +50,11 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
                 simple one-to-one layout ``list(range(n_qubits))`` is used.
-            shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
-                is sampled for each shot.
+            shot_batch_size: number of shots assigned to each sampled PVM. If set
+                to 1, a new PVM is sampled for each shot. Note that the ``shots``
+                argument of the method :meth:`.POVMSampler.run` is effectively the
+                number of batches (i.e., the number of sampled PVMs). The actual
+                total number of shots is then ``shots``  multiplied by ``shot_batch_size``.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The Z-,X-,Y-measurements are sampled according to the probability distribution(s)
                 specified by ``bias``. The user can also directly provide a random generator. If
