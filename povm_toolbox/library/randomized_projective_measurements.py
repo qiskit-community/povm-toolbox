@@ -205,9 +205,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             circuit: A quantum circuit.
             circuit_binding: A bindings array.
             shots: A specific number of shots to run with. Note that ``shots`` is
-                effectively the number of measurement batches (i.e., the number
-                of sampled PVMs). The actual total number of shots is then
-                ``shots``  multiplied by ``self.shot_repetitions``.
+                effectively the number of times we sample PVMs. Then, for each
+                sampled PVM, the measurement is repeated ``self.shot_repetitions``
+                times. Therefore, the actual total number of measurement shots is
+                then ``shots`` multiplied by ``self.shot_repetitions``.
             pass_manager: An optional pass manager. After the supplied circuit has
                 been composed with the measurement circuit, the pass manager will
                 transpile the composed circuit.
