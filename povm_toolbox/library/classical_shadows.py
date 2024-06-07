@@ -26,7 +26,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
         n_qubit: int,
         measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
-        shot_batch_size: int = 1,
+        shot_repetitions: int = 1,
         seed_rng: int | Generator | None = None,
     ):
         """Implement a classical shadows POVM.
@@ -46,8 +46,13 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
                 simple one-to-one layout ``list(range(n_qubits))`` is used.
-            shot_batch_size: number of shots assigned to each sampled measurement basis.
-                If set to 1, a new basis is sampled for each shot.
+            shot_repetitions: number of times the measurement is repeated for each
+                sampled PVM. More precisely, a new PVM is sampled for all ``shots``
+                (i.e. the number of times as specified by the user via the ``shots``
+                argument of the method :meth:`.POVMSampler.run`). Then, the parameter
+                ``shot_repetitions`` states how many times we repeat the measurement
+                for each sampled PVM (default is 1). Therefore, the effective total
+                number of measurement shots is ``shots`` multiplied by ``shot_repetitions``.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to
                 sample measurement bases. The user can also directly provide a random
                 generator. If None, a random seed will be used.
@@ -58,6 +63,6 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
             bias=bias,
             measurement_twirl=measurement_twirl,
             measurement_layout=measurement_layout,
-            shot_batch_size=shot_batch_size,
+            shot_repetitions=shot_repetitions,
             seed_rng=seed_rng,
         )
