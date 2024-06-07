@@ -90,7 +90,7 @@ class TestRandomizedPMs(TestCase):
         exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
         self.assertAlmostEqual(exp_value, 1.1718749999999998)
 
-    def test_batch_size(self):
+    def test_shot_repetitions(self):
         """Test if the twirling option works correctly."""
         rng = default_rng(65)
 
@@ -98,7 +98,7 @@ class TestRandomizedPMs(TestCase):
         qc.h(0)
 
         n_qubit = qc.num_qubits
-        measurement = ClassicalShadows(n_qubit, seed_rng=rng, shot_batch_size=7)
+        measurement = ClassicalShadows(n_qubit, seed_rng=rng, shot_repetitions=7)
 
         rng2 = default_rng(56)
 
