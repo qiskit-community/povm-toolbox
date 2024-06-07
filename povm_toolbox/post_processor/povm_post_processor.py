@@ -88,7 +88,23 @@ class POVMPostProcessor:
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
     ) -> tuple[np.ndarray, np.ndarray] | tuple[float, float]:
-        """Return the expectation value of a given observable and standard deviation of the estimator."""
+        """Return the expectation value of a given observable and standard deviation of the estimator.
+
+        Args:
+            observable: the observable whose expectation value is queried.
+            loc: this argument is relevant if multiple sets of parameter values
+                were supplied to the sampler in the same :class:`.POVMSamplerPub`.
+                The index ``loc`` then corresponds to the set of parameter values
+                that was supplied to the sampler through the PUB. If None, the
+                expectation value (and standard deviation) for each set of circuit
+                parameters is returned.
+
+        Returns:
+            A tuple of (estimated) expectation value and standard deviation of the
+            estimator if a single value is queried. If all values are queried a
+            tuple of two :class:`numpy.ndarray` is returned, the first containing
+            the expectation values and the second the standard deviations.
+        """
         if loc is not None:
             return self._single_exp_value_and_std(observable, loc)
         if self.counts.shape == (1,):
@@ -105,7 +121,18 @@ class POVMPostProcessor:
         observable: SparsePauliOp,
         loc: int | tuple[int, ...],
     ) -> tuple[float, float]:
-        """Return the expectation value of a given observable and standard deviation of the estimator."""
+        """Return the expectation value of a given observable and standard deviation of the estimator.
+
+        Args:
+            observable: the observable whose expectation value is queried.
+            loc: index of the results to use. The index corresponds to the set
+                of parameter values that was supplied to the sampler through a
+                :class:`.POVMSamplerPub`. If the circuit was not parametrized,
+                the index ``loc`` should be 0.
+
+        Returns:
+            A tuple of (estimated) expectation value and standard deviation.
+        """
         count = self.counts[loc]
         shots = sum(count.values())
         # TODO: performance gains to be made when computing the omegas here ?
