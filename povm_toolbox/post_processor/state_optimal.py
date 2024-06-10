@@ -19,7 +19,7 @@ from povm_toolbox.quantum_info import MultiQubitPOVM
 from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
 
 
-class PPPStateOptimal(POVMPostProcessor):
+class StateOptimal(POVMPostProcessor):
     """A POVM post-processor that leverages state knowledge to set the dual frame."""
 
     def set_state_optimal_dual(

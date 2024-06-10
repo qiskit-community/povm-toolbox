@@ -81,7 +81,7 @@ class POVMPostProcessor:
             outcome_idx: set of labels indicating which decomposition weights are queried.
 
         Returns:
-            An dictionary of decomposition weights.
+            A dictionary of decomposition weights.
         """
         return dict(self.dual.get_omegas(observable, outcome_idx))  # type: ignore
 
@@ -141,16 +141,16 @@ class POVMPostProcessor:
         omegas = self.get_decomposition_weights(observable, set(count.keys()))
 
         exp_val = 0.0
-        pw2 = 0.0
+        std = 0.0
 
         for outcome in count:
             exp_val += count[outcome] * omegas[outcome]
-            pw2 += count[outcome] * omegas[outcome] ** 2
+            std += count[outcome] * omegas[outcome] ** 2
 
         # Normalize
         exp_val /= shots
-        pw2 /= shots
+        std /= shots
 
-        std = np.sqrt((pw2 - exp_val**2) / (shots - 1))
+        std = np.sqrt((std - exp_val**2) / (shots - 1))
 
         return exp_val, std

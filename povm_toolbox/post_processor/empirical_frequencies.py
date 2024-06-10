@@ -20,7 +20,7 @@ from povm_toolbox.quantum_info import ProductPOVM
 from povm_toolbox.quantum_info.product_dual import ProductDUAL
 
 
-class PPPEmpiricalFrequencies(POVMPostProcessor):
+class EmpiricalFrequencies(POVMPostProcessor):
     """A POVM post-processor that leverages the outcome frequencies to set the dual frame."""
 
     def set_empirical_frequencies_dual(

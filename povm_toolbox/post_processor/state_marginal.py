@@ -20,7 +20,7 @@ from povm_toolbox.quantum_info import ProductPOVM
 from povm_toolbox.quantum_info.product_dual import ProductDUAL
 
 
-class PPPStateMarginal(POVMPostProcessor):
+class StateMarginal(POVMPostProcessor):
     """A POVM post-processor that leverages the marginal outcome distributions to set the dual frame."""
 
     def set_marginal_probabilities_dual(
