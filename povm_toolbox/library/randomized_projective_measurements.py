@@ -44,7 +44,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         angles: np.ndarray,
         measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
-        shot_batch_size: int = 1,
+        shot_repetitions: int = 1,
         seed_rng: int | Generator | None = None,
     ) -> None:
         """Implement a product POVM through the randomization of single-qubit projective measurement.
@@ -71,8 +71,13 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
                 simple one-to-one layout ``list(range(n_qubits))`` is used.
-            shot_batch_size: number of shots assigned to each sampled PVM. If set to 1, a new PVM
-                is sampled for each shot.
+            shot_repetitions: number of times the measurement is repeated for each
+                sampled PVM. More precisely, a new PVM is sampled for all ``shots``
+                (i.e. the number of times as specified by the user via the ``shots``
+                argument of the method :meth:`.POVMSampler.run`). Then, the parameter
+                ``shot_repetitions`` states how many times we repeat the measurement
+                for each sampled PVM (default is 1). Therefore, the effective total
+                number of measurement shots is ``shots`` multiplied by ``shot_repetitions``.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The PVMs are sampled according to the probability distribution(s) specified by
                 ``bias``. The user can also directly provide a random generator. If None, a random
@@ -123,7 +128,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         self.msmt_qc = self._build_qc()
 
-        self.shot_batch_size = shot_batch_size
+        self.shot_repetitions = shot_repetitions
 
         self._rng: Generator
         if seed_rng is None:
@@ -199,7 +204,11 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         Args:
             circuit: A quantum circuit.
             circuit_binding: A bindings array.
-            shots: A specific number of shots to run with.
+            shots: A specific number of shots to run with. Note that ``shots`` is
+                effectively the number of times we sample PVMs. Then, for each
+                sampled PVM, the measurement is repeated ``self.shot_repetitions``
+                times. Therefore, the actual total number of measurement shots is
+                then ``shots`` multiplied by ``self.shot_repetitions``.
             pass_manager: An optional pass manager. After the supplied circuit has
                 been composed with the measurement circuit, the pass manager will
                 transpile the composed circuit.
@@ -209,37 +218,26 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             the ``POVMImplementation`` object itself. The metadata should contain
             all the information necessary to extract the POVM outcomes out of raw
             bitstrings. (TODO: explain what is it exactly)
-
-        Raises:
-            ValueError: If the number of shots is not compatible with the batch size.
-                It should be a multiple of the batch size.
         """
         t1 = time.time()
         LOGGER.info("Piecing together SamplerPub")
-
-        if shots % self.shot_batch_size != 0:
-            raise ValueError(
-                f"The number of shots ({shots}) is not a multiple of "
-                f"the batch size ({self.shot_batch_size})."
-            )
-
-        num_batches = shots // self.shot_batch_size
 
         # We combine the parameter values from the supplied circuit and from the
         # the measurement circuit.
         binding_data = {}
 
-        # We tile the circuit parameter values such that it is duplicated for each measurement shot.
+        # We tile the circuit parameter values such that it is duplicated for each PVM sampled.
+
         # E.g., if the supplied circuit has 3 parameters and 5 different set of values are supplied,
         # the corresponding `BindingsArray` has :
         #   .shape = (5,)
         #   .num_parameters = 3
         # Now if the POVM measurement circuit has 2*n_qubit parameters and a set of values is fed for
-        # each batch, the corresponding `BindingsArray` has :
-        #   .shape = (num_batches,)
+        # each "shot", the corresponding `BindingsArray` has :
+        #   .shape = (shots,)
         #   .num_parameters = 2*n_qubit
         # Then, the combined `BindingsArray` should have :
-        #   .shape = (5, num_batches)
+        #   .shape = (5, shots)
         #   .num_parameters = 3 + 2*n_qubit
         # The data is stored as a dictionary of arrays where each array has a shape such that :
         #   - the last dimension corresponds to the number of parameters stored in this entry
@@ -248,27 +246,27 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         #     amongst all dictionary entries (it is the `.shape` of the `BindingsArray`)
         # We loop over the circuit parameter values :
         for circuit_param, circuit_val in circuit_binding.data.items():
-            # For each array we insert a dimension on the second to last axis and duplicate `num_batches` times
-            # the circuit values over this axis. The resulting np.ndarray shape is (5, num_batches, num_param_of_entry)
+            # For each array we insert a dimension on the second to last axis and duplicate ``shots`` times
+            # the circuit values over this axis. The resulting np.ndarray shape is (5, shots, num_param_of_entry)
             # where num_param_of_entry = circuit_val.shape[-1] is the number of parameters stored in this dictionary entry.
-            # The general shape of the resulting np.ndarray is (*circuit_val.shape[:-1], num_batches, circuit_val.shape[-1]).
-            binding_data[circuit_param] = np.tile(circuit_val[..., np.newaxis, :], (num_batches, 1))
+            # The general shape of the resulting np.ndarray is (*circuit_val.shape[:-1], shots, circuit_val.shape[-1]).
+            binding_data[circuit_param] = np.tile(circuit_val[..., np.newaxis, :], (shots, 1))
 
         # We create the array that will store the qubit-wise indices of all the sampled PVMs.
-        pvm_idx = np.zeros((*circuit_binding.shape, num_batches, self.n_qubit), dtype=int)
+        pvm_idx = np.zeros((*circuit_binding.shape, shots, self.n_qubit), dtype=int)
         # We loop over the different qubits :
         for i in range(self.n_qubit):
             # For each qubit, we sample PVMs according to the local bias defined on
-            # this particular qubit. We draw a PVM for each batch of shots and for
+            # this particular qubit. We draw a PVM for each "shot" and for
             # each set of circuit parameter values supplied by the user through the
             # :method:``POVMSampler.run`` method.
             pvm_idx[..., i] = self._rng.choice(
                 self._n_PVMs,
-                size=circuit_binding.size * num_batches,
+                size=circuit_binding.size * shots,
                 replace=True,
                 p=self.bias[i],
             ).reshape(  # Reshape to match the shape of ``pvm_idx``.
-                (*circuit_binding.shape, num_batches)
+                (*circuit_binding.shape, shots)
             )
             # If the twirling option is turned on we double the number of PVMs
             # because each PVM can be twirled. The encoding works as follows :
@@ -285,9 +283,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             if self.measurement_twirl:
                 pvm_idx[..., i] += self._n_PVMs * self._rng.integers(
                     2,
-                    size=circuit_binding.size * num_batches,
+                    size=circuit_binding.size * shots,
                 ).reshape(  # Reshape to match the shape of ``pvm_idx``.
-                    (*circuit_binding.shape, num_batches)
+                    (*circuit_binding.shape, shots)
                 )
 
         # Transform the PVM indices into actual measurement parameters that are
@@ -305,7 +303,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         pub = SamplerPub(
             circuit=composed_circuit,
             parameter_values=combined_binding,
-            shots=self.shot_batch_size,
+            shots=self.shot_repetitions,
         )
 
         metadata = RPMMetadata(
@@ -324,16 +322,17 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         # We extract the raw ``BitArray``
         raw_bit_array = self._get_bitarray(data)
-        # Next we reshape the array such that the number of shots is correct.
-        # For RandomizedPMs, the raw `BitArray` has the following properties :
-        #   .shape == (*pub.parameter_values.shape, pub.shots/n)
-        #   .num_shots == batch_size
-        # -> the internal numpy array has shape (*pub.parameter_values.shape, pub.shots/batch_size, batch_size, num_bits)
+        # Next we reshape the array such that the actual number of shots is correct.
+        # For RandomizedProjectiveMeasurements (rpm for short), the raw `BitArray`
+        # has the following properties :
+        #   .shape == (*pub.parameter_values.shape, povm_sampler_pub.shots)
+        #   .num_shots == rpm.shot_repetitions
+        # -> the internal numpy array has shape (*pub.parameter_values.shape, povm_sampler_pub.shots, rpm.shot_repetitions, num_bits)
         # where `pub` is the corresponding `POVMSamplerPub` supplied to the `run`
         # method. We now reshape the raw `BitArray` such that :
         #   .shape == pub.parameter_values.shape
-        #   .num_shots == pub.shots
-        # -> internal array with shape (*pub.parameter_values.shape, pub.shots, num_bits)
+        #   .num_shots == povm_sampler_pub.shots * rpm.shot_repetitions
+        # -> internal array with shape (*pub.parameter_values.shape, povm_sampler_pub.shots*rpm.shot_repetitions, num_bits)
         # `BitArray.reshape` method does not handle the n=1 case properly,
         # so we have to do it "manually":
         shape = raw_bit_array.array.shape
@@ -362,7 +361,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Counting POVM outcomes")
 
-        # povm_metadata.pvm_keys.shape is (*pv.shape, num_batches, n_qubit)
+        # povm_metadata.pvm_keys.shape is (*pv.shape, povm_sampler_pub.shots, n_qubit)
+        # and bit_array.num_shots is povm_sampler_pub.shots*self.shot_repetitions
         # loc is assumed to have a length of at most pv.ndim = len(pv.shape)
 
         try:
@@ -373,7 +373,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 "RandomizedPMs POVM should specify a list of pvm keys, "
                 "but none were found."
             ) from exc
-        if pvm_keys.shape != (bit_array.num_shots // self.shot_batch_size, self.n_qubit):
+        if pvm_keys.shape != (bit_array.num_shots // self.shot_repetitions, self.n_qubit):
             raise ValueError(
                 "Either the shape of the `BitArray` is not compatible with the"
                 " shape of the PVM keys stored in the metadata, or the `loc`"
@@ -388,7 +388,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         for i, raw_bitstring in enumerate(bit_array.get_bitstrings(loc)):
             povm_outcomes.append(
                 self._get_outcome_label(
-                    pvm_idx=pvm_keys[i // self.shot_batch_size], bitstring_outcome=raw_bitstring
+                    pvm_idx=pvm_keys[i // self.shot_repetitions], bitstring_outcome=raw_bitstring
                 )
             )
 
@@ -403,7 +403,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         """Return the concrete parameter values associated to a PVM label.
 
         Args:
-            pvm_idx: an array of integers with shape `(*pv, num_batches, n_qubit)`.
+            pvm_idx: an array of integers with shape `(*pv, povm_sampler_pub.shots, n_qubit)`.
 
         Returns:
             Parameter values for the specified PVM.
@@ -411,13 +411,13 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building PVM bindings array")
 
-        # shape is assumed to be (*pv, num_batches, n_qubit)
+        # shape is assumed to be (*pv, povm_sampler_pub.shots, n_qubit)
         if pvm_idx.shape[-1] != self.n_qubit:
             raise ValueError
         theta: np.ndarray = np.empty(pvm_idx.shape)
         phi: np.ndarray = np.empty(pvm_idx.shape)
         for multi_index in np.ndindex(pvm_idx.shape):
-            # multi_index.shape is (*pv, num_batches, n_qubit)
+            # multi_index.shape is (*pv, povm_sampler_pub.shots, n_qubit)
             i_qubit = multi_index[-1]
             actual_pvm_idx = pvm_idx[multi_index] % self._n_PVMs
             twirl = pvm_idx[multi_index] // self._n_PVMs
