@@ -114,7 +114,7 @@ class TestRandomizedPMs(TestCase):
         post_processor = POVMPostProcessor(pub_result)
 
         observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        exp_value, _ = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 1.0312499999999998)
 
     # TODO: write a unittest for each public method of RandomizedProjectiveMeasurements
