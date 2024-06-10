@@ -170,12 +170,11 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             #   qc.u(theta=theta[i], phi=phi[i], lam=0.0, qubit=i).inverse()
             # which is equivalent to :
             #   qc.u(theta=-theta[i], phi=0.0, lam=-phi[i], qubit=i)
-            # which can be decomposed into basis gates as:
+            # which can be decomposed (up to an irrelevant global phase) into basis gates as:
             qc.rz(-self._qc_phi[i], qubit=i)
             qc.sx(qubit=i)
             qc.rz(np.pi - self._qc_theta[i], qubit=i)
             qc.sx(qubit=i)
-            # qc.rz(3 * np.pi, qubit=i)
 
         qc.measure(qr, cr)
 
