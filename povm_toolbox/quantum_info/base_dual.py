@@ -49,8 +49,9 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
 
         Args:
             frame: The primal frame from which we will build the dual frame.
-            alphas: parameters of the local frame super-operators used to build
-                the local dual frames which form together the product dual frame.
+            alphas: parameters of the frame super-operator used to build the
+                dual frame. If None, the parameters are set as the traces of
+                each operator in the primal frame.
 
         Returns:
             A dual frame to the supplied ``frame``.
