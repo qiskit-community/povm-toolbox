@@ -72,18 +72,26 @@ class POVMPostProcessor:
         return self._dual
 
     def get_decomposition_weights(
-        self, observable: SparsePauliOp, outcome_idx: set[Any]
+        self, observable: SparsePauliOp, outcome_set: set[Any]
     ) -> dict[Any, float]:
-        """Get the decomposition weights of ``observable`` into the elements of ``self.povm``.
+        r"""Get the decomposition weights of ``observable`` into the elements of ``self.povm``.
+
+        Given an observable :math:`O` which is in the span of a given POVM, one
+        can write the observable :math:`O` as the weighted sum of the POVM effects,
+        :math:`O = \sum_k w_k M_k` for real weights :math:`w_k` and where :math:`k`
+        labels the outcomes.
 
         Args:
             observable: the observable to be decomposed into the POVM effects.
-            outcome_idx: set of labels indicating which decomposition weights are queried.
+            outcome_set: set of outcome labels indicating which decomposition
+                weights are queried. An outcome of a :class:`.ProductPOVM` is
+                labeled by a tuple of integers for instance. For a :class:`.MultiQubitPOVM`,
+                an outcome is simply labeled by an integer.
 
         Returns:
-            A dictionary of decomposition weights.
+            A dictionary mapping outcome labels to decomposition weights.
         """
-        return dict(self.dual.get_omegas(observable, outcome_idx))  # type: ignore
+        return dict(self.dual.get_omegas(observable, outcome_set))  # type: ignore
 
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
