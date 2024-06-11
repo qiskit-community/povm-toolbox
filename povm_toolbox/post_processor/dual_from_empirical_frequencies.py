@@ -30,7 +30,7 @@ def dual_from_empirical_frequencies(
     | Statevector
     | None = None,
 ) -> BaseDUAL:
-    """Set the dual frame based on the frequencies of the sampled outcomes.
+    """Return the dual frame of `povm` based on the frequencies of the sampled outcomes.
 
     Given outcomes sampled from a product POVM, each local dual frame is parametrized
     with the alpha-parameters set as the marginal outcome frequencies. For stability,
@@ -59,11 +59,16 @@ def dual_from_empirical_frequencies(
             state is used for each-subsystem.
 
     Raises:
+        NotImplementedError: if ``povm_post_processor.povm`` is not a
+            :class:`povm_toolbox.quantum_info.product_povm.ProductPOVM`
+            instance.
         ValueError: if `loc` is None and that the POVM post-processor stores more
             than one counter (i.e., multiple sets of parameter values were
             supplied to the sampler in a single pub).
-        NotImplementedError: if ``self.povm`` is not a :class:`povm_toolbox.quantum_info.product_povm.ProductPOVM`
-            instance.
+        ValueError: if `bias` is a list but its length does not match the number
+            of local POVMs forming the product POVM ``povm_post_processor.povm``.
+        ValueError: if `ansatz` is a list but its length does not match the number
+            of local POVMs forming the product POVM ``povm_post_processor.povm``.
     """
     povm = povm_post_processor.povm
     if not isinstance(povm, ProductPOVM):

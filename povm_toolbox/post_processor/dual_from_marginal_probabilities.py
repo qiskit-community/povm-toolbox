@@ -24,7 +24,7 @@ def dual_from_marginal_probabilities(
     state: SparsePauliOp | DensityMatrix | Statevector,
     threshold: float = 1e-5,
 ) -> BaseDUAL:
-    """Set the dual frame based on the marginal distribution of a supplied state.
+    """Return the dual frame of `povm` based on the marginal distribution of a supplied state.
 
     This methods constructs a product dual frame where each local dual frame
     is parametrized  with the alpha-parameters set as the marginal outcome

@@ -22,7 +22,7 @@ def optimal_dual_from_state(
     povm: BasePOVM,
     state: SparsePauliOp | DensityMatrix | Statevector,
 ) -> BaseDUAL:
-    """Set the dual frame based on the outcome distribution of a supplied state.
+    """Return the dual frame of `povm` based on the outcome distribution of a supplied state.
 
     This methods constructs a joint dual frame where the alpha-parameters are
     set as the outcome probabilities of the supplied state. It can be shown
