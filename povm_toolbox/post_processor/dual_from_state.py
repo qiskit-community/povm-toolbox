@@ -12,6 +12,9 @@
 
 from __future__ import annotations
 
+from typing import cast
+
+import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
 from povm_toolbox.quantum_info import BaseDUAL, BasePOVM, MultiQubitPOVM
@@ -22,7 +25,7 @@ def optimal_dual_from_state(
     povm: BasePOVM,
     state: SparsePauliOp | DensityMatrix | Statevector,
 ) -> BaseDUAL:
-    """Return the dual frame of `povm` based on the outcome distribution of a supplied state.
+    """Return the dual frame of ``povm`` based on the outcome distribution of a supplied state.
 
     This methods constructs a joint dual frame where the alpha-parameters are
     set as the outcome probabilities of the supplied state. It can be shown
@@ -40,7 +43,7 @@ def optimal_dual_from_state(
     if not isinstance(povm, MultiQubitPOVM):
         # TODO : implement for ProductPOVM
         raise NotImplementedError(
-            "This method is only implemented for `povm_toolbox.quantum_info.product_povm.MultiQubitPOVM`."
+            "This method is only implemented for ``povm_toolbox.quantum_info.product_povm.MultiQubitPOVM``."
         )
-    alphas = tuple(povm.get_prob(state))  # type: ignore
+    alphas = tuple(cast(np.ndarray, povm.get_prob(state)))
     return MultiQubitDUAL.build_dual_from_frame(povm, alphas=alphas)

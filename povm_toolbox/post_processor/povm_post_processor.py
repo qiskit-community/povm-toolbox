@@ -39,8 +39,8 @@ class POVMPostProcessor:
                 observable.
 
         Raises:
-            ValueError: If the provided `dual` is not a dual frame to the POVM
-                used to produce `povm_sample`.
+            ValueError: If the provided ``dual`` is not a dual frame to the POVM
+                used to produce ``povm_sample``.
         """
         self._povm = povm_sample.metadata.povm_implementation.definition()
         self.counts: np.ndarray = povm_sample.get_counts()  # type: ignore
@@ -48,8 +48,8 @@ class POVMPostProcessor:
 
         if (dual is not None) and (not dual.is_dual_to(self._povm)):
             raise ValueError(
-                "The `dual` argument is not valid. It is not a dual"
-                " frame to the POVM stored in `povm_sample`."
+                "The ``dual`` argument is not valid. It is not a dual"
+                " frame to the POVM stored in ``povm_sample``."
             )
 
         self._dual = dual
@@ -75,8 +75,8 @@ class POVMPostProcessor:
     def dual(self, new_dual: BaseDUAL):
         if not new_dual.is_dual_to(self.povm):
             raise ValueError(
-                "The provided `dual` instance is not valid. It is not a dual"
-                " frame to `self.povm`."
+                "The provided ``dual`` instance is not valid. It is not a dual"
+                " frame to the POVM used to obtained the post-processing results."
             )
         self._dual = new_dual
 

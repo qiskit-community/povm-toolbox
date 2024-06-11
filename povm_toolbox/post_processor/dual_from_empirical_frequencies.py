@@ -12,16 +12,19 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
-from povm_toolbox.post_processor import POVMPostProcessor
+from povm_toolbox.post_processor.povm_post_processor import POVMPostProcessor
 from povm_toolbox.quantum_info import BaseDUAL, ProductPOVM
 from povm_toolbox.quantum_info.product_dual import ProductDUAL
 
 
 def dual_from_empirical_frequencies(
     povm_post_processor: POVMPostProcessor,
+    *,
     loc: int | tuple[int, ...] | None = None,
     bias: list[float] | float | None = None,
     ansatz: list[SparsePauliOp | DensityMatrix | Statevector]
@@ -30,7 +33,7 @@ def dual_from_empirical_frequencies(
     | Statevector
     | None = None,
 ) -> BaseDUAL:
-    """Return the dual frame of `povm` based on the frequencies of the sampled outcomes.
+    """Return the dual frame of ``povm`` based on the frequencies of the sampled outcomes.
 
     Given outcomes sampled from a product POVM, each local dual frame is parametrized
     with the alpha-parameters set as the marginal outcome frequencies. For stability,
@@ -62,18 +65,18 @@ def dual_from_empirical_frequencies(
         NotImplementedError: if ``povm_post_processor.povm`` is not a
             :class:`povm_toolbox.quantum_info.product_povm.ProductPOVM`
             instance.
-        ValueError: if `loc` is None and that the POVM post-processor stores more
+        ValueError: if ``loc`` is None and that the POVM post-processor stores more
             than one counter (i.e., multiple sets of parameter values were
             supplied to the sampler in a single pub).
-        ValueError: if `bias` is a list but its length does not match the number
+        ValueError: if ``bias`` is a list but its length does not match the number
             of local POVMs forming the product POVM ``povm_post_processor.povm``.
-        ValueError: if `ansatz` is a list but its length does not match the number
+        ValueError: if ``ansatz`` is a list but its length does not match the number
             of local POVMs forming the product POVM ``povm_post_processor.povm``.
     """
     povm = povm_post_processor.povm
     if not isinstance(povm, ProductPOVM):
         raise NotImplementedError(
-            "This method is only implemented for `povm_toolbox.quantum_info.product_povm.ProductPOVM`."
+            "This method is only implemented for ``povm_toolbox.quantum_info.product_povm.ProductPOVM``."
         )
 
     if loc is None:
@@ -122,7 +125,9 @@ def dual_from_empirical_frequencies(
         sub_bias = (
             sub_povm.n_outcomes if bias is None else (bias[i] if isinstance(bias, list) else bias)
         )
-        sub_alphas = shots * marginals[i] + sub_bias * sub_povm.get_prob(ansatz_state)  # type: ignore
+        sub_alphas = shots * marginals[i] + sub_bias * cast(
+            np.ndarray, sub_povm.get_prob(ansatz_state)
+        )
         alphas.append(tuple(sub_alphas / (shots + sub_bias)))
 
     # Building ProductDUAL from frequencies
