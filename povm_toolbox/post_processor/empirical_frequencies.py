@@ -26,8 +26,12 @@ class EmpiricalFrequencies(POVMPostProcessor):
     def set_empirical_frequencies_dual(
         self,
         loc: int | tuple[int, ...] | None = None,
-        bias: float | list[float] | None = None,
-        ansatz: list[SparsePauliOp | DensityMatrix | Statevector] | None = None,
+        bias: list[float] | float | None = None,
+        ansatz: list[SparsePauliOp | DensityMatrix | Statevector]
+        | SparsePauliOp
+        | DensityMatrix
+        | Statevector
+        | None = None,
     ) -> None:
         """Set the dual frame based on the frequencies of the sampled outcomes.
 
@@ -48,10 +52,12 @@ class EmpiricalFrequencies(POVMPostProcessor):
                 bias is applied to each sub-system. If None, the bias for each sub-
                 system is set to be the number of outcomes of the POVM acting on this
                 sub-system.
-            ansatz: list of quantum states for each local sub-system, from which the
-                local outcome probability distributions are computed for each sub-
-                system. The empirical marginal frequencies are biased towards these
-                distributions. If None, the fully mixed state is used for each-subsystem.
+            ansatz: list of quantum states for each local sub-system. If a single
+                (local) quantum state is supplied, it is used for all sub-systems.
+                From these states, the local outcome probability distributions are
+                computed for each sub-system. The empirical marginal frequencies
+                are biased towards these distributions. If None, the fully mixed
+                state is used for each-subsystem.
 
         Raises:
             ValueError: if `loc` is None and that the POVM post-processor stores more
@@ -76,6 +82,19 @@ class EmpiricalFrequencies(POVMPostProcessor):
                     f" array of counters is of shape {self.counts.shape}."
                 )
 
+        if isinstance(bias, list) and len(bias) != len(self.povm.sub_systems):
+            raise ValueError(
+                f"A list of biases was submitted but its length ({len(bias)})"
+                f" does not match the number of local POVMs ({len(self.povm.sub_systems)})."
+            )
+
+        if isinstance(ansatz, list) and len(ansatz) != len(self.povm.sub_systems):
+            raise ValueError(
+                "A list of ansatz local states was submitted but its length"
+                f" ({len(ansatz)}) does not match the number of local POVMs"
+                f" ({len(self.povm.sub_systems)})."
+            )
+
         counts = self.counts[loc]
         marginals = [np.zeros(subsystem_shape) for subsystem_shape in self.povm.shape]
 
@@ -90,7 +109,11 @@ class EmpiricalFrequencies(POVMPostProcessor):
         for i, sub_system in enumerate(self.povm.sub_systems):
             sub_povm = self.povm[sub_system]
             dim = sub_povm.dimension
-            ansatz_state = DensityMatrix(np.eye(dim) / dim) if ansatz is None else ansatz[i]
+            ansatz_state = (
+                DensityMatrix(np.eye(dim) / dim)
+                if ansatz is None
+                else (ansatz[i] if isinstance(ansatz, list) else ansatz)
+            )
             sub_bias = (
                 sub_povm.n_outcomes
                 if bias is None

@@ -74,8 +74,9 @@ class TestPOVMSamplerJob(TestCase):
         pub_result = result[0]
         observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
         post_processor = POVMPostProcessor(pub_result)
-        exp_value, _ = post_processor.get_expectation_value(observable)
+        exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 3.53125)
+        self.assertAlmostEqual(std, 0.3590672895231641)
 
         job.save_metadata()
 
@@ -87,5 +88,6 @@ class TestPOVMSamplerJob(TestCase):
         pub_result = result[0]
         observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
         post_processor = POVMPostProcessor(pub_result)
-        exp_value, _ = post_processor.get_expectation_value(observable)
+        exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 3.53125)
+        self.assertAlmostEqual(std, 0.3590672895231641)
