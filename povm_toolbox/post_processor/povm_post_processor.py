@@ -71,6 +71,15 @@ class POVMPostProcessor:
             self._dual = dual_class.build_dual_from_frame(self.povm)
         return self._dual
 
+    @dual.setter
+    def dual(self, new_dual: BaseDUAL):
+        if not new_dual.is_dual_to(self.povm):
+            raise ValueError(
+                "The provided `dual` instance is not valid. It is not a dual"
+                " frame to `self.povm`."
+            )
+        self._dual = new_dual
+
     def get_decomposition_weights(
         self, observable: SparsePauliOp, outcome_set: set[Any]
     ) -> dict[Any, float]:
