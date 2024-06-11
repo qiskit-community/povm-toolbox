@@ -26,6 +26,7 @@ class StateMarginal(POVMPostProcessor):
     def set_marginal_probabilities_dual(
         self,
         state: SparsePauliOp | DensityMatrix | Statevector,
+        threshold: float = 1e-5,
     ) -> None:
         """Set the dual frame based on the marginal distribution of a supplied state.
 
@@ -35,6 +36,9 @@ class StateMarginal(POVMPostProcessor):
 
         Args:
             state: state from which to compute the marginal outcome probabilities.
+            threshold: if an outcome probability is below the value of ``threshold``,
+                this value will be added to all probabilities in the same marginal
+                distribution. This is designed to avoid having par
 
         Raises:
             NotImplementedError: if ``self.povm`` is not a :class:`povm_toolbox.quantum_info.product_povm.ProductPOVM`
@@ -49,7 +53,7 @@ class StateMarginal(POVMPostProcessor):
         alphas = []
         for qubit_idx in self.povm.sub_systems:
             marg_prob = joint_prob.sum(axis=tuple(np.delete(axes, [qubit_idx])))
-            if np.any(np.absolute(marg_prob) < 1e-5):
-                marg_prob += 1e-5
+            if np.any(np.absolute(marg_prob) < threshold):
+                marg_prob += threshold
             alphas.append(tuple(marg_prob))
         self._dual = ProductDUAL.build_dual_from_frame(self.povm, alphas=tuple(alphas))
