@@ -15,7 +15,6 @@ from unittest import TestCase
 import numpy as np
 from numpy.random import default_rng
 from povm_toolbox.library import (
-    ClassicalShadows,
     RandomizedProjectiveMeasurements,
 )
 from povm_toolbox.post_processor import (
@@ -33,14 +32,6 @@ from qiskit.quantum_info import (
 
 class TestDualFromEmpiricalFrequencies(TestCase):
     """Test that we can construct optimal dual of a POVM from empirical frequencies."""
-
-    def test_not_implemented(self):
-        """Test that errors are correctly raised."""
-        _ = ClassicalShadows(n_qubit=1).definition()[(0,)]
-        _ = DensityMatrix(np.eye(2) / 2)
-        with self.assertRaises(NotImplementedError):
-            # TODO
-            raise NotImplementedError
 
     def test_empirical_dual(self):
         """Test that the method constructs a valid dual."""
