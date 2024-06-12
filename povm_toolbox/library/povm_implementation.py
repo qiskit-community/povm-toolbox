@@ -203,18 +203,18 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array = self._get_bitarray(data)
 
         if loc is not None:
-            outcomes = np.array(self._povm_outcomes(bit_array, povm_metadata, loc))
-            return Counter(outcomes) if return_counts else outcomes
+            outcomes = self._povm_outcomes(bit_array, povm_metadata, loc)
+            return Counter(outcomes) if return_counts else np.array(outcomes)
 
         if bit_array.ndim == 0:
-            outcomes = np.array(self._povm_outcomes(bit_array, povm_metadata))
-            return Counter(outcomes) if return_counts else outcomes
+            outcomes = self._povm_outcomes(bit_array, povm_metadata)
+            return np.array([Counter(outcomes)]) if return_counts else np.array(outcomes)
 
         shape = bit_array.shape
         outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
         for idx in np.ndindex(shape):
             outcomes = self._povm_outcomes(bit_array, povm_metadata, idx)
-            outcomes_array[idx] = Counter(outcomes) if return_counts else outcomes
+            outcomes_array[idx] = Counter(outcomes) if return_counts else np.array(outcomes)
         return outcomes_array
 
     @abstractmethod
