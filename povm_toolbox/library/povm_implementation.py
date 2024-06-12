@@ -174,15 +174,6 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """TODO."""
         return getattr(data, self.classical_register_name)
 
-    def _counter(
-        self,
-        bit_array: BitArray,
-        povm_metadata: MetadataT,
-        loc: int | tuple[int, ...] | None = None,
-    ) -> Counter:
-        """TODO."""
-        return Counter(self._povm_outcomes(bit_array, povm_metadata, loc))
-
     @abstractmethod
     def _povm_outcomes(
         self,
