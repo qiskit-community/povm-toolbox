@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Tests for the MultiQubitPOVM class."""
+"""Tests for the `dual_from_empirical_frequencies` function."""
 
 from unittest import TestCase
 
@@ -42,7 +42,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
             # TODO
             raise NotImplementedError
 
-    def test_optimal_dual(self):
+    def test_empirical_dual(self):
         """Test that the method constructs a valid dual."""
         qc = random_circuit(2, 1, measure=False, seed=12)
         rng = default_rng(96568)
@@ -69,26 +69,39 @@ class TestDualFromEmpiricalFrequencies(TestCase):
 
         post_processor = POVMPostProcessor(pub_result)
 
-        post_processor.dual = dual_from_empirical_frequencies(povm_post_processor=post_processor)
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.9128662937761666)
-        self.assertAlmostEqual(std, 0.40472771240833644)
+        with self.subTest("Test canonical dual."):
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 1.255719986997053)
+            self.assertAlmostEqual(std, 0.5312929210892221)
 
-        post_processor.dual = dual_from_empirical_frequencies(
-            povm_post_processor=post_processor,
-            loc=0,
-            bias=6,
-            ansatz=[DensityMatrix(np.eye(2) / 2), DensityMatrix(np.eye(2) / 2)],
-        )
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.9128662937761666)
-        self.assertAlmostEqual(std, 0.40472771240833644)
+        with self.subTest("Test empirical dual with default arguments."):
+            post_processor.dual = dual_from_empirical_frequencies(
+                povm_post_processor=post_processor
+            )
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 0.9128662937761666)
+            self.assertAlmostEqual(std, 0.40472771240833644)
 
-        post_processor.dual = dual_from_empirical_frequencies(
-            povm_post_processor=post_processor,
-            bias=[6, 6],
-            ansatz=SparsePauliOp(["I"], coeffs=np.array([0.5])),
-        )
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.9128662937761666)
-        self.assertAlmostEqual(std, 0.40472771240833644)
+        with self.subTest("Test empirical dual with lists arguments."):
+            post_processor.dual = dual_from_empirical_frequencies(
+                povm_post_processor=post_processor,
+                loc=0,
+                bias=[6, 6],
+                ansatz=[DensityMatrix(np.eye(2) / 2), DensityMatrix(np.eye(2) / 2)],
+            )
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 0.9128662937761666)
+            self.assertAlmostEqual(std, 0.40472771240833644)
+
+        with self.subTest(
+            "Test empirical dual with `bias` and `ansatz` arguments repeated for all qubits."
+        ):
+            post_processor.dual = dual_from_empirical_frequencies(
+                povm_post_processor=post_processor,
+                loc=0,
+                bias=6,
+                ansatz=SparsePauliOp(["I"], coeffs=np.array([0.5])),
+            )
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 0.9128662937761666)
+            self.assertAlmostEqual(std, 0.40472771240833644)

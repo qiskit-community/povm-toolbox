@@ -8,31 +8,71 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Tests for the MultiQubitPOVM class."""
+"""Tests for the `dual_from_state` function."""
 
 from unittest import TestCase
 
 import numpy as np
-from povm_toolbox.library import ClassicalShadows, LocallyBiasedClassicalShadows
-from povm_toolbox.post_processor import optimal_dual_from_state
-from qiskit.quantum_info import DensityMatrix, random_density_matrix
+from povm_toolbox.post_processor import dual_from_state
+from povm_toolbox.quantum_info import MultiQubitPOVM, ProductPOVM, SingleQubitPOVM
+from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
+from qiskit.quantum_info import Operator, random_density_matrix, random_hermitian
 
 
-class TestOptimalDualFromState(TestCase):
+class TestDualFromState(TestCase):
     """Test that we can construct optimal dual of a POVM from a state."""
+
+    def __init__(self, methodName: str = "runTest") -> None:
+        super().__init__(methodName)
+        self.povm = MultiQubitPOVM(
+            [
+                0.3 * Operator.from_label("0"),
+                0.3 * Operator.from_label("1"),
+                0.6 * Operator.from_label("+"),
+                0.6 * Operator.from_label("-"),
+                0.1 * Operator.from_label("r"),
+                0.1 * Operator.from_label("l"),
+            ]
+        )
 
     def test_not_implemented(self):
         """Test that errors are correctly raised."""
-        prod_povm = ClassicalShadows(n_qubit=2).definition()
-        state = DensityMatrix(np.eye(4) / 4)
+        prod_povm: ProductPOVM = ProductPOVM.from_list([self.povm, self.povm])
+        state = random_density_matrix(4, seed=12)
         with self.assertRaises(NotImplementedError):
-            _ = optimal_dual_from_state(prod_povm, state)
+            _ = dual_from_state(prod_povm, state)
+
+    def test_implemented(self):
+        """Test that the method constructs a valid dual."""
+        joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
+        state = random_density_matrix(2, seed=12)
+        dual = dual_from_state(joint_povm, state)
+        self.assertTrue(dual.is_dual_to(joint_povm))
 
     def test_optimal_dual(self):
         """Test that the method constructs a valid dual."""
-        povm = LocallyBiasedClassicalShadows(
-            n_qubit=1, bias=np.array([0.3, 0.6, 0.1])
-        ).definition()[(0,)]
+        joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
         state = random_density_matrix(2, seed=12)
-        dual = optimal_dual_from_state(povm, state)
-        self.assertTrue(dual.is_dual_to(povm))
+        obs = random_hermitian(2, seed=13)
+        probabilities = joint_povm.get_prob(state)
+        exact_exp_val = state.expectation_value(obs).real
+
+        with self.subTest("Test canonical dual."):
+            canonical_dual = MultiQubitDUAL.build_dual_from_frame(joint_povm)
+            canonical_weights = canonical_dual.get_omegas(obs)
+            exp_val_canonical = np.dot(probabilities, canonical_weights)
+            var_canonical = (
+                np.dot(probabilities, np.power(canonical_weights, 2)) - exp_val_canonical**2
+            )
+            self.assertTrue(canonical_dual.is_dual_to(joint_povm))
+            self.assertAlmostEqual(exp_val_canonical, exact_exp_val)
+            self.assertAlmostEqual(var_canonical, 19.939516226261677)
+
+        with self.subTest("Test optimal dual."):
+            optimal_dual = dual_from_state(joint_povm, state)
+            optimal_weights = optimal_dual.get_omegas(obs)
+            exp_val_optimal = np.dot(probabilities, optimal_weights)
+            var_optimal = np.dot(probabilities, np.power(optimal_weights, 2)) - exp_val_optimal**2
+            self.assertTrue(optimal_dual.is_dual_to(joint_povm))
+            self.assertAlmostEqual(exp_val_optimal, exact_exp_val)
+            self.assertAlmostEqual(var_optimal, 19.310408719153827)

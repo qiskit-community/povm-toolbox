@@ -21,7 +21,7 @@ from povm_toolbox.quantum_info import BaseDUAL, BasePOVM, MultiQubitPOVM
 from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
 
 
-def optimal_dual_from_state(
+def dual_from_state(
     povm: BasePOVM,
     state: SparsePauliOp | DensityMatrix | Statevector,
 ) -> BaseDUAL:
