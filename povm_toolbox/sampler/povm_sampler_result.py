@@ -54,4 +54,20 @@ class POVMPubResult(PubResult):
                 ``loc`` indicates the set of parameter values for which counts are
                 to be obtained.
         """
-        return self.metadata.povm_implementation.get_counts_from_raw(self.data, self.metadata, loc)
+        return self.metadata.povm_implementation.get_povm_outcomes_from_raw(self.data, self.metadata, loc)
+
+    def get_samples(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray:
+        """Get the individual POVM outcomes of an experiment.
+
+        Args:
+            loc: Which entry of the ``BitArray`` to return the samples for.
+                If a ``BindingsArray`` was originally passed to the `POVMSampler``,
+                ``loc`` indicates the set of parameter values for which counts are
+                to be obtained.
+        """
+        return self.metadata.povm_implementation.get_povm_outcomes_from_raw(
+            self.data,
+            self.metadata,
+            loc,
+            return_counts = False
+        )
