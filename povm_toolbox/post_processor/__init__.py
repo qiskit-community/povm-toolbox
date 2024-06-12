@@ -17,10 +17,19 @@
    :nosignatures:
 
    POVMPostProcessor
+   dual_from_state
+   dual_from_marginal_probabilities
+   dual_from_empirical_frequencies
 """
 
+from .dual_from_empirical_frequencies import dual_from_empirical_frequencies
+from .dual_from_marginal_probabilities import dual_from_marginal_probabilities
+from .dual_from_state import dual_from_state
 from .povm_post_processor import POVMPostProcessor
 
 __all__ = [
     "POVMPostProcessor",
+    "dual_from_state",
+    "dual_from_marginal_probabilities",
+    "dual_from_empirical_frequencies",
 ]

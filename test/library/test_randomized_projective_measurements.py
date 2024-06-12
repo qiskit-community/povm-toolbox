@@ -78,17 +78,21 @@ class TestRandomizedPMs(TestCase):
         post_processor = POVMPostProcessor(pub_result)
 
         observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 0.9843749999999998)
+        self.assertAlmostEqual(std, 0.12499231029496978)
         observable = SparsePauliOp(["IZ"], coeffs=[1.0])
-        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 0.07031249999999983)
+        self.assertAlmostEqual(std, 0.13085857162022752)
         observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 0.0)
+        self.assertAlmostEqual(std, 0.26411902291905537)
         observable = SparsePauliOp(["IX"], coeffs=[1.0])
-        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 1.1718749999999998)
+        self.assertAlmostEqual(std, 0.12987983496490826)
 
     def test_shot_repetitions(self):
         """Test if the twirling option works correctly."""
@@ -114,8 +118,9 @@ class TestRandomizedPMs(TestCase):
         post_processor = POVMPostProcessor(pub_result)
 
         observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-        exp_value, _ = post_processor.get_single_exp_value_and_std(observable)
+        exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 1.0312499999999998)
+        self.assertAlmostEqual(std, 0.04762837328043843)
 
     # TODO: write a unittest for each public method of RandomizedProjectiveMeasurements
 

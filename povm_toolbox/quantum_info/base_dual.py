@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
@@ -41,22 +42,16 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
     def is_dual_to(self, frame: BaseFrame) -> bool:
         """Check if `self` is a dual to another frame."""
 
-    @abstractmethod
-    def optimize(self, frame: BaseFrame, **options) -> None:
-        """Optimize the dual to `frame` inplace.
-
-        Args:
-            frame: The primal frame to which ``self`` is a dual.
-            options: keyword arguments specifying how to optimize ``self``.
-        """
-
     @classmethod
     @abstractmethod
-    def build_dual_from_frame(cls, frame: BaseFrame) -> BaseDUAL:
+    def build_dual_from_frame(cls, frame: BaseFrame, alphas: tuple[Any] | None = None) -> BaseDUAL:
         """Construct a dual frame to another frame.
 
         Args:
             frame: The primal frame from which we will build the dual frame.
+            alphas: parameters of the frame super-operator used to build the
+                dual frame. If None, the parameters are set as the traces of
+                each operator in the primal frame.
 
         Returns:
             A dual frame to the supplied ``frame``.

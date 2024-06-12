@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
@@ -53,7 +54,7 @@ class BaseFrame(ABC, Generic[LabelT]):
 
         For qubits, this is always :math:`\log_2(`:attr:`.dimension`:math:`)`.
         """
-        return int(np.log2(self.dimension))
+        return int(math.log2(self.dimension))
 
     @property
     @abstractmethod

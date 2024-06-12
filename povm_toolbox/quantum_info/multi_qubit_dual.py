@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
-from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
@@ -55,45 +55,25 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
             return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
         raise NotImplementedError
 
-    def optimize(self, frame: BaseFrame, **options) -> None:
-        """Optimize the dual to ``frame`` inplace.
+    @classmethod
+    def build_dual_from_frame(
+        cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
+    ) -> MultiQubitDUAL:
+        """Construct a dual frame to another frame.
 
         Args:
-            frame: The primal frame to which ``self`` is a dual.
-            options: keyword arguments specifying how to optimize ``self``.
-        """
-        # If a state is provided, the state-optimal dual is computed.
-        if (state := options.get("state", None)) is not None:
-            if isinstance(state, (Statevector, DensityMatrix)):
-                state = Operator(state)
-            elif not isinstance(state, Operator):
-                raise TypeError
-            # Compute the corresponding alpha-parameters.
-            alphas = tuple(frame.analysis(state))  # type: ignore
-            self.operators = self._build_dual_operators(frame, alphas)
-
-        # Otherwise if alpha-parameters are provided, they will be used to
-        # optimize ``self``.
-        elif (alphas := options.get("alphas", None)) is not None:
-            self.operators = self._build_dual_operators(frame, alphas)
-
-    @staticmethod
-    def _build_dual_operators(
-        frame: BaseFrame, alphas: tuple[float, ...] | None = None
-    ) -> list[Operator]:
-        """Construct dual operators of a frame.
-
-        Args:
-            frame: The primal frame from which we will build dual operators.
-            alphas: TODO.
+            frame: the primal frame from which we will build the dual frame.
+            alphas: parameters of the frame super-operator used to build the
+                dual frame. If None, the parameters are set as the traces of
+                each operator in the primal frame.
 
         Returns:
-            A list of dual operators to the ``frame`` operators.
+            A multi-qubit dual frame to the supplied ``frame``.
         """
         if isinstance(frame, MultiQubitFrame):
             # Set default values for alphas if none is provided.
             if alphas is None:
-                alphas = tuple(np.trace(frame_op.data) for frame_op in frame.operators)
+                alphas = tuple(np.real(np.trace(frame_op.data)) for frame_op in frame.operators)
             # Check that the number of alpha-parameters match the number of operators
             # forming the ``frame``.
             elif len(alphas) != frame.n_operators:
@@ -116,23 +96,8 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
             # Convert dual operators from double-ket to operator representation.
             dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
 
-            return dual_operators
+            return cls(dual_operators)
 
         # We could build a ``MultiQubitDUAL`` instance (i.e. joint dual frame) that
         # is a dual frame to a ``ProductFrame``, but we have not implemented this yet.
         raise NotImplementedError(f"Not implemented for {type(frame)}")
-
-    @classmethod
-    def build_dual_from_frame(
-        cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
-    ) -> MultiQubitDUAL:
-        """Construct a dual frame to another frame.
-
-        Args:
-            frame: The primal frame from which we will build the dual frame.
-            alphas: TODO.
-
-        Returns:
-            A multi-qubit dual frame to the supplied ``frame``.
-        """
-        return cls(cls._build_dual_operators(frame, alphas))
