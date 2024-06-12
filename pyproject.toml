@@ -15,7 +15,7 @@ dependencies = [
     "numba>=0.59",
     "qiskit>=1.0",
     "qiskit-ibm-runtime>=0.22",
-    "qiskit-aer>=0.13",
+    "qiskit-aer>=0.14",
     "matplotlib",
 ]
 

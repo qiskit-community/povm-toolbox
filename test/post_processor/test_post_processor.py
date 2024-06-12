@@ -12,7 +12,12 @@
 
 from unittest import TestCase
 
+from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
+from povm_toolbox.sampler import POVMSampler
+from qiskit import QuantumCircuit
+from qiskit.primitives import StatevectorSampler as Sampler
+from qiskit.quantum_info import SparsePauliOp
 
 
 class TestPostProcessor(TestCase):
@@ -21,19 +26,12 @@ class TestPostProcessor(TestCase):
     def test_init(self):
         """TODO."""
 
-        from qiskit import QuantumCircuit
-
         qc = QuantumCircuit(2)
         qc.h(0)
         qc.cx(0, 1)
 
-        from povm_toolbox.sampler import POVMSampler
-        from qiskit.primitives import StatevectorSampler as Sampler
-
         sampler = Sampler()
         povm_sampler = POVMSampler(sampler=sampler)
-
-        from povm_toolbox.library import ClassicalShadows
 
         measurement = ClassicalShadows(n_qubit=2)
 
@@ -41,10 +39,11 @@ class TestPostProcessor(TestCase):
         result = job.result()
         pub_result = result[0]
 
-        from qiskit.quantum_info import SparsePauliOp
-
         observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
 
         post_processor = POVMPostProcessor(pub_result)
 
-        self.assertIsInstance(post_processor.get_expectation_value(observable), float)
+        exp_val, std = post_processor.get_expectation_value(observable)
+
+        self.assertIsInstance(exp_val, float)
+        self.assertIsInstance(std, float)
