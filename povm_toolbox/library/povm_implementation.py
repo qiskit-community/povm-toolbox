@@ -208,7 +208,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         data: DataBin,
         povm_metadata: MetadataT,
         loc: int | tuple[int, ...] | None = None,
-    ) -> list[tuple[int]]:
+    ) -> np.ndarray | list[tuple[int, ...]]:
         """TODO."""
         bit_array = self._get_bitarray(data)
 
