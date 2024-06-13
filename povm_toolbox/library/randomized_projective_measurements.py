@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import Counter
 
 import numpy as np
 from numpy.random import Generator, default_rng
@@ -350,15 +349,15 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         return data_bin
 
-    def _counter(
+    def _povm_outcomes(
         self,
         bit_array: BitArray,
         povm_metadata: RPMMetadata,
         loc: int | tuple[int, ...] | None = None,
-    ) -> Counter:
+    ) -> list[tuple[int, ...]]:
         """TODO."""
         t1 = time.time()
-        LOGGER.info("Counting POVM outcomes")
+        LOGGER.info("Creating POVM outcomes")
 
         # povm_metadata.pvm_keys.shape is (*pv.shape, povm_sampler_pub.shots, n_qubit)
         # and bit_array.num_shots is povm_sampler_pub.shots*self.shot_repetitions
@@ -391,12 +390,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 )
             )
 
-        counter = Counter(povm_outcomes)
-
         t2 = time.time()
-        LOGGER.info(f"Finished counting POVM outcomes. Took {t2 - t1:.6f}s")
+        LOGGER.info(f"Finished creating POVM outcomes. Took {t2 - t1:.6f}s")
 
-        return counter
+        return povm_outcomes
 
     def _get_pvm_bindings_array(self, pvm_idx: np.ndarray) -> BindingsArray:
         """Return the concrete parameter values associated to a PVM label.
