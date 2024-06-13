@@ -58,7 +58,9 @@ class POVMPubResult(PubResult):
             self.data, self.metadata, loc
         )
 
-    def get_samples(self, loc: int | tuple[int, ...] | None = None) -> list[tuple[int]]:
+    def get_samples(
+        self, loc: int | tuple[int, ...] | None = None
+    ) -> np.ndarray | list[tuple[int, ...]]:
         """Get the individual POVM outcomes of an experiment.
 
         Args:

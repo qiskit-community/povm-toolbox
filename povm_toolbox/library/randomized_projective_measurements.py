@@ -354,7 +354,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         bit_array: BitArray,
         povm_metadata: RPMMetadata,
         loc: int | tuple[int, ...] | None = None,
-    ) -> list[tuple[int]]:
+    ) -> list[tuple[int, ...]]:
         """TODO."""
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")

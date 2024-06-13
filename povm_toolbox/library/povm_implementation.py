@@ -179,7 +179,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array: BitArray,
         povm_metadata: MetadataT,
         loc: int | tuple[int, ...] | None = None,
-    ) -> list[tuple[int]]:
+    ) -> list[tuple[int, ...]]:
         """TODO."""
 
     def get_povm_counts_from_raw(
