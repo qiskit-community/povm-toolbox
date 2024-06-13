@@ -45,7 +45,9 @@ class POVMPubResult(PubResult):
         """Note: this subclass returns a different type than its base."""
         return self._metadata  # type:ignore
 
-    def get_counts(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
+    def get_counts(
+        self, loc: int | tuple[int, ...] | None = None
+    ) -> np.ndarray | Counter:
         """Get the histogram data of an experiment.
 
         Args:
@@ -54,9 +56,11 @@ class POVMPubResult(PubResult):
                 ``loc`` indicates the set of parameter values for which counts are
                 to be obtained.
         """
-        return self.metadata.povm_implementation.get_povm_outcomes_from_raw(self.data, self.metadata, loc)
+        return self.metadata.povm_implementation.get_povm_counts_from_raw(
+            self.data, self.metadata, loc
+        )
 
-    def get_samples(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray:
+    def get_samples(self, loc: int | tuple[int, ...] | None = None) -> list[tuple[int]]:
         """Get the individual POVM outcomes of an experiment.
 
         Args:
@@ -66,8 +70,5 @@ class POVMPubResult(PubResult):
                 to be obtained.
         """
         return self.metadata.povm_implementation.get_povm_outcomes_from_raw(
-            self.data,
-            self.metadata,
-            loc,
-            return_counts = False
+            self.data, self.metadata, loc
         )
