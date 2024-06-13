@@ -45,9 +45,7 @@ class POVMPubResult(PubResult):
         """Note: this subclass returns a different type than its base."""
         return self._metadata  # type:ignore
 
-    def get_counts(
-        self, loc: int | tuple[int, ...] | None = None
-    ) -> np.ndarray | Counter:
+    def get_counts(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
         """Get the histogram data of an experiment.
 
         Args:

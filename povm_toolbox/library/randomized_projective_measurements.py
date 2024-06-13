@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import List
 
 import numpy as np
 from numpy.random import Generator, default_rng
@@ -355,7 +354,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         bit_array: BitArray,
         povm_metadata: RPMMetadata,
         loc: int | tuple[int, ...] | None = None,
-    ) -> List:
+    ) -> list[tuple[int]]:
         """TODO."""
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")

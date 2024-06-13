@@ -130,9 +130,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
             elif isinstance(dest_circuit.layout, TranspileLayout):
                 # Extract the final layout of the transpiled circuit (ancillas are filtered).
-                index_layout = dest_circuit.layout.final_index_layout(
-                    filter_ancillas=True
-                )
+                index_layout = dest_circuit.layout.final_index_layout(filter_ancillas=True)
             else:
                 raise NotImplementedError
         else:
@@ -160,9 +158,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             ) from exc
 
         # Compose the two circuits with the correct routing.
-        ret = dest_circuit.compose(
-            self.msmt_qc, qubits=index_layout, clbits=self.msmt_qc.clbits
-        )
+        ret = dest_circuit.compose(self.msmt_qc, qubits=index_layout, clbits=self.msmt_qc.clbits)
 
         t2 = time.time()
         LOGGER.info(f"Finished circuit composition. Took {t2 - t1:.6f}s")
@@ -204,9 +200,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         shape = bit_array.shape
         outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
         for idx in np.ndindex(shape):
-            outcomes_array[idx] = Counter(
-                self._povm_outcomes(bit_array, povm_metadata, idx)
-            )
+            outcomes_array[idx] = Counter(self._povm_outcomes(bit_array, povm_metadata, idx))
         return outcomes_array
 
     def get_povm_outcomes_from_raw(
