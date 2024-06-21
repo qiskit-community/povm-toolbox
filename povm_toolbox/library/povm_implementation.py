@@ -174,15 +174,15 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         return getattr(data, self.classical_register_name)
 
     @abstractmethod
-    def _counter(
+    def _povm_outcomes(
         self,
         bit_array: BitArray,
         povm_metadata: MetadataT,
         loc: int | tuple[int, ...] | None = None,
-    ) -> Counter:
+    ) -> list[tuple[int, ...]]:
         """TODO."""
 
-    def get_counts_from_raw(
+    def get_povm_counts_from_raw(
         self,
         data: DataBin,
         povm_metadata: MetadataT,
@@ -192,16 +192,34 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array = self._get_bitarray(data)
 
         if loc is not None:
-            return self._counter(bit_array, povm_metadata, loc)
+            return Counter(self._povm_outcomes(bit_array, povm_metadata, loc))
 
         if bit_array.ndim == 0:
-            return np.array([self._counter(bit_array, povm_metadata)])
+            return np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))])
 
         shape = bit_array.shape
-        counters_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
+        outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
         for idx in np.ndindex(shape):
-            counters_array[idx] = self._counter(bit_array, povm_metadata, idx)
-        return counters_array
+            outcomes_array[idx] = Counter(self._povm_outcomes(bit_array, povm_metadata, idx))
+        return outcomes_array
+
+    def get_povm_outcomes_from_raw(
+        self,
+        data: DataBin,
+        povm_metadata: MetadataT,
+        loc: int | tuple[int, ...] | None = None,
+    ) -> np.ndarray | list[tuple[int, ...]]:
+        """TODO."""
+        bit_array = self._get_bitarray(data)
+
+        if loc is not None or bit_array.ndim == 0:
+            return self._povm_outcomes(bit_array, povm_metadata, loc)
+
+        shape = bit_array.shape
+        outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
+        for idx in np.ndindex(shape):
+            outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, idx)
+        return outcomes_array
 
     @abstractmethod
     def definition(self) -> BasePOVM:

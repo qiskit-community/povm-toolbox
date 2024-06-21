@@ -12,10 +12,12 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-from povm_toolbox.quantum_info.base_dual import BaseDUAL
+from povm_toolbox.quantum_info import BaseDUAL, BasePOVM
 from povm_toolbox.sampler import POVMPubResult
 
 
@@ -25,7 +27,7 @@ class POVMPostProcessor:
     def __init__(
         self,
         povm_sample: POVMPubResult,
-        dual_class: type[BaseDUAL] | None = None,
+        dual: BaseDUAL | None = None,
     ) -> None:
         """Initialize the POVM post-processor.
 
@@ -35,18 +37,27 @@ class POVMPostProcessor:
                 build the dual frame to the POVM of ``povm_sample``. The dual
                 frame is then used to compute the decomposition weights of any
                 observable.
+
+        Raises:
+            ValueError: If the provided ``dual`` is not a dual frame to the POVM
+                used to produce ``povm_sample``.
         """
-        self.povm = povm_sample.metadata.povm_implementation.definition()
+        self._povm = povm_sample.metadata.povm_implementation.definition()
         self.counts: np.ndarray = povm_sample.get_counts()  # type: ignore
         # TODO: find a way to avoid the type ignore
 
-        if dual_class is None:
-            dual_class = self.povm.default_dual_class
-        elif not issubclass(dual_class, BaseDUAL):
-            raise TypeError
+        if (dual is not None) and (not dual.is_dual_to(self._povm)):
+            raise ValueError(
+                "The ``dual`` argument is not valid. It is not a dual"
+                " frame to the POVM stored in ``povm_sample``."
+            )
 
-        self._dual_class = dual_class
-        self._dual: BaseDUAL | None = None
+        self._dual = dual
+
+    @property
+    def povm(self) -> BasePOVM:
+        """Return the POVM that was used to sample outcomes."""
+        return self._povm
 
     @property
     def dual(self) -> BaseDUAL:
@@ -56,59 +67,107 @@ class POVMPostProcessor:
             If the dual frame is not already built, this could be computationally demanding.
         """
         if self._dual is None:
-            self._dual = self._dual_class.build_dual_from_frame(self.povm)
+            dual_class = self.povm.default_dual_class
+            self._dual = dual_class.build_dual_from_frame(self.povm)
         return self._dual
 
-    def optimize(self, **options) -> None:
-        """Optimize the dual inplace."""
-        # TODO: improve efficiency, we are doing the heavy computation twice here
-        # if the dual was not built before (first when we access :attr:`.dual` and
-        # second when we optimize it).
-        self._dual = self.dual.optimize(self.povm, **options)
+    @dual.setter
+    def dual(self, new_dual: BaseDUAL):
+        if not new_dual.is_dual_to(self.povm):
+            raise ValueError(
+                "The provided ``dual`` instance is not valid. It is not a dual"
+                " frame to the POVM used to obtained the post-processing results."
+            )
+        self._dual = new_dual
+
+    def get_decomposition_weights(
+        self, observable: SparsePauliOp, outcome_set: set[Any]
+    ) -> dict[Any, float]:
+        r"""Get the decomposition weights of ``observable`` into the elements of ``self.povm``.
+
+        Given an observable :math:`O` which is in the span of a given POVM, one
+        can write the observable :math:`O` as the weighted sum of the POVM effects,
+        :math:`O = \sum_k w_k M_k` for real weights :math:`w_k` and where :math:`k`
+        labels the outcomes.
+
+        Args:
+            observable: the observable to be decomposed into the POVM effects.
+            outcome_set: set of outcome labels indicating which decomposition
+                weights are queried. An outcome of a :class:`.ProductPOVM` is
+                labeled by a tuple of integers for instance. For a :class:`.MultiQubitPOVM`,
+                an outcome is simply labeled by an integer.
+
+        Returns:
+            A dictionary mapping outcome labels to decomposition weights.
+        """
+        return dict(self.dual.get_omegas(observable, outcome_set))  # type: ignore
 
     def get_expectation_value(
         self, observable: SparsePauliOp, loc: int | tuple[int, ...] | None = None
-    ) -> np.ndarray | float:
-        """Return the expectation value of a given observable."""
+    ) -> tuple[np.ndarray, np.ndarray] | tuple[float, float]:
+        """Return the expectation value of a given observable and standard deviation of the estimator.
+
+        Args:
+            observable: the observable whose expectation value is queried.
+            loc: this argument is relevant if multiple sets of parameter values
+                were supplied to the sampler in the same :class:`.POVMSamplerPub`.
+                The index ``loc`` then corresponds to the set of parameter values
+                that was supplied to the sampler through the PUB. If None, the
+                expectation value (and standard deviation) for each set of circuit
+                parameters is returned.
+
+        Returns:
+            A tuple of (estimated) expectation value and standard deviation of the
+            estimator if a single value is queried. If all values are queried a
+            tuple of two :class:`numpy.ndarray` is returned, the first containing
+            the expectation values and the second the standard deviations.
+        """
         if loc is not None:
-            return self._single_exp_val(observable, loc)
+            return self._single_exp_value_and_std(observable, loc)
         if self.counts.shape == (1,):
-            return self._single_exp_val(observable, 0)
+            return self._single_exp_value_and_std(observable, 0)
 
         exp_val = np.zeros(shape=self.counts.shape, dtype=float)
+        std = np.zeros(shape=self.counts.shape, dtype=float)
         for idx in np.ndindex(self.counts.shape):
-            exp_val[idx] = self._single_exp_val(observable, idx)
-        return exp_val
+            exp_val[idx], std[idx] = self._single_exp_value_and_std(observable, idx)
+        return exp_val, std
 
-    def _single_exp_val(self, observable: SparsePauliOp, loc: int | tuple[int, ...]) -> float:
-        """Return the expectation value of an observable for a given circuit."""
-        exp_value, _ = self.get_single_exp_value_and_std(observable, loc)
-        return exp_value
-
-    def get_single_exp_value_and_std(
+    def _single_exp_value_and_std(
         self,
         observable: SparsePauliOp,
-        loc: int | tuple[int, ...] | None = None,
+        loc: int | tuple[int, ...],
     ) -> tuple[float, float]:
-        """Return the expectation value of a given observable."""
-        # loc is allowed to be None only if there's only one counter in the counter array
-        if loc is None:
-            if self.counts.shape == (1,):
-                loc = (0,)
-            else:
-                raise ValueError
-        exp_val = 0.0
-        std = 0.0
+        """Return the expectation value of a given observable and standard deviation of the estimator.
+
+        Args:
+            observable: the observable whose expectation value is queried.
+            loc: index of the results to use. The index corresponds to the set
+                of parameter values that was supplied to the sampler through a
+                :class:`.POVMSamplerPub`. If the circuit was not parametrized,
+                the index ``loc`` should be 0.
+
+        Returns:
+            A tuple of (estimated) expectation value and standard deviation.
+        """
         count = self.counts[loc]
+        shots = sum(count.values())
         # TODO: performance gains to be made when computing the omegas here ?
         # like storing the dict of computed omegas and updating the dict with the
         # missing values that were still never computed.
-        omegas = dict(self.dual.get_omegas(observable, set(count.keys())))  # type: ignore
+        omegas = self.get_decomposition_weights(observable, set(count.keys()))
+
+        exp_val = 0.0
+        std = 0.0
+
         for outcome in count:
             exp_val += count[outcome] * omegas[outcome]
             std += count[outcome] * omegas[outcome] ** 2
-        shots = sum(count.values())
+
+        # Normalize
         exp_val /= shots
         std /= shots
+
         std = np.sqrt((std - exp_val**2) / (shots - 1))
+
         return exp_val, std
