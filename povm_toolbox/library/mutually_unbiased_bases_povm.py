@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.random import Generator
+from qiskit.circuit.library import HGate, SGate, UGate
+from qiskit.quantum_info import Operator, Statevector
 from scipy.spatial.transform import Rotation
 
 from .randomized_projective_measurements import RandomizedProjectiveMeasurements
@@ -97,11 +99,45 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
             TODO.
         """
         theta, phi, lam = angles
-        r1 = Rotation.from_euler("yz", [theta, phi])
-        e = r1.apply([0, 0, 1])
-        r2 = Rotation.from_rotvec(lam * e)
-        r = r2 * r1
-        bloch_vectors = r.apply([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+
+        _version = 1
+
+        if _version == 0:
+            # In the Bloch sphere representation, a UGate(theta, phi, lam) is
+            # equivalent to the following two steps :
+
+            # first step : two extrinsic rotations around the Y and Z axes resp.
+            r1 = Rotation.from_euler("yz", [theta, phi])
+            # second step : Z rotation in the new reference frame
+            e = r1.apply([0, 0, 1])  # defining the axis of rotation in the canonical frame
+            r2 = Rotation.from_rotvec(lam * e)
+
+            # compose the rotations
+            r = r2 * r1
+            # get the Bloch vectors from the rotated Z-,X-,Y-measurements resp.
+            bloch_vectors = r.apply([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+
+        if _version == 1:
+            H = HGate().to_matrix()
+            S = SGate().to_matrix()
+            U = UGate(theta, phi, lam).to_matrix()
+
+            rotated_Z_msmt = U @ np.array([1, 0])
+            rotated_X_msmt = U @ H @ np.array([1, 0])
+            rotated_Y_msmt = U @ S @ H @ np.array([1, 0])
+            rotated_msmts = [rotated_Z_msmt, rotated_X_msmt, rotated_Y_msmt]
+
+            bloch_vectors = np.real_if_close(
+                [
+                    [
+                        Statevector(msmt).expectation_value(Operator.from_label(op))
+                        for op in ["X", "Y", "Z"]
+                    ]
+                    for msmt in rotated_msmts
+                ]
+            )
+
         thetas = np.arctan2(np.linalg.norm(bloch_vectors[:, :2], axis=1), bloch_vectors[:, 2])
         phis = np.arctan2(bloch_vectors[:, 1], bloch_vectors[:, 0])
+
         return (np.vstack((thetas, phis)).T).flatten()
