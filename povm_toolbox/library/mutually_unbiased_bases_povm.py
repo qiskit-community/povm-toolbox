@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.random import Generator
+from scipy.spatial.transform import Rotation
 
 from .randomized_projective_measurements import RandomizedProjectiveMeasurements
 
@@ -63,16 +64,44 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
                 specified by ``bias``. The user can also directly provide a random generator. If
                 None, a random seed will be used.
         """
-        assert angles.shape[-1] == 3
-        # TODO: angles = ...
-        #    -> apply global rotation to the locally-biased classical shadows effects
-        assert bias.shape[-1] == 3
+        if bias.shape[-1] != 3:
+            raise ValueError
+
+        if angles.shape == (3,):
+            processed_angles = self._process_angles(angles)
+        elif angles.shape == (n_qubit, 3):
+            processed_angles = np.zeros((n_qubit, 6))
+            for i, angles_qubit_i in enumerate(angles):
+                processed_angles[i] = self._process_angles(angles_qubit_i)
+        else:
+            raise ValueError
+
         super().__init__(
             n_qubit=n_qubit,
             bias=bias,
-            angles=angles,
+            angles=processed_angles,
             measurement_twirl=measurement_twirl,
             measurement_layout=measurement_layout,
             shot_repetitions=shot_repetitions,
             seed_rng=seed_rng,
         )
+
+    @staticmethod
+    def _process_angles(angles: np.ndarray) -> np.ndarray:
+        """TODO.
+
+        Args:
+            angles: TODO.
+
+        Returns:
+            TODO.
+        """
+        theta, phi, lam = angles
+        r1 = Rotation.from_euler("yz", [theta, phi])
+        e = r1.apply([0, 0, 1])
+        r2 = Rotation.from_rotvec(lam * e)
+        r = r2 * r1
+        bloch_vectors = r.apply([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+        thetas = np.arctan2(np.linalg.norm(bloch_vectors[:, :2], axis=1), bloch_vectors[:, 2])
+        phis = np.arctan2(bloch_vectors[:, 1], bloch_vectors[:, 0])
+        return (np.vstack((thetas, phis)).T).flatten()
