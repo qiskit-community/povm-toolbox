@@ -47,7 +47,7 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
                 to indicate the three Euler angles to rotate the locally-biased classical shadows
                 measurement in the Bloch sphere representation. If 2D, it will have a new set of
                 angles for each qubit. The sequence of intrinsic rotations associated with the Euler
-                angles is z-x'-z''.
+                angles is z-y'-z''.
             measurement_twirl : option to randomly twirl the measurements. For each single-qubit
                 projective measurement, random twirling is equivalent to randomly flipping the
                 measurement. This is equivalent to randomly taking the opposite Bloch vector in
@@ -102,10 +102,10 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
         and apply a direct rotation from the canonical Z-measurement to the respective rotated measurements.
         Then, only one parametrized rotation gate is needed and two angles for each rotated measurement.
 
-        Note: the sequence of intrinsic rotations is z-x'-z''.
+        Note: the sequence of intrinsic rotations is z-y'-z''.
 
         Args:
-            theta: rotation around the x' axis.
+            theta: rotation around the y' axis.
             phi: rotation around the z axis.
             lam: rotation around the z'' axis.
 
