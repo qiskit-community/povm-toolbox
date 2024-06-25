@@ -95,12 +95,13 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
     def _process_angles(theta: float, phi: float, lam: float) -> np.ndarray:
         """Transform the three Euler angles into two angles for each of the rotated X,Y,Z measurements.
 
-        One way to obtain the rotated measurements would to first (optionally) rotate the Z-measurement
-        into an X- or Y-measurement when applicable and then apply the (fixed) rotation defined by ``angles``
-        in all cases. However, it means we have two subsequent rotations and therefore two unitary gates
-        are added to the circuits. Instead, we can look at the final orientation of the rotated measurements
-        and apply a direct rotation from the canonical Z-measurement to the respective rotated measurements.
-        Then, only one parametrized rotation gate is needed and two angles for each rotated measurement.
+        One way to obtain the rotated measurements would be to first (optionally) rotate the Z-measurement
+        into an X- or Y-measurement when applicable and then apply in all cases the fixed rotation defined
+        by ``theta``, ``phi`` and ``lam``. However, it means to have two subsequent rotations and therefore
+        two unitary gates are added to the circuits. Instead, we can look at the final orientation of the
+        rotated measurements and apply a direct rotation from the canonical Z-measurement to the respective
+        rotated measurements. Then, only one parametrized rotation gate is needed and two angles for each
+        rotated measurement.
 
         Note: the sequence of intrinsic rotations is z-y'-z''.
 
