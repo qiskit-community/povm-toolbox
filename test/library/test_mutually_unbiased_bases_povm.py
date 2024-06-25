@@ -8,13 +8,13 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Tests for the MutuallyUnbiasedBasesPOVM class."""
+"""Tests for the MutuallyUnbiasedBasesMeasurements class."""
 
 from unittest import TestCase
 
 import numpy as np
 from numpy.random import default_rng
-from povm_toolbox.library import MutuallyUnbiasedBasesPOVM
+from povm_toolbox.library import MutuallyUnbiasedBasesMeasurements
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMSampler
 from qiskit import QuantumCircuit
@@ -34,7 +34,7 @@ class TestRandomizedPMs(TestCase):
         n_qubit = qc.num_qubits
 
         with self.subTest("Test uniform angles across qubits."):
-            measurement = MutuallyUnbiasedBasesPOVM(
+            measurement = MutuallyUnbiasedBasesMeasurements(
                 n_qubit, bias=np.ones(3) / 3, angles=np.array([0.75, -np.pi / 3, 0.2]), seed_rng=rng
             )
             sampler = StatevectorSampler(seed=rng)
@@ -55,7 +55,7 @@ class TestRandomizedPMs(TestCase):
             self.assertAlmostEqual(std, 0.27055245411115403)
 
         with self.subTest("Test specific angles for each qubit."):
-            measurement = MutuallyUnbiasedBasesPOVM(
+            measurement = MutuallyUnbiasedBasesMeasurements(
                 n_qubit,
                 bias=np.ones(3) / 3,
                 angles=np.array([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
@@ -87,7 +87,7 @@ class TestRandomizedPMs(TestCase):
         for angles in set_angles:
             theta, phi, lam = angles
 
-            processed_angles_1 = MutuallyUnbiasedBasesPOVM._process_angles(theta, phi, lam)
+            processed_angles_1 = MutuallyUnbiasedBasesMeasurements._process_angles(theta, phi, lam)
 
             H = HGate().to_matrix()
             S = SGate().to_matrix()

@@ -22,7 +22,7 @@ Each one serves as a factory to generate a specific, concrete POVM and provides 
 
    POVMImplementation
    RandomizedProjectiveMeasurements
-   MutuallyUnbiasedBasesPOVM
+   MutuallyUnbiasedBasesMeasurements
    LocallyBiasedClassicalShadows
    ClassicalShadows
 
@@ -37,14 +37,14 @@ Submodules
 
 from .classical_shadows import ClassicalShadows
 from .locally_biased_classical_shadows import LocallyBiasedClassicalShadows
-from .mutually_unbiased_bases_povm import MutuallyUnbiasedBasesPOVM
+from .mutually_unbiased_bases_measurements import MutuallyUnbiasedBasesMeasurements
 from .povm_implementation import POVMImplementation
 from .randomized_projective_measurements import RandomizedProjectiveMeasurements
 
 __all__ = [
     "POVMImplementation",
     "RandomizedProjectiveMeasurements",
-    "MutuallyUnbiasedBasesPOVM",
+    "MutuallyUnbiasedBasesMeasurements",
     "LocallyBiasedClassicalShadows",
     "ClassicalShadows",
 ]

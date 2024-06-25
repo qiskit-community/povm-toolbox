@@ -19,7 +19,7 @@ from scipy.spatial.transform import Rotation
 from .randomized_projective_measurements import RandomizedProjectiveMeasurements
 
 
-class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
+class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
     """A mutually-unbiased-bases (MUB) POVM."""
 
     def __init__(
@@ -34,8 +34,11 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
     ):
         """Implement a mutually-unbiased-bases (MUB) POVM.
 
-        This is a special case of a :class:`.RandomizedProjectiveMeasurements`. A MUB POVM corresponds
-        to an arbitrary rotated :class:`.LocallyBiasedClassicalShadows`.
+        This is a special case of a :class:`.RandomizedProjectiveMeasurements` (RPM) POVM. A
+        MUB-POVM corresponds to an arbitrary rotated :class:`.LocallyBiasedClassicalShadows`
+        (LBCS) POVM. That is, the MUB-POVMs can be seen as lying between RPM- and LBCS-POVMs.
+        More precisely, the set of RPM-POVMs includes the set of MUB-POVMs which includes the
+        set of LBCS-POVMs.
 
         Args:
             n_qubits: the number of qubits.
@@ -44,10 +47,14 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
             angles: can be either 1D or 2D. If 1D, it should be of length 3 and contain float values
-                to indicate the three Euler angles to rotate the locally-biased classical shadows
+                to indicate the three Euler angles to rotate the locally-biased classical shadows (LBCS)
                 measurement in the Bloch sphere representation. If 2D, it will have a new set of
-                angles for each qubit. The sequence of intrinsic rotations associated with the Euler
-                angles is z-y'-z''.
+                angles for each qubit. The angles are expected in the order ``theta``, ``phi``, ``lam``
+                which are the parameters of the :class:`.qiskit.circuit.library.UGate` instance used to
+                rotate the LBCS measurement effects. This Note that this differs from the angles expected
+                during the initialization of a :class:`.RandomizedProjectiveMeasurements` instance,
+                where the angles are expected to be pairs of angles ``(theta, phi)`` for each projective
+                measurement forming the overall randomized measurement.
             measurement_twirl : option to randomly twirl the measurements. For each single-qubit
                 projective measurement, random twirling is equivalent to randomly flipping the
                 measurement. This is equivalent to randomly taking the opposite Bloch vector in
@@ -73,11 +80,13 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
             raise ValueError
 
         if angles.shape == (3,):
-            processed_angles = self._process_angles(*angles)
+            theta, phi, lam = angles
+            processed_angles = self._process_angles(theta, phi, lam)
         elif angles.shape == (n_qubit, 3):
             processed_angles = np.zeros((n_qubit, 6))
             for i, angles_qubit_i in enumerate(angles):
-                processed_angles[i] = self._process_angles(*angles_qubit_i)
+                theta, phi, lam = angles_qubit_i
+                processed_angles[i] = self._process_angles(theta, phi, lam)
         else:
             raise ValueError
 
@@ -97,13 +106,15 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
 
         One way to obtain the rotated measurements would be to first (optionally) rotate the Z-measurement
         into an X- or Y-measurement when applicable and then apply in all cases the fixed rotation defined
-        by ``theta``, ``phi`` and ``lam``. However, it means to have two subsequent rotations and therefore
-        two unitary gates are added to the circuits. Instead, we can look at the final orientation of the
-        rotated measurements and apply a direct rotation from the canonical Z-measurement to the respective
-        rotated measurements. Then, only one parametrized rotation gate is needed and two angles for each
-        rotated measurement.
+        by :class:`.qiskit.circuit.library.UGate` with parameters ``theta``, ``phi`` and ``lam``. However,
+        it means to have two subsequent rotations and therefore two unitary gates are added to the circuits.
+        Instead, we can look at the final orientation of the rotated measurements and apply a direct rotation
+        from the canonical Z-measurement to the respective rotated measurements. Then, only one parametrized
+        rotation gate is needed and two angles for each rotated measurement.
 
-        Note: the sequence of intrinsic rotations is z-y'-z''.
+        The rotation defined by :class:`.qiskit.circuit.library.UGate` with parameter ``theta``, ``phi`` and
+        ``lam`` is equivalent - in the Bloch sphere representation - to the sequence of intrinsic rotations
+        z-y'-z'' for angles ``phi``, ``theta`` and ``lam`` respectively (note the changed order of angles).
 
         Args:
             theta: rotation around the y' axis.
