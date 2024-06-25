@@ -51,7 +51,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
                 measurement in the Bloch sphere representation. If 2D, it will have a new set of
                 angles for each qubit. The angles are expected in the order ``theta``, ``phi``, ``lam``
                 which are the parameters of the :class:`.qiskit.circuit.library.UGate` instance used to
-                rotate the LBCS measurement effects. This Note that this differs from the angles expected
+                rotate the LBCS measurement effects. Note that this differs from the angles expected
                 during the initialization of a :class:`.RandomizedProjectiveMeasurements` instance,
                 where the angles are expected to be pairs of angles ``(theta, phi)`` for each projective
                 measurement forming the overall randomized measurement.
@@ -114,7 +114,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
 
         The rotation defined by :class:`.qiskit.circuit.library.UGate` with parameter ``theta``, ``phi`` and
         ``lam`` is equivalent - in the Bloch sphere representation - to the sequence of intrinsic rotations
-        z-y'-z'' for angles ``phi``, ``theta`` and ``lam`` respectively (note the changed order of angles).
+        z-y'-z'' for angles ``phi``, ``theta`` and ``lam`` respectively (note the changed order of the angles).
 
         Args:
             theta: rotation around the y' axis.
