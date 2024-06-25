@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.random import Generator
-from qiskit.circuit.library import HGate, SGate, UGate
-from qiskit.quantum_info import Operator, Statevector
 from scipy.spatial.transform import Rotation
 
 from .randomized_projective_measurements import RandomizedProjectiveMeasurements
@@ -34,9 +32,10 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
         shot_repetitions: int = 1,
         seed_rng: int | Generator | None = None,
     ):
-        """TODO.
+        """Implement a mutually-unbiased-bases (MUB) POVM.
 
-        This is a special case of a :class:`RandomizedProjectiveMeasurements`, TODO.
+        This is a special case of a :class:`.RandomizedProjectiveMeasurements`. A MUB POVM corresponds
+        to an arbitrary rotated :class:`.LocallyBiasedClassicalShadows`.
 
         Args:
             n_qubits: the number of qubits.
@@ -44,7 +43,11 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
-            angles: TODO.
+            angles: can be either 1D or 2D. If 1D, it should be of length 3 and contain float values
+                to indicate the three Euler angles to rotate the locally-biased classical shadows
+                measurement in the Bloch sphere representation. If 2D, it will have a new set of
+                angles for each qubit. The sequence of intrinsic rotations associated with the Euler
+                angles is z-x'-z''.
             measurement_twirl : option to randomly twirl the measurements. For each single-qubit
                 projective measurement, random twirling is equivalent to randomly flipping the
                 measurement. This is equivalent to randomly taking the opposite Bloch vector in
@@ -70,11 +73,11 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
             raise ValueError
 
         if angles.shape == (3,):
-            processed_angles = self._process_angles(angles)
+            processed_angles = self._process_angles(*angles)
         elif angles.shape == (n_qubit, 3):
             processed_angles = np.zeros((n_qubit, 6))
             for i, angles_qubit_i in enumerate(angles):
-                processed_angles[i] = self._process_angles(angles_qubit_i)
+                processed_angles[i] = self._process_angles(*angles_qubit_i)
         else:
             raise ValueError
 
@@ -89,54 +92,33 @@ class MutuallyUnbiasedBasesPOVM(RandomizedProjectiveMeasurements):
         )
 
     @staticmethod
-    def _process_angles(angles: np.ndarray) -> np.ndarray:
-        """TODO.
+    def _process_angles(theta: float, phi: float, lam: float) -> np.ndarray:
+        """Transform the three Euler angles into two angles for each of the rotated X,Y,Z measurements.
+
+        One way to obtain the rotated measurements would to first (optionally) rotate the Z-measurement
+        into an X- or Y-measurement when applicable and then apply the (fixed) rotation defined by ``angles``
+        in all cases. However, it means we have two subsequent rotations and therefore two unitary gates
+        are added to the circuits. Instead, we can look at the final orientation of the rotated measurements
+        and apply a direct rotation from the canonical Z-measurement to the respective rotated measurements.
+        Then, only one parametrized rotation gate is needed and two angles for each rotated measurement.
+
+        Note: the sequence of intrinsic rotations is z-x'-z''.
 
         Args:
-            angles: TODO.
+            theta: rotation around the x' axis.
+            phi: rotation around the z axis.
+            lam: rotation around the z'' axis.
 
         Returns:
-            TODO.
+            Flatten array of theta and phi angles of the respective rotated measurements.
         """
-        theta, phi, lam = angles
-
-        _version = 1
-
-        if _version == 0:
-            # In the Bloch sphere representation, a UGate(theta, phi, lam) is
-            # equivalent to the following two steps :
-
-            # first step : two extrinsic rotations around the Y and Z axes resp.
-            r1 = Rotation.from_euler("yz", [theta, phi])
-            # second step : Z rotation in the new reference frame
-            e = r1.apply([0, 0, 1])  # defining the axis of rotation in the canonical frame
-            r2 = Rotation.from_rotvec(lam * e)
-
-            # compose the rotations
-            r = r2 * r1
-            # get the Bloch vectors from the rotated Z-,X-,Y-measurements resp.
-            bloch_vectors = r.apply([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
-
-        if _version == 1:
-            H = HGate().to_matrix()
-            S = SGate().to_matrix()
-            U = UGate(theta, phi, lam).to_matrix()
-
-            rotated_Z_msmt = U @ np.array([1, 0])
-            rotated_X_msmt = U @ H @ np.array([1, 0])
-            rotated_Y_msmt = U @ S @ H @ np.array([1, 0])
-            rotated_msmts = [rotated_Z_msmt, rotated_X_msmt, rotated_Y_msmt]
-
-            bloch_vectors = np.real_if_close(
-                [
-                    [
-                        Statevector(msmt).expectation_value(Operator.from_label(op))
-                        for op in ["X", "Y", "Z"]
-                    ]
-                    for msmt in rotated_msmts
-                ]
-            )
-
+        # In the Bloch sphere representation, a UGate(theta, phi, lam) is
+        # equivalent to the following sequence of intrinsic rotations:
+        r = Rotation.from_euler("ZYZ", [phi, theta, lam])
+        # get the Bloch vectors from the rotated Z-,X-,Y-measurements resp.
+        bloch_vectors = r.apply([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+        # compute rotation angles from [0,0,1] (i.e. Bloch sphere representation of |0>) to the
+        # respective Bloch vectors
         thetas = np.arctan2(np.linalg.norm(bloch_vectors[:, :2], axis=1), bloch_vectors[:, 2])
         phis = np.arctan2(bloch_vectors[:, 1], bloch_vectors[:, 0])
 
