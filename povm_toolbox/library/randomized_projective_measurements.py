@@ -97,7 +97,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             ValueError: If the shape of ``angles`` is not compatible with ``num_qubits``.
             TypeError: If the type of ``seed_rng`` is not valid.
         """
-        super().__init__(num_qubits, measurement_layout)
+        super().__init__(num_qubits, measurement_layout=measurement_layout)
 
         if 2 * bias.shape[-1] != angles.shape[-1]:
             raise ValueError(

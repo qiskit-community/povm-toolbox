@@ -67,7 +67,7 @@ autosummary_generate_overwrite = False
 autoclass_content = "both"
 autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented_params"
-
+autodoc_member_order = "bysource"
 autodoc_default_options = {
     "inherited-members": None,
 }

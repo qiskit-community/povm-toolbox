@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""The interface for "ready-to-go" POVM implementations."""
 
 from __future__ import annotations
 
@@ -35,37 +35,63 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 MetadataT = TypeVar("MetadataT", bound="POVMMetadata")
+"""The metadata type variable bound to :class:`.POVMMetadata`."""
 
 
 class POVMImplementation(ABC, Generic[MetadataT]):
-    """The abstract base interface for all POVM implementations in this library."""
+    """The abstract base interface for all POVM implementations in this library.
 
-    classical_register_name = "povm_measurement_creg"
+    Since this is an `abstract` class, an end-user will not actually create an instance of it at
+    runtime. Instead, you should look at the various concrete implementations of this interface
+    documented in :mod:`~povm_toolbox.library`.
+    """
+
+    classical_register_name: str = "povm_measurement_creg"
+    """The name given to the classical bit register in which the POVM outcomes are stored.
+
+    The :class:`~qiskit.primitives.containers.data_bin.DataBin` container result object will have an
+    attribute with this name, which will contain the raw measurement data.
+    """
 
     def __init__(
         self,
         num_qubits: int,
+        *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
     ) -> None:
         """Initialize the POVMImplementation.
 
         Args:
             num_qubits: number of logical qubits in the system.
-            measurement_layout: list of indices specifying on which qubits the POVM
-                acts. If None, two cases can be distinguished: 1) if a circuit supplied
-                to the :meth:`.compose_circuits` has been transpiled, its final
-                transpile layout will be used as default value, 2) otherwise, a
-                simple one-to-one layout ``list(range(num_qubits))`` is used.
+            measurement_layout: optional list of indices specifying on which qubits the POVM acts.
+                See :attr:`.measurement_layout` for more details.
         """
         super().__init__()
-        self.num_qubits = num_qubits
-        self.measurement_layout = measurement_layout
+
+        self.num_qubits: int = num_qubits
+        """The number of logical qubits in the system."""
+
+        self.measurement_layout: list[int] | None = measurement_layout
+        """An optional list of indices specifying on which qubits the POVM acts.
+
+        If ``None``, two cases can be distinguished:
+
+        1. if a circuit supplied to the :meth:`.compose_circuits` has been transpiled, its final
+           transpile layout will be used as default value,
+        2. otherwise, a simple one-to-one layout ``list(range(num_qubits))`` is used.
+        """
 
         self.measurement_circuit: QuantumCircuit
+        """The :class:`~qiskit.circuit.quantumcircuit.QuantumCircuit` actually implementing this
+        POVM's measurement."""
 
     def __repr__(self) -> str:
         """Return the string representation of a POVMImplementation instance."""
         return f"{self.__class__.__name__}(num_qubits={self.num_qubits})"
+
+    @abstractmethod
+    def definition(self) -> BasePOVM:
+        """Return the corresponding quantum-informational POVM representation."""
 
     @abstractmethod
     def _build_qc(self) -> QuantumCircuit:
@@ -77,28 +103,27 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         circuit: QuantumCircuit,
         circuit_binding: BindingsArray,
         shots: int,
+        *,
         pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, MetadataT]:
         """Append the measurement circuit(s) to the supplied circuit.
 
-        This method takes a supplied circuit and append the measurement circuit(s)
-        to it. If the measurement circuit is parametrized, its parameters values
-        should be concatenated with the parameter values associated with the supplied
-        quantum circuit.
+        This method takes a supplied circuit and appends the measurement circuit(s) to it. If the
+        measurement circuit is parametrized, its parameters values should be concatenated with the
+        parameter values associated with the supplied quantum circuit.
 
         Args:
             circuit: A quantum circuit.
             circuit_binding: A bindings array.
             shots: A specific number of shots to run with.
-            pass_manager: An optional pass manager. After the supplied circuit has
-                been composed with the measurement circuit, the pass manager will
+            pass_manager: An optional transpilation pass manager. After the supplied circuit has
+                been composed with the measurement circuit, the pass manager will be used to
                 transpile the composed circuit.
 
         Returns:
-            A tuple of a sampler pub and a dictionary of metadata which include
-            the ``POVMImplementation`` object itself. The metadata should contain
-            all the information necessary to extract the POVM outcomes out of raw
-            bitstrings.
+            A tuple of a sampler pub and a dictionary of metadata which includes the
+            :class:`.POVMImplementation` object itself. The metadata should contain all the
+            information necessary to extract the POVM outcomes out of raw bitstrings.
         """
         # TODO: figure out if it would be better to pass these arguments as a
         #    ``SamplerPubLike`` object or even as a ``SamplerPub`` object.
@@ -110,11 +135,11 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """Compose the circuit to sample from, with the measurement circuit.
 
         Args:
-            circuit: Quantum circuit to be sampled from.
+            circuit: The quantum circuit to be sampled from.
 
         Returns:
-            The composition of the supplied quantum circuit with the measurement
-            circuit of this POVM implementation.
+            The composition of the supplied quantum circuit with the :attr:`.measurement_circuit` of
+            this POVM implementation.
         """
         t1 = time.time()
         LOGGER.info("Starting circuit composition")
@@ -169,10 +194,30 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
     @abstractmethod
     def reshape_data_bin(self, data: DataBin) -> DataBin:
-        """TODO."""
+        """Reshapes the provided data.
+
+        This method should reshape the provided data to the output dimensions expected by the
+        end-user. That is, the dimensions should match those of the
+        :class:`qiskit.primitives.SamplerPubLike` object provided by the user when submitting their
+        primitive job.
+
+        Args:
+            data: The raw primitive result data still shaped according to the internally submitted
+                :class:`.POVMSamplerJob`.
+
+        Returns:
+            A new data structure of the correct shape.
+        """
 
     def _get_bitarray(self, data: DataBin) -> BitArray:
-        """TODO."""
+        """Get the bitstrings of the POVM's classical register name from the data object.
+
+        Args:
+            data: The data object from which to extract the bitstrings.
+
+        Returns:
+            The bitstrings.
+        """
         return getattr(data, self.classical_register_name)
 
     @abstractmethod
@@ -182,15 +227,34 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         povm_metadata: MetadataT,
         loc: int | tuple[int, ...] | None = None,
     ) -> list[tuple[int, ...]]:
-        """TODO."""
+        """Convert the raw bitstrings into POVM outcomes based on the associated metadata.
+
+        Args:
+            bit_array: The raw bitstrings.
+            povm_metadata: The associated metadata.
+            loc: an optional location to splice the bitstrings.
+
+        Returns:
+            The converted POVM outcomes.
+        """
 
     def get_povm_counts_from_raw(
         self,
         data: DataBin,
         povm_metadata: MetadataT,
+        *,
         loc: int | tuple[int, ...] | None = None,
     ) -> np.ndarray | Counter:
-        """TODO."""
+        """Get the POVM counts.
+
+        Args:
+            data: The raw sampled data.
+            povm_metadata: The associated metadata.
+            loc: an optional location to splice the bitstrings.
+
+        Returns:
+            The POVM counts.
+        """
         bit_array = self._get_bitarray(data)
 
         if loc is not None:
@@ -209,9 +273,19 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         self,
         data: DataBin,
         povm_metadata: MetadataT,
+        *,
         loc: int | tuple[int, ...] | None = None,
     ) -> np.ndarray | list[tuple[int, ...]]:
-        """TODO."""
+        """Get the POVM bitstrings.
+
+        Args:
+            data: The raw sampled data.
+            povm_metadata: The associated metadata.
+            loc: an optional location to splice the bitstrings.
+
+        Returns:
+            The POVM bitstrings.
+        """
         bit_array = self._get_bitarray(data)
 
         if loc is not None or bit_array.ndim == 0:
@@ -222,7 +296,3 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         for idx in np.ndindex(shape):
             outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, idx)
         return outcomes_array
-
-    @abstractmethod
-    def definition(self) -> BasePOVM:
-        """Return the corresponding POVM."""
