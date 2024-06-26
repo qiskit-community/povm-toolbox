@@ -25,7 +25,7 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
     """Abstract base class that contains all methods that any specific DUAL subclass should implement."""
 
     @property
-    def n_outcomes(self) -> int:
+    def num_outcomes(self) -> int:
         """Give the number of outcomes of the DUAL."""
         return self.num_operators
 

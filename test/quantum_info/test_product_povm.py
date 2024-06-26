@@ -66,19 +66,19 @@ class TestProductPOVM(TestCase):
             povms = {(0,): sqp, (1,): sqp, (2,): sqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 8)
-            self.assertEqual(product.n_outcomes, 8)
+            self.assertEqual(product.num_outcomes, 8)
             self.assertEqual(product.n_subsystems, 3)
         with self.subTest("MultiQubitPOVM objects"):
             povms = {(0, 1): mqp, (2, 3): mqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 16)
-            self.assertEqual(product.n_outcomes, 16)
+            self.assertEqual(product.num_outcomes, 16)
             self.assertEqual(product.n_subsystems, 4)
         with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects"):
             povms = {(0,): sqp, (1,): sqp, (2, 3): mqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 16)
-            self.assertEqual(product.n_outcomes, 16)
+            self.assertEqual(product.num_outcomes, 16)
             self.assertEqual(product.n_subsystems, 4)
         with self.subTest("Invalid POVM subsystem indices"), self.assertRaises(ValueError):
             _ = ProductPOVM({(0, 0): mqp})

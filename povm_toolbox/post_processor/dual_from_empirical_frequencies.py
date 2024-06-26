@@ -123,7 +123,7 @@ def dual_from_empirical_frequencies(
             else (ansatz[i] if isinstance(ansatz, list) else ansatz)
         )
         sub_bias = (
-            sub_povm.n_outcomes if bias is None else (bias[i] if isinstance(bias, list) else bias)
+            sub_povm.num_outcomes if bias is None else (bias[i] if isinstance(bias, list) else bias)
         )
         sub_alphas = shots * marginals[i] + sub_bias * cast(
             np.ndarray, sub_povm.get_prob(ansatz_state)
