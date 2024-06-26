@@ -23,11 +23,11 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 class TestPOVMImplementation(TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.n_qubits = 3
-        self.povm = ClassicalShadows(n_qubit=self.n_qubits)
+        self.num_qubits = 3
+        self.povm = ClassicalShadows(num_qubits=self.num_qubits)
 
         # 3-qubit circuit preparing state |+01>
-        self.circuit = QuantumCircuit(self.n_qubits)
+        self.circuit = QuantumCircuit(self.num_qubits)
         self.circuit.h(0)
         self.circuit.x(2)
 
@@ -40,27 +40,27 @@ class TestPOVMImplementation(TestCase):
             qc2 = self.circuit.copy()
             qc2.measure_all()
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, self.n_qubits)
+            self.assertEqual(composed_qc2.num_clbits, self.num_qubits)
             self.assertEqual(self.composed_circuit.clbits, composed_qc2.clbits)
 
             qc2 = self.circuit.copy()
             qc2.measure_active()
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, self.n_qubits)
+            self.assertEqual(composed_qc2.num_clbits, self.num_qubits)
             self.assertEqual(self.composed_circuit.clbits, composed_qc2.clbits)
 
         with self.subTest("Test adding classical register."):
             qc2 = self.circuit.copy()
             qc2.add_register(ClassicalRegister(5, "creg"))
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, 5 + self.n_qubits)
+            self.assertEqual(composed_qc2.num_clbits, 5 + self.num_qubits)
 
             qc2 = self.circuit.copy()
             cr = ClassicalRegister(3, "creg")
             qc2.add_register(cr)
-            qc2.measure(list(range(self.n_qubits)), cr)
+            qc2.measure(list(range(self.num_qubits)), cr)
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, self.n_qubits)
+            self.assertEqual(composed_qc2.num_clbits, self.num_qubits)
 
     def test_errors_raised(self):
         """Test that the proper errors are raised in specific situations."""
@@ -69,15 +69,15 @@ class TestPOVMImplementation(TestCase):
             "Error when adding already existing classical register."
         ) and self.assertRaises(CircuitError):
             qc2 = self.circuit.copy()
-            qc2.add_register(ClassicalRegister(self.n_qubits, self.povm.classical_register_name))
+            qc2.add_register(ClassicalRegister(self.num_qubits, self.povm.classical_register_name))
             self.povm.compose_circuits(qc2)
 
         with self.subTest("Error when number of qubits is not matching."):
             with self.assertRaises(ValueError):
-                povm2 = ClassicalShadows(n_qubit=2)
+                povm2 = ClassicalShadows(num_qubits=2)
                 povm2.compose_circuits(self.circuit)
             with self.assertRaises(ValueError):
-                povm2 = ClassicalShadows(n_qubit=4)
+                povm2 = ClassicalShadows(num_qubits=4)
                 povm2.compose_circuits(self.circuit)
 
     def test_composed_circuits(self):
@@ -87,7 +87,7 @@ class TestPOVMImplementation(TestCase):
             # define a ZZX-measurement (inverse qubit order)
             bias = np.array([1.0])
             angles = np.array([[0.5 * np.pi, 0.0], [0.0, 0.0], [0.0, 0.0]])
-            pvm = RandomizedProjectiveMeasurements(n_qubit=3, bias=bias, angles=angles)
+            pvm = RandomizedProjectiveMeasurements(num_qubits=3, bias=bias, angles=angles)
 
             # compose circuits
             composed_circuit = pvm.compose_circuits(self.circuit)
@@ -107,7 +107,7 @@ class TestPOVMImplementation(TestCase):
             # define a ZZX-measurement (inverse qubit order)
             bias = np.array([1.0])
             angles = np.array([[0.5 * np.pi, 0.0], [0.0, 0.0], [0.0, 0.0]])
-            pvm = RandomizedProjectiveMeasurements(n_qubit=3, bias=bias, angles=angles)
+            pvm = RandomizedProjectiveMeasurements(num_qubits=3, bias=bias, angles=angles)
 
             # compose circuits after the input circuit has been transpiled
             composed_circuit = pvm.compose_circuits(routed_circuit)

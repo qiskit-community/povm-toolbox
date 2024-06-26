@@ -38,7 +38,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
     def __init__(
         self,
-        n_qubit: int,
+        num_qubits: int,
         bias: np.ndarray,
         angles: np.ndarray,
         measurement_twirl: bool = False,
@@ -52,7 +52,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         future, we may need to move away from np.ndarray input types to sequences of sequences.
 
         Args:
-            n_qubits: the number of qubits.
+            num_qubits: the number of qubits.
             bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs.
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
@@ -75,7 +75,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
-                simple one-to-one layout ``list(range(n_qubits))`` is used.
+                simple one-to-one layout ``list(range(num_qubits))`` is used.
             shot_repetitions: number of times the measurement is repeated for each
                 sampled PVM. More precisely, a new PVM is sampled for all ``shots``
                 (i.e. the number of times as specified by the user via the ``shots``
@@ -90,14 +90,14 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         Raises:
             ValueError: If the shape of ``bias`` is not compatible with the shape of ``angles``.
-            ValueError: If the shape of ``bias`` is not compatible with ``n_qubit``.
+            ValueError: If the shape of ``bias`` is not compatible with ``num_qubits``.
             ValueError: If there is a negative value in the probability distribution(s) specified
                 by ``bias``.
             ValueError: If the probability distribution(s) specified by ``bias`` don't sum up to 1.
-            ValueError: If the shape of ``angles`` is not compatible with ``n_qubit``.
+            ValueError: If the shape of ``angles`` is not compatible with ``num_qubits``.
             TypeError: If the type of ``seed_rng`` is not valid.
         """
-        super().__init__(n_qubit, measurement_layout)
+        super().__init__(num_qubits, measurement_layout)
 
         if 2 * bias.shape[-1] != angles.shape[-1]:
             raise ValueError(
@@ -107,11 +107,11 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         self._n_PVMs = bias.shape[-1]
 
         if bias.ndim == 1:
-            bias = np.tile(bias, (self.n_qubit, 1))
-        elif (bias.ndim == 2 and bias.shape[0] != self.n_qubit) or bias.ndim > 2:
+            bias = np.tile(bias, (self.num_qubits, 1))
+        elif (bias.ndim == 2 and bias.shape[0] != self.num_qubits) or bias.ndim > 2:
             raise ValueError(
                 f"The shape of ``bias`` ({bias.shape}) is not compatible with"
-                f" ``n_qubit`` ({n_qubit})."
+                f" ``num_qubits`` ({num_qubits})."
             )
         if np.any(bias < 0.0):
             raise ValueError(
@@ -122,13 +122,13 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         self.bias = bias
 
         if angles.ndim == 1:
-            angles = np.tile(angles, (self.n_qubit, 1))
-        elif (angles.ndim == 2 and angles.shape[0] != self.n_qubit) or angles.ndim > 2:
+            angles = np.tile(angles, (self.num_qubits, 1))
+        elif (angles.ndim == 2 and angles.shape[0] != self.num_qubits) or angles.ndim > 2:
             raise ValueError(
                 f"The shape of ``angles`` ({angles.shape}) is not compatible with"
-                f" ``n_qubit`` ({n_qubit})."
+                f" ``num_qubits`` ({num_qubits})."
             )
-        self.angles = angles.reshape((self.n_qubit, self._n_PVMs, 2))
+        self.angles = angles.reshape((self.num_qubits, self._n_PVMs, 2))
         self.measurement_twirl = measurement_twirl
 
         self.msmt_qc = self._build_qc()
@@ -163,13 +163,13 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
 
-        self._qc_theta = ParameterVector("theta", length=self.n_qubit)
-        self._qc_phi = ParameterVector("phi", length=self.n_qubit)
+        self._qc_theta = ParameterVector("theta", length=self.num_qubits)
+        self._qc_phi = ParameterVector("phi", length=self.num_qubits)
 
-        qr = QuantumRegister(self.n_qubit, name="povm_qr")
-        cr = ClassicalRegister(self.n_qubit, name=self.classical_register_name)
+        qr = QuantumRegister(self.num_qubits, name="povm_qr")
+        cr = ClassicalRegister(self.num_qubits, name=self.classical_register_name)
         qc = QuantumCircuit(qr, cr, name="msmt_qc")
-        for i in range(self.n_qubit):
+        for i in range(self.num_qubits):
             # We apply ``U_dag``, where ``U`` is the unitary operation to go from the computational basis
             # to the new measurement basis:
             #   qc.u(theta=theta[i], phi=phi[i], lam=0.0, qubit=i).inverse()
@@ -236,13 +236,13 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         # the corresponding `BindingsArray` has :
         #   .shape = (5,)
         #   .num_parameters = 3
-        # Now if the POVM measurement circuit has 2*n_qubit parameters and a set of values is fed for
+        # Now if the POVM measurement circuit has 2*num_qubits parameters and a set of values is fed for
         # each "shot", the corresponding `BindingsArray` has :
         #   .shape = (shots,)
-        #   .num_parameters = 2*n_qubit
+        #   .num_parameters = 2*num_qubits
         # Then, the combined `BindingsArray` should have :
         #   .shape = (5, shots)
-        #   .num_parameters = 3 + 2*n_qubit
+        #   .num_parameters = 3 + 2*num_qubits
         # The data is stored as a dictionary of arrays where each array has a shape such that :
         #   - the last dimension corresponds to the number of parameters stored in this entry
         #     of the dictionary
@@ -257,9 +257,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             binding_data[circuit_param] = np.tile(circuit_val[..., np.newaxis, :], (shots, 1))
 
         # We create the array that will store the qubit-wise indices of all the sampled PVMs.
-        pvm_idx = np.zeros((*circuit_binding.shape, shots, self.n_qubit), dtype=int)
+        pvm_idx = np.zeros((*circuit_binding.shape, shots, self.num_qubits), dtype=int)
         # We loop over the different qubits :
-        for i in range(self.n_qubit):
+        for i in range(self.num_qubits):
             # For each qubit, we sample PVMs according to the local bias defined on
             # this particular qubit. We draw a PVM for each "shot" and for
             # each set of circuit parameter values supplied by the user through the
@@ -365,7 +365,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")
 
-        # povm_metadata.pvm_keys.shape is (*pv.shape, povm_sampler_pub.shots, n_qubit)
+        # povm_metadata.pvm_keys.shape is (*pv.shape, povm_sampler_pub.shots, num_qubits)
         # and bit_array.num_shots is povm_sampler_pub.shots*self.shot_repetitions
         # loc is assumed to have a length of at most pv.ndim = len(pv.shape)
 
@@ -377,7 +377,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 "RandomizedPMs POVM should specify a list of pvm keys, "
                 "but none were found."
             ) from exc
-        if pvm_keys.shape != (bit_array.num_shots // self.shot_repetitions, self.n_qubit):
+        if pvm_keys.shape != (bit_array.num_shots // self.shot_repetitions, self.num_qubits):
             raise ValueError(
                 "Either the shape of the `BitArray` is not compatible with the"
                 " shape of the PVM keys stored in the metadata, or the `loc`"
@@ -405,7 +405,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         """Return the concrete parameter values associated to a PVM label.
 
         Args:
-            pvm_idx: an array of integers with shape `(*pv, povm_sampler_pub.shots, n_qubit)`.
+            pvm_idx: an array of integers with shape `(*pv, povm_sampler_pub.shots, num_qubits)`.
 
         Returns:
             Parameter values for the specified PVM.
@@ -413,13 +413,13 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building PVM bindings array")
 
-        # shape is assumed to be (*pv, povm_sampler_pub.shots, n_qubit)
-        if pvm_idx.shape[-1] != self.n_qubit:
+        # shape is assumed to be (*pv, povm_sampler_pub.shots, num_qubits)
+        if pvm_idx.shape[-1] != self.num_qubits:
             raise ValueError
         theta: np.ndarray = np.empty(pvm_idx.shape)
         phi: np.ndarray = np.empty(pvm_idx.shape)
         for multi_index in np.ndindex(pvm_idx.shape):
-            # multi_index.shape is (*pv, povm_sampler_pub.shots, n_qubit)
+            # multi_index.shape is (*pv, povm_sampler_pub.shots, num_qubits)
             i_qubit = multi_index[-1]
             actual_pvm_idx = pvm_idx[multi_index] % self._n_PVMs
             twirl = pvm_idx[multi_index] // self._n_PVMs
@@ -465,7 +465,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building POVM definition")
 
-        stabilizers: np.ndarray = np.zeros((self.n_qubit, self._n_PVMs, 2, 2), dtype=complex)
+        stabilizers: np.ndarray = np.zeros((self.num_qubits, self._n_PVMs, 2, 2), dtype=complex)
 
         stabilizers[:, :, 0, 0] = np.cos(self.angles[:, :, 0] / 2.0)
         stabilizers[:, :, 0, 1] = (
@@ -477,7 +477,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         stabilizers[:, :, 1, 1] = stabilizers[:, :, 0, 0]  # up to irrelevant global phase e^(i phi)
 
         stabilizers = np.multiply(stabilizers.T, np.sqrt(self.bias).T).T
-        stabilizers = stabilizers.reshape((self.n_qubit, 2 * self._n_PVMs, 2))
+        stabilizers = stabilizers.reshape((self.num_qubits, 2 * self._n_PVMs, 2))
 
         sq_povms = []
         for vecs in stabilizers:

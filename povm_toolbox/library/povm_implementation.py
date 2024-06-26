@@ -44,28 +44,28 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
     def __init__(
         self,
-        n_qubit: int,
+        num_qubits: int,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
     ) -> None:
         """Initialize the POVMImplementation.
 
         Args:
-            n_qubit: number of logical qubits in the system.
+            num_qubits: number of logical qubits in the system.
             measurement_layout: list of indices specifying on which qubits the POVM
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
-                simple one-to-one layout ``list(range(n_qubits))`` is used.
+                simple one-to-one layout ``list(range(num_qubits))`` is used.
         """
         super().__init__()
-        self.n_qubit = n_qubit
+        self.num_qubits = num_qubits
         self.measurement_layout = measurement_layout
 
         self.msmt_qc: QuantumCircuit
 
     def __repr__(self) -> str:
         """Return the string representation of a POVMImplementation instance."""
-        return f"{self.__class__.__name__}(n_qubits={self.n_qubit})"
+        return f"{self.__class__.__name__}(num_qubits={self.num_qubits})"
 
     @abstractmethod
     def _build_qc(self) -> QuantumCircuit:
@@ -138,11 +138,11 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
         # Check that the number of qubits of the circuit (before the transpilation, if
         # applicable) matches the number of qubits of the POVM implementation.
-        if self.n_qubit != len(index_layout):
+        if self.num_qubits != len(index_layout):
             raise ValueError(
                 f"The supplied circuit (acting on {len(index_layout)} qubits)"
                 " does not match this POVM implementation which acts on"
-                f" {self.n_qubit} qubits."
+                f" {self.num_qubits} qubits."
             )
 
         try:

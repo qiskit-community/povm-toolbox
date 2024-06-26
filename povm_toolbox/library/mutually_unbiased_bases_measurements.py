@@ -24,7 +24,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
 
     def __init__(
         self,
-        n_qubit: int,
+        num_qubits: int,
         bias: np.ndarray,
         angles: np.ndarray,
         measurement_twirl: bool = False,
@@ -41,7 +41,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
         set of LBCS-POVMs.
 
         Args:
-            n_qubits: the number of qubits.
+            num_qubits: the number of qubits.
             bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
@@ -63,7 +63,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
-                simple one-to-one layout ``list(range(n_qubits))`` is used.
+                simple one-to-one layout ``list(range(num_qubits))`` is used.
             shot_repetitions: number of times the measurement is repeated for each
                 sampled PVM. More precisely, a new PVM is sampled for all ``shots``
                 (i.e. the number of times as specified by the user via the ``shots``
@@ -82,8 +82,8 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
         if angles.shape == (3,):
             theta, phi, lam = angles
             processed_angles = self._process_angles(theta, phi, lam)
-        elif angles.shape == (n_qubit, 3):
-            processed_angles = np.zeros((n_qubit, 6))
+        elif angles.shape == (num_qubits, 3):
+            processed_angles = np.zeros((num_qubits, 6))
             for i, angles_qubit_i in enumerate(angles):
                 theta, phi, lam = angles_qubit_i
                 processed_angles[i] = self._process_angles(theta, phi, lam)
@@ -91,7 +91,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
             raise ValueError
 
         super().__init__(
-            n_qubit=n_qubit,
+            num_qubits=num_qubits,
             bias=bias,
             angles=processed_angles,
             measurement_twirl=measurement_twirl,

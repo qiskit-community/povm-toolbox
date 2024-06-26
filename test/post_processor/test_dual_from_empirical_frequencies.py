@@ -37,7 +37,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         """Test that the method constructs a valid dual."""
         qc = random_circuit(2, 1, measure=False, seed=12)
         rng = default_rng(96568)
-        n_qubit = qc.num_qubits
+        num_qubits = qc.num_qubits
         bias = np.array([0.5, 0.25, 0.25])
         angles = np.array(
             [
@@ -47,7 +47,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         )
 
         measurement = RandomizedProjectiveMeasurements(
-            n_qubit, bias=bias, angles=angles, seed_rng=rng
+            num_qubits, bias=bias, angles=angles, seed_rng=rng
         )
         sampler = StatevectorSampler(seed=rng)
         povm_sampler = POVMSampler(sampler=sampler)
@@ -55,7 +55,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         pub_result = job.result()[0]
 
         observable = SparsePauliOp(
-            ["XI", "YI", n_qubit * "Y", n_qubit * "Z"], coeffs=[1.3, 1.2, -1, 1.4]
+            ["XI", "YI", num_qubits * "Y", num_qubits * "Z"], coeffs=[1.3, 1.2, -1, 1.4]
         )
 
         post_processor = POVMPostProcessor(pub_result)

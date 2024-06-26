@@ -51,11 +51,11 @@ class TestClassicalShadows(TestCase):
             ]
         )
 
-        for n_qubit in range(1, 11):
-            cs_implementation = ClassicalShadows(n_qubit=n_qubit)
-            self.assertEqual(n_qubit, cs_implementation.n_qubit)
+        for num_qubits in range(1, 11):
+            cs_implementation = ClassicalShadows(num_qubits=num_qubits)
+            self.assertEqual(num_qubits, cs_implementation.num_qubits)
             cs_povm = cs_implementation.definition()
-            for i in range(n_qubit):
+            for i in range(num_qubits):
                 self.assertEqual(cs_povm._povms[(i,)].n_outcomes, sqpovm.n_outcomes)
                 for k in range(sqpovm.n_outcomes):
                     self.assertAlmostEqual(cs_povm._povms[(i,)][k], sqpovm[k])

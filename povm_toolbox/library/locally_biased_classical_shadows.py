@@ -23,7 +23,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
 
     def __init__(
         self,
-        n_qubit: int,
+        num_qubits: int,
         bias: np.ndarray,
         measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
@@ -36,7 +36,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         chosen to be Z-, X- and Y-measurements.
 
         Args:
-            n_qubits: the number of qubits.
+            num_qubits: the number of qubits.
             bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
@@ -49,7 +49,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
-                simple one-to-one layout ``list(range(n_qubits))`` is used.
+                simple one-to-one layout ``list(range(num_qubits))`` is used.
             shot_repetitions: number of times the measurement is repeated for each
                 sampled PVM. More precisely, a new PVM is sampled for all ``shots``
                 (i.e. the number of times as specified by the user via the ``shots``
@@ -65,7 +65,7 @@ class LocallyBiasedClassicalShadows(RandomizedProjectiveMeasurements):
         angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
         assert bias.shape[-1] == 3
         super().__init__(
-            n_qubit=n_qubit,
+            num_qubits=num_qubits,
             bias=bias,
             angles=angles,
             measurement_twirl=measurement_twirl,

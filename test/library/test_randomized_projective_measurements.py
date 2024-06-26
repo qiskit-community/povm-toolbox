@@ -43,19 +43,19 @@ class TestRandomizedPMs(TestCase):
     def test_qc_build(self):
         """Test if we can build a QuantumCircuit."""
 
-        for n_qubit in range(1, 11):
-            q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
+        for num_qubits in range(1, 11):
+            q = np.random.uniform(0, 5, size=3 * num_qubits).reshape((num_qubits, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
             angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
 
             cs_implementation = RandomizedProjectiveMeasurements(
-                n_qubit=n_qubit, bias=q, angles=angles
+                num_qubits=num_qubits, bias=q, angles=angles
             )
 
             qc = cs_implementation._build_qc()
 
-            self.assertEqual(qc.num_qubits, n_qubit)
+            self.assertEqual(qc.num_qubits, num_qubits)
 
     def test_twirling(self):
         """Test if the twirling option works correctly."""
@@ -64,8 +64,8 @@ class TestRandomizedPMs(TestCase):
         qc = QuantumCircuit(2)
         qc.h(0)
 
-        n_qubit = qc.num_qubits
-        measurement = ClassicalShadows(n_qubit, seed_rng=rng, measurement_twirl=True)
+        num_qubits = qc.num_qubits
+        measurement = ClassicalShadows(num_qubits, seed_rng=rng, measurement_twirl=True)
 
         rng2 = default_rng(26)
 
@@ -101,8 +101,8 @@ class TestRandomizedPMs(TestCase):
         qc = QuantumCircuit(2)
         qc.h(0)
 
-        n_qubit = qc.num_qubits
-        measurement = ClassicalShadows(n_qubit, seed_rng=rng, shot_repetitions=7)
+        num_qubits = qc.num_qubits
+        measurement = ClassicalShadows(num_qubits, seed_rng=rng, shot_repetitions=7)
 
         rng2 = default_rng(56)
 

@@ -33,7 +33,7 @@ class TestPostProcessor(TestCase):
         sampler = Sampler()
         povm_sampler = POVMSampler(sampler=sampler)
 
-        measurement = ClassicalShadows(n_qubit=2)
+        measurement = ClassicalShadows(num_qubits=2)
 
         job = povm_sampler.run([qc], shots=256, povm=measurement)
         result = job.result()
