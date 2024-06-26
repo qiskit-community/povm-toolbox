@@ -61,7 +61,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         self.num_qubits = num_qubits
         self.measurement_layout = measurement_layout
 
-        self.msmt_qc: QuantumCircuit
+        self.measurement_circuit: QuantumCircuit
 
     def __repr__(self) -> str:
         """Return the string representation of a POVMImplementation instance."""
@@ -146,7 +146,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             )
 
         try:
-            dest_circuit.add_register(*self.msmt_qc.cregs)
+            dest_circuit.add_register(*self.measurement_circuit.cregs)
         except CircuitError as exc:
             raise CircuitError(
                 f"{exc}\nNote: the supplied quantum circuit should not have a classical register"
@@ -158,7 +158,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             ) from exc
 
         # Compose the two circuits with the correct routing.
-        ret = dest_circuit.compose(self.msmt_qc, qubits=index_layout, clbits=self.msmt_qc.clbits)
+        ret = dest_circuit.compose(
+            self.measurement_circuit, qubits=index_layout, clbits=self.measurement_circuit.clbits
+        )
 
         t2 = time.time()
         LOGGER.info(f"Finished circuit composition. Took {t2 - t1:.6f}s")

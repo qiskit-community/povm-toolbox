@@ -131,7 +131,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         self.angles = angles.reshape((self.num_qubits, self._num_PVMs, 2))
         self.measurement_twirl = measurement_twirl
 
-        self.msmt_qc = self._build_qc()
+        self.measurement_circuit = self._build_qc()
 
         self.shot_repetitions = shot_repetitions
 
@@ -168,7 +168,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         qr = QuantumRegister(self.num_qubits, name="povm_qr")
         cr = ClassicalRegister(self.num_qubits, name=self.classical_register_name)
-        qc = QuantumCircuit(qr, cr, name="msmt_qc")
+        qc = QuantumCircuit(qr, cr, name="measurement_circuit")
         for i in range(self.num_qubits):
             # We apply ``U_dag``, where ``U`` is the unitary operation to go from the computational basis
             # to the new measurement basis:
