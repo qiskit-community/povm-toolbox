@@ -28,6 +28,16 @@ Getting started
 Be sure to check out our `tutorials <tutorials/index.html>`_ to get started with this
 toolbox.
 
+Citation
+--------
+
+If you use this project, please cite the following reference:
+
+    Laurin E. Fischer, Timothée Dao, Ivano Tavernelli, and Francesco Tacchino;
+    "Dual-frame optimization for informationally complete quantum measurements";
+    Phys. Rev. A 109, 062415;
+    DOI: https://doi.org/10.1103/PhysRevA.109.062415
+
 
 .. toctree::
   :hidden:

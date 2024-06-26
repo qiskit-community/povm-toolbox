@@ -30,3 +30,12 @@ You can find the documentation hosted
 > Since this toolbox is still in development, so is its documentation! You may
 > encounter missing information as well as sudden changes from one day to
 > another.
+
+## Citation
+
+If you use this project, please cite the following reference:
+
+> Laurin E. Fischer, Timothée Dao, Ivano Tavernelli, and Francesco Tacchino
+> "Dual-frame optimization for informationally complete quantum measurements"
+> Phys. Rev. A 109, 062415
+> DOI: https://doi.org/10.1103/PhysRevA.109.062415
