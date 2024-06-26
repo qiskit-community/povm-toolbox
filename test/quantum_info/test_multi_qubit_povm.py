@@ -42,7 +42,7 @@ class TestMultiQubitPOVM(TestCase):
             self.assertEqual((dim, dim), povm.operators[1].dim)
 
     def test_num_outcomes(self):
-        """Test the number of outcomes, with both `n_outcome` attribute and `__len__` method."""
+        """Test the number of outcomes, with both `num_outcomes` attribute and `__len__` method."""
         for n in range(1, 10):
             for dim in range(1, 10):
                 povm = MultiQubitPOVM(n * [Operator(1.0 / n * np.eye(dim))])

@@ -26,7 +26,7 @@ class RPMMetadata(POVMMetadata):
     pvm_keys: np.ndarray
     """The keys which associate a specific result sample with the corresponding RPM parameters.
 
-    Shape of `pvm_keys` is assumed to be ``(*pv.shape, num_batches, n_qubit)``,
+    Shape of `pvm_keys` is assumed to be ``(*pv.shape, num_batches, num_qubit)``,
     where ``pv`` is the bindings array provided by the user to run with the
     parametrized quantum circuit supplied in the :meth:`.POVMSampler.run` method.
     """
