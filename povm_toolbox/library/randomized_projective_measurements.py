@@ -57,10 +57,16 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs.
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
-            angles: can be either 1D or 2D. If 1D, it should contain float values to indicate the
-                different angles of each effect. I.e. its length equals two times the number of
-                PVMs (since we have 2 angles per PVMs). If 2D, it will have a new set of angles
-                for each qubit.
+            angles: can be either 1D or 2D. If 1D, it should be a flatten array containing
+                float values to indicate the different angles of each PVM. I.e. its length
+                equals two times the number of PVMs (since we have 2 angles per PVM). If 2D,
+                it will have a new set of angles for each qubit. The angles are expected to
+                be pairs of angles ``(theta, phi)`` for each PVM and correspond to the
+                parameters of the :class:`.qiskit.circuit.library.UGate` instance used to
+                rotate the canonical Z-measurement into an arbitrary projective measurement.
+                Note that this differs from the angles expected during the initialization of
+                a :class:`.MutuallyUnbiasedBasesMeasurements` instance, where a unique
+                triplet of angles ``(theta, phi, lam)`` is expected for each qubit.
             measurement_twirl : option to randomly twirl the measurements. For each single-qubit
                 projective measurement, random twirling is equivalent to randomly flipping the
                 measurement. This is equivalent to randomly taking the opposite Bloch vector in
