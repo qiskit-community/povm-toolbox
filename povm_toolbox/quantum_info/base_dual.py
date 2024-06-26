@@ -25,18 +25,18 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
     """Abstract base class that contains all methods that any specific DUAL subclass should implement."""
 
     @property
-    def n_outcomes(self) -> int:
+    def num_outcomes(self) -> int:
         """Give the number of outcomes of the DUAL."""
-        return self.n_operators
+        return self.num_operators
 
     @abstractmethod
     def get_omegas(
         self,
-        obs: SparsePauliOp | Operator,
+        observable: SparsePauliOp | Operator,
         outcome_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
         """Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual."""
-        return self.analysis(obs, outcome_idx)
+        return self.analysis(observable, outcome_idx)
 
     @abstractmethod
     def is_dual_to(self, frame: BaseFrame) -> bool:

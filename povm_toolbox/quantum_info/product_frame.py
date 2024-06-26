@@ -57,11 +57,11 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 words, all POVMs must act on mutually exclusive subsystem indices.
             ValueError: if any key in ``povms`` does not specify the number of subsystem indices,
                 which matches the number of systems acted upon by that POVM
-                (:meth:`MultiQubitFrame.n_subsystems`).
+                (:meth:`MultiQubitFrame.num_subsystems`).
         """
         subsystem_indices = set()
         self._dimension = 1
-        self._n_operators = 1
+        self._num_operators = 1
         shape: list[int] = []
         for idx, povm in povms.items():
             idx_set = set(idx)
@@ -75,16 +75,16 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                     "The subsystem indices acted upon by all the POVMs must be mutually exclusive. "
                     f"However, one of the indices in '{idx}' was already encountered before."
                 )
-            if len(idx_set) != povm.n_subsystems:
+            if len(idx_set) != povm.num_subsystems:
                 raise ValueError(
                     "The number of subsystem indices for a POVM must match the number of subsystems"
                     " which it acts upon. This is not satisfied for the POVM specified to act on "
-                    f"subsystems '{idx}' but having support on '{povm.n_subsystems}' subsystems."
+                    f"subsystems '{idx}' but having support on '{povm.num_subsystems}' subsystems."
                 )
             subsystem_indices.update(idx_set)
             self._dimension *= povm.dimension
-            self._n_operators *= povm.n_operators
-            shape.append(povm.n_operators)
+            self._num_operators *= povm.num_operators
+            shape.append(povm.num_operators)
 
         self._informationally_complete: bool = all(
             [povm.informationally_complete for povm in povms.values()]
@@ -98,7 +98,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     def __repr__(self):
         """Return the string representation of a :class:`.ProductFrame` instance."""
         f_repr = "\n   " + "\n   ".join(f"{name}: {value}" for name, value in self._povms.items())
-        return f"{self.__class__.__name__}(n_subsystems={self.n_subsystems})<{','.join(map(str, self.shape))}>:{f_repr}"
+        return f"{self.__class__.__name__}(num_subsystems={self.num_subsystems})<{','.join(map(str, self.shape))}>:{f_repr}"
 
     @classmethod
     def from_list(cls, povms: Sequence[T]) -> Self:
@@ -149,7 +149,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         idx = 0
         for povm in povms:
             prev_idx = idx
-            idx += povm.n_subsystems
+            idx += povm.num_subsystems
             povm_dict[tuple(range(prev_idx, idx))] = povm
         return cls(povm_dict)
 
@@ -164,9 +164,9 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         return self._dimension
 
     @property
-    def n_operators(self) -> int:
+    def num_operators(self) -> int:
         """Give the number of single-qubit operators forming the POVM."""
-        return self._n_operators
+        return self._num_operators
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -200,7 +200,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
     def __len__(self) -> int:
         """Return the number of outcomes of the POVM."""
-        return self.n_operators
+        return self.num_operators
 
     def _trace_of_prod(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
         """Return the trace of the product of a Hermitian operator with a specific frame operator.
@@ -247,16 +247,16 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                             f"The outcome label {frame_op_idx} does not match the expected shape. It is"
                             f" supposed to contain {len(self._povms)} integers, but has {len(frame_op_idx)}."
                         ) from exc
-                    if povm.n_operators <= frame_op_idx[j]:
+                    if povm.num_operators <= frame_op_idx[j]:
                         raise IndexError(
                             f"Outcome index '{frame_op_idx[j]}' is out of range for the local POVM"
-                            f" acting on subsystems {idx}. This POVM has {povm.n_operators} outcomes."
+                            f" acting on subsystems {idx}. This POVM has {povm.num_operators} outcomes."
                         ) from exc
                     raise exc
                 else:
                     # If the label does exist, we multiply the coefficient into our summand.
                     # The factor 2*N_qubit comes from Tr[(P_1...P_N)^2] = 2*N.
-                    summand *= coeff * 2 * povm.n_subsystems
+                    summand *= coeff * 2 * povm.num_subsystems
 
             # Once we have finished computing our summand, we add it into ``p_init``.
             p_idx += summand
@@ -296,7 +296,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             hermitian_op = SparsePauliOp.from_operator(hermitian_op)
 
         # Assert matching operator and POVM sizes.
-        if hermitian_op.num_qubits != self.n_subsystems:
+        if hermitian_op.num_qubits != self.num_subsystems:
             raise ValueError(
                 f"Size of the operator ({hermitian_op.num_qubits}) does not match the size of the povm ({math.log2(self.dimension)})."
             )

@@ -30,7 +30,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
     """
 
     def get_omegas(
-        self, obs: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
+        self, observable: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
         r"""Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual.
 
@@ -41,13 +41,13 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
         This method returns a possible set of weights.
 
         Args:
-            obs: the observable to be decomposed into the POVM effects.
+            observable: the observable to be decomposed into the POVM effects.
             outcome_idx: label(s) indicating which decomposition weights are queried.
 
         Returns:
             An array of decomposition weights.
         """
-        return self.analysis(obs, outcome_idx)
+        return self.analysis(observable, outcome_idx)
 
     def is_dual_to(self, frame: BaseFrame) -> bool:
         """Check if ``self`` is a dual to another frame."""
@@ -76,10 +76,10 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
                 alphas = tuple(np.real(np.trace(frame_op.data)) for frame_op in frame.operators)
             # Check that the number of alpha-parameters match the number of operators
             # forming the ``frame``.
-            elif len(alphas) != frame.n_operators:
+            elif len(alphas) != frame.num_operators:
                 raise ValueError(
                     f"The number of alpha-parameters should be equal to the number of"
-                    f" operators in the frame ({frame.n_operators}). Here, {len(alphas)}"
+                    f" operators in the frame ({frame.num_operators}). Here, {len(alphas)}"
                     " parameters were provided."
                 )
 

@@ -66,20 +66,20 @@ class TestProductPOVM(TestCase):
             povms = {(0,): sqp, (1,): sqp, (2,): sqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 8)
-            self.assertEqual(product.n_outcomes, 8)
-            self.assertEqual(product.n_subsystems, 3)
+            self.assertEqual(product.num_outcomes, 8)
+            self.assertEqual(product.num_subsystems, 3)
         with self.subTest("MultiQubitPOVM objects"):
             povms = {(0, 1): mqp, (2, 3): mqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 16)
-            self.assertEqual(product.n_outcomes, 16)
-            self.assertEqual(product.n_subsystems, 4)
+            self.assertEqual(product.num_outcomes, 16)
+            self.assertEqual(product.num_subsystems, 4)
         with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects"):
             povms = {(0,): sqp, (1,): sqp, (2, 3): mqp}
             product = ProductPOVM(povms)
             self.assertEqual(product.dimension, 16)
-            self.assertEqual(product.n_outcomes, 16)
-            self.assertEqual(product.n_subsystems, 4)
+            self.assertEqual(product.num_outcomes, 16)
+            self.assertEqual(product.num_subsystems, 4)
         with self.subTest("Invalid POVM subsystem indices"), self.assertRaises(ValueError):
             _ = ProductPOVM({(0, 0): mqp})
         with self.subTest("Duplicate POVM subsystem indices"), self.assertRaises(ValueError):
@@ -124,13 +124,13 @@ class TestProductPOVM(TestCase):
             checks = np.load("test/quantum_info/probabilities_ProdOfSingleQubitPOVMs.npz")
 
             seed = 14
-            for n_qubit in range(1, 4):
+            for num_qubits in range(1, 4):
                 rng = np.random.RandomState(seed)
-                q = rng.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
+                q = rng.uniform(0, 5, size=3 * num_qubits).reshape((num_qubits, 3))
                 q /= q.sum(axis=1)[:, np.newaxis]
 
                 povm_list = []
-                for i in range(n_qubit):
+                for i in range(num_qubits):
                     povm_list.append(
                         SingleQubitPOVM(
                             [
@@ -145,19 +145,19 @@ class TestProductPOVM(TestCase):
                     )
 
                 prod_povm = ProductPOVM.from_list(povm_list)
-                rho = random_density_matrix(dims=2**n_qubit, seed=seed)
+                rho = random_density_matrix(dims=2**num_qubits, seed=seed)
                 p = prod_povm.get_prob(rho)
-                self.assertTrue(np.allclose(a=np.array(checks[f"n_{n_qubit}"]), b=np.array(p)))
-                if n_qubit >= 2:
+                self.assertTrue(np.allclose(a=np.array(checks[f"n_{num_qubits}"]), b=np.array(p)))
+                if num_qubits >= 2:
                     for n_idx in range(2, 5):
-                        outcome_idx = np.random.randint(low=0, high=6, size=(n_idx, n_qubit))
+                        outcome_idx = np.random.randint(low=0, high=6, size=(n_idx, num_qubits))
                         outcome_idx = set({tuple(idx) for idx in outcome_idx})
                         # TODO: correct bug if two index tuples are the same in sequence. For now
                         # we avoid that by skipping the test when it's the case.
                         if len(outcome_idx) != len(set(outcome_idx)):
                             break
                         p = prod_povm.get_prob(rho, outcome_idx)
-                        check = checks[f"n_{n_qubit}"]
+                        check = checks[f"n_{num_qubits}"]
                         for idx in outcome_idx:
                             self.assertTrue(np.allclose(p[idx], check[idx]))
 
@@ -206,13 +206,13 @@ class TestProductPOVM(TestCase):
 
     def test_build_dual(self):
         seed = 12
-        n_qubit = 3
+        num_qubits = 3
         rng = np.random.RandomState(seed)
-        q = rng.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
+        q = rng.uniform(0, 5, size=3 * num_qubits).reshape((num_qubits, 3))
         q /= q.sum(axis=1)[:, np.newaxis]
 
         povm_list = []
-        for i in range(n_qubit):
+        for i in range(num_qubits):
             povm_list.append(
                 SingleQubitPOVM(
                     [
@@ -230,7 +230,7 @@ class TestProductPOVM(TestCase):
 
         dual = ProductDUAL.build_dual_from_frame(prod_povm)
 
-        obs = random_hermitian(dims=2**n_qubit)
+        obs = random_hermitian(dims=2**num_qubits)
         omegas = dual.get_omegas(obs)
         self.assertIsInstance(omegas[0, 0, 0], float)
 

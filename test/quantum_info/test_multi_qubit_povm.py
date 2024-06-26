@@ -41,12 +41,12 @@ class TestMultiQubitPOVM(TestCase):
             self.assertEqual(dim, povm._dimension)
             self.assertEqual((dim, dim), povm.operators[1].dim)
 
-    def test_n_outcomes(self):
-        """Test the number of outcomes, with both `n_outcome` attribute and `__len__` method."""
+    def test_num_outcomes(self):
+        """Test the number of outcomes, with both `num_outcomes` attribute and `__len__` method."""
         for n in range(1, 10):
             for dim in range(1, 10):
                 povm = MultiQubitPOVM(n * [Operator(1.0 / n * np.eye(dim))])
-                self.assertEqual(n, povm.n_outcomes)
+                self.assertEqual(n, povm.num_outcomes)
                 self.assertEqual(n, len(povm))
                 self.assertEqual(n, len(povm.operators))
 
@@ -86,7 +86,7 @@ class TestMultiQubitPOVM(TestCase):
             dual = MultiQubitDUAL.build_dual_from_frame(povm)
             omegas = dual.get_omegas(obs)
             dec = np.zeros((2, 2), dtype=complex)
-            for k in range(povm.n_outcomes):
+            for k in range(povm.num_outcomes):
                 dec += omegas[k] * povm[k].data
             self.assertTrue(np.allclose(obs, dec))
 

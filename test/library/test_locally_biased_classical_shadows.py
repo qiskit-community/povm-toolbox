@@ -39,14 +39,14 @@ class TestRandomizedPMs(TestCase):
     def test_qc_build(self):
         """Test if we can build a LB Classical Shadow POVM from the generic class"""
 
-        for n_qubit in range(1, 11):
-            q = np.random.uniform(0, 5, size=3 * n_qubit).reshape((n_qubit, 3))
+        for num_qubits in range(1, 11):
+            q = np.random.uniform(0, 5, size=3 * num_qubits).reshape((num_qubits, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
-            cs_implementation = LocallyBiasedClassicalShadows(n_qubit=n_qubit, bias=q)
-            self.assertEqual(n_qubit, cs_implementation.n_qubit)
+            cs_implementation = LocallyBiasedClassicalShadows(num_qubits=num_qubits, bias=q)
+            self.assertEqual(num_qubits, cs_implementation.num_qubits)
             cs_povm = cs_implementation.definition()
-            for i in range(n_qubit):
+            for i in range(num_qubits):
                 sqpovm = SingleQubitPOVM(
                     [
                         q[i, 0] * Operator.from_label("0"),
@@ -57,6 +57,6 @@ class TestRandomizedPMs(TestCase):
                         q[i, 2] * Operator.from_label("l"),
                     ]
                 )
-                self.assertEqual(cs_povm._povms[(i,)].n_outcomes, sqpovm.n_outcomes)
-                for k in range(sqpovm.n_outcomes):
+                self.assertEqual(cs_povm._povms[(i,)].num_outcomes, sqpovm.num_outcomes)
+                for k in range(sqpovm.num_outcomes):
                     self.assertTrue(np.allclose(cs_povm._povms[(i,)][k], sqpovm[k]))

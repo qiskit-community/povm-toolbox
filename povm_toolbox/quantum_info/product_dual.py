@@ -32,7 +32,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
 
     def get_omegas(
         self,
-        obs: SparsePauliOp | Operator,
+        observable: SparsePauliOp | Operator,
         outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
         r"""Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual.
@@ -44,7 +44,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
         This method returns a possible set of weights.
 
         Args:
-            obs: the observable to be decomposed into the POVM effects.
+            observable: the observable to be decomposed into the POVM effects.
             outcome_idx: the outcomes for which one queries the probability. Each outcome is labeled
                 by a tuple of integers (one index per local POVM). One can query a single outcome or a
                 set of outcomes. If ``None``, all outcomes are queried.
@@ -58,8 +58,8 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
             :class:`.ProductPOVM` instance is returned. The length of each dimension is given by
             the number of outcomes of the POVM encoded along that axis.
         """
-        # TODO: check that obs is Hermitian ?
-        return self.analysis(obs, outcome_idx)
+        # TODO: check that observable is Hermitian ?
+        return self.analysis(observable, outcome_idx)
 
     def is_dual_to(self, frame: BaseFrame) -> bool:
         """Check if ``self`` is a dual to another frame."""

@@ -23,7 +23,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
 
     def __init__(
         self,
-        n_qubit: int,
+        num_qubits: int,
         measurement_twirl: bool = False,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         shot_repetitions: int = 1,
@@ -36,7 +36,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
         to perform a measurement in the Z, X and Y bases.
 
         Args:
-            n_qubits: the number of qubits.
+            num_qubits: the number of qubits.
             measurement_twirl : option to randomly twirl the measurements. For each single-qubit
                 projective measurement, random twirling is equivalent to randomly flipping the
                 measurement. This is equivalent to randomly taking the opposite Bloch vector in
@@ -45,7 +45,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
                 acts. If None, two cases can be distinguished: 1) if a circuit supplied
                 to the :meth:`.compose_circuits` has been transpiled, its final
                 transpile layout will be used as default value, 2) otherwise, a
-                simple one-to-one layout ``list(range(n_qubits))`` is used.
+                simple one-to-one layout ``list(range(num_qubits))`` is used.
             shot_repetitions: number of times the measurement is repeated for each
                 sampled PVM. More precisely, a new PVM is sampled for all ``shots``
                 (i.e. the number of times as specified by the user via the ``shots``
@@ -59,7 +59,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
         """
         bias = 1.0 / 3.0 * np.ones(3)
         super().__init__(
-            n_qubit=n_qubit,
+            num_qubits=num_qubits,
             bias=bias,
             measurement_twirl=measurement_twirl,
             measurement_layout=measurement_layout,

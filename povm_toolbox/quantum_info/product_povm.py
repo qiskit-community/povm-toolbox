@@ -95,7 +95,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
                 help to visualize the vector if they have a small norm.
         """
         # Number of subplots (one per qubit)
-        num = self.n_subsystems
+        num = self.num_subsystems
 
         # Check that all local POVMs are single-qubit POVMs
         if any([len(idx) > 1 for idx in self.sub_systems]):

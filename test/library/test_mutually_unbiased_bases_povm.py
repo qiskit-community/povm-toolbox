@@ -31,11 +31,14 @@ class TestRandomizedPMs(TestCase):
         qc = QuantumCircuit(2)
         qc.h(0)
 
-        n_qubit = qc.num_qubits
+        num_qubits = qc.num_qubits
 
         with self.subTest("Test uniform angles across qubits."):
             measurement = MutuallyUnbiasedBasesMeasurements(
-                n_qubit, bias=np.ones(3) / 3, angles=np.array([0.75, -np.pi / 3, 0.2]), seed_rng=rng
+                num_qubits,
+                bias=np.ones(3) / 3,
+                angles=np.array([0.75, -np.pi / 3, 0.2]),
+                seed_rng=rng,
             )
             sampler = StatevectorSampler(seed=rng)
             povm_sampler = POVMSampler(sampler=sampler)
@@ -56,7 +59,7 @@ class TestRandomizedPMs(TestCase):
 
         with self.subTest("Test specific angles for each qubit."):
             measurement = MutuallyUnbiasedBasesMeasurements(
-                n_qubit,
+                num_qubits,
                 bias=np.ones(3) / 3,
                 angles=np.array([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
                 seed_rng=rng,

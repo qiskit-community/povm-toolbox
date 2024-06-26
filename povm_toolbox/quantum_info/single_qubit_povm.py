@@ -52,7 +52,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
         effect as :math:`\vec{r}_k = \gamma_k \vec{a}_k`, which uniquely defines
         the rank-1 effect.
         """
-        r = np.empty((self.n_outcomes, 3))
+        r = np.empty((self.num_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
             # Check that the povm effect is rank-1:
             if np.linalg.matrix_rank(self.operators[i]) > 1:

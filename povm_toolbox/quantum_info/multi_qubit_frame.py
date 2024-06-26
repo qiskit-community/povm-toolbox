@@ -47,7 +47,7 @@ class MultiQubitFrame(BaseFrame[int]):
             ValueError: if the frame operators do not have a correct shape. They should all
                 be square and of the same dimension.
         """
-        self._n_operators: int = len(list_operators)
+        self._num_operators: int = len(list_operators)
         self._dimension: int = list_operators[0].dim[0]
         for frame_op in list_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
@@ -58,7 +58,7 @@ class MultiQubitFrame(BaseFrame[int]):
 
         self._pauli_operators: list[dict[str, complex]] | None = None
 
-        self._array: np.ndarray = np.ndarray((self.dimension**2, self.n_operators), dtype=complex)
+        self._array: np.ndarray = np.ndarray((self.dimension**2, self.num_operators), dtype=complex)
         for k, frame_op in enumerate(list_operators):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
 
@@ -70,8 +70,8 @@ class MultiQubitFrame(BaseFrame[int]):
 
     def __repr__(self):
         """Return the string representation of a :class:`.MultiQubitFrame` instance."""
-        f_subsystems = f"(num_qubits={self.n_subsystems})" if self.n_subsystems > 1 else ""
-        return f"{self.__class__.__name__}{f_subsystems}<{self.n_operators}> at {hex(id(self))}"
+        f_subsystems = f"(num_qubits={self.num_subsystems})" if self.num_subsystems > 1 else ""
+        return f"{self.__class__.__name__}{f_subsystems}<{self.num_operators}> at {hex(id(self))}"
 
     @property
     def informationally_complete(self) -> bool:
@@ -84,9 +84,9 @@ class MultiQubitFrame(BaseFrame[int]):
         return self._dimension
 
     @property
-    def n_operators(self) -> int:
+    def num_operators(self) -> int:
         """Give the number of outcomes of the frame."""
-        return self._n_operators
+        return self._num_operators
 
     @property
     def operators(self) -> list[Operator]:
@@ -96,7 +96,7 @@ class MultiQubitFrame(BaseFrame[int]):
     @operators.setter
     def operators(self, new_operators: list[Operator]):
         """Set the frame operators."""
-        self._n_operators = len(new_operators)
+        self._num_operators = len(new_operators)
         self._dimension = new_operators[0].dim[0]
         for frame_op in new_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
@@ -108,7 +108,7 @@ class MultiQubitFrame(BaseFrame[int]):
 
         self._pauli_operators = None
 
-        self._array = np.ndarray((self.dimension**2, self.n_operators), dtype=complex)
+        self._array = np.ndarray((self.dimension**2, self.num_operators), dtype=complex)
         for k, frame_op in enumerate(new_operators):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
 
@@ -157,12 +157,12 @@ class MultiQubitFrame(BaseFrame[int]):
 
     def __len__(self) -> int:
         """Return the number of operators of the frame."""
-        return self.n_operators
+        return self.num_operators
 
     def __array__(self) -> np.ndarray:
         """Return the array representation of the frame, with shape.
 
-        The array has a shape :math:`(``self.dimension``**2, ``self.n_operators``)`.
+        The array has a shape :math:`(``self.dimension``**2, ``self.num_operators``)`.
         """
         return self._array
 
