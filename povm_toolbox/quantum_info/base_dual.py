@@ -32,11 +32,11 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
     @abstractmethod
     def get_omegas(
         self,
-        obs: SparsePauliOp | Operator,
+        observable: SparsePauliOp | Operator,
         outcome_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
         """Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual."""
-        return self.analysis(obs, outcome_idx)
+        return self.analysis(observable, outcome_idx)
 
     @abstractmethod
     def is_dual_to(self, frame: BaseFrame) -> bool:
