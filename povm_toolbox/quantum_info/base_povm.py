@@ -29,7 +29,7 @@ class BasePOVM(BaseFrame[LabelT], ABC):
     @property
     def n_outcomes(self) -> int:
         """Give the number of outcomes of the POVM."""
-        return self.n_operators
+        return self.num_operators
 
     @abstractmethod
     def get_prob(

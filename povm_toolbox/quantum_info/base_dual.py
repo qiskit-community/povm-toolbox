@@ -27,7 +27,7 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
     @property
     def n_outcomes(self) -> int:
         """Give the number of outcomes of the DUAL."""
-        return self.n_operators
+        return self.num_operators
 
     @abstractmethod
     def get_omegas(

@@ -76,10 +76,10 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
                 alphas = tuple(np.real(np.trace(frame_op.data)) for frame_op in frame.operators)
             # Check that the number of alpha-parameters match the number of operators
             # forming the ``frame``.
-            elif len(alphas) != frame.n_operators:
+            elif len(alphas) != frame.num_operators:
                 raise ValueError(
                     f"The number of alpha-parameters should be equal to the number of"
-                    f" operators in the frame ({frame.n_operators}). Here, {len(alphas)}"
+                    f" operators in the frame ({frame.num_operators}). Here, {len(alphas)}"
                     " parameters were provided."
                 )
 

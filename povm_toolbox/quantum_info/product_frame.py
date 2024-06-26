@@ -61,7 +61,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         """
         subsystem_indices = set()
         self._dimension = 1
-        self._n_operators = 1
+        self._num_operators = 1
         shape: list[int] = []
         for idx, povm in povms.items():
             idx_set = set(idx)
@@ -83,8 +83,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 )
             subsystem_indices.update(idx_set)
             self._dimension *= povm.dimension
-            self._n_operators *= povm.n_operators
-            shape.append(povm.n_operators)
+            self._num_operators *= povm.num_operators
+            shape.append(povm.num_operators)
 
         self._informationally_complete: bool = all(
             [povm.informationally_complete for povm in povms.values()]
@@ -164,9 +164,9 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         return self._dimension
 
     @property
-    def n_operators(self) -> int:
+    def num_operators(self) -> int:
         """Give the number of single-qubit operators forming the POVM."""
-        return self._n_operators
+        return self._num_operators
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -200,7 +200,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
     def __len__(self) -> int:
         """Return the number of outcomes of the POVM."""
-        return self.n_operators
+        return self.num_operators
 
     def _trace_of_prod(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
         """Return the trace of the product of a Hermitian operator with a specific frame operator.
@@ -247,10 +247,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                             f"The outcome label {frame_op_idx} does not match the expected shape. It is"
                             f" supposed to contain {len(self._povms)} integers, but has {len(frame_op_idx)}."
                         ) from exc
-                    if povm.n_operators <= frame_op_idx[j]:
+                    if povm.num_operators <= frame_op_idx[j]:
                         raise IndexError(
                             f"Outcome index '{frame_op_idx[j]}' is out of range for the local POVM"
-                            f" acting on subsystems {idx}. This POVM has {povm.n_operators} outcomes."
+                            f" acting on subsystems {idx}. This POVM has {povm.num_operators} outcomes."
                         ) from exc
                     raise exc
                 else:

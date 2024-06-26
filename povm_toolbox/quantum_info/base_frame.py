@@ -58,7 +58,7 @@ class BaseFrame(ABC, Generic[LabelT]):
 
     @property
     @abstractmethod
-    def n_operators(self) -> int:
+    def num_operators(self) -> int:
         """Give the number of effects of the frame."""
 
     @abstractmethod
