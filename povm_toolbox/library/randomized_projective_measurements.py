@@ -104,7 +104,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 f"The shape of ``bias`` ({bias.shape}) is not compatible with the shape"
                 f" of ``angles`` ({angles.shape})."
             )
-        self._n_PVMs = bias.shape[-1]
+        self._num_PVMs = bias.shape[-1]
 
         if bias.ndim == 1:
             bias = np.tile(bias, (self.num_qubits, 1))
@@ -128,7 +128,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 f"The shape of ``angles`` ({angles.shape}) is not compatible with"
                 f" ``num_qubits`` ({num_qubits})."
             )
-        self.angles = angles.reshape((self.num_qubits, self._n_PVMs, 2))
+        self.angles = angles.reshape((self.num_qubits, self._num_PVMs, 2))
         self.measurement_twirl = measurement_twirl
 
         self.msmt_qc = self._build_qc()
@@ -265,7 +265,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             # each set of circuit parameter values supplied by the user through the
             # :method:``POVMSampler.run`` method.
             pvm_idx[..., i] = self._rng.choice(
-                self._n_PVMs,
+                self._num_PVMs,
                 size=circuit_binding.size * shots,
                 replace=True,
                 p=self.bias[i],
@@ -274,10 +274,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             )
             # If the twirling option is turned on we double the number of PVMs
             # because each PVM can be twirled. The encoding works as follows :
-            #   `pvm_idx % self._n_PVMS` is the index of the PVM used and
-            #   `pvm_idx // self._n_PVMS` indicates if the PVM has been twirled.
+            #   `pvm_idx % self._num_PVMs` is the index of the PVM used and
+            #   `pvm_idx // self._num_PVMs` indicates if the PVM has been twirled.
             # For the example of :class:`ClassicalShadows`, we have:
-            #   n_PVMs = 3
+            #   num_PVMs = 3
             #   pvm_idx == 0 -> untwirled Z-measurement: {|0><0|, |1><1|}
             #   pvm_idx == 1 -> untwirled X-measurement: {|+><+|, |-><-|}
             #   pvm_idx == 2 -> untwirled Y-measurement: {|+i><+i|, |-i><-i|}
@@ -285,7 +285,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             #   pvm_idx == 4 -> twirled X-measurement: {|-><-|, |+><+|}
             #   pvm_idx == 5 -> twirled Y-measurement: {|-i><-i|, |+i><+i|}
             if self.measurement_twirl:
-                pvm_idx[..., i] += self._n_PVMs * self._rng.integers(
+                pvm_idx[..., i] += self._num_PVMs * self._rng.integers(
                     2,
                     size=circuit_binding.size * shots,
                 ).reshape(  # Reshape to match the shape of ``pvm_idx``.
@@ -421,8 +421,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         for multi_index in np.ndindex(pvm_idx.shape):
             # multi_index.shape is (*pv, povm_sampler_pub.shots, num_qubits)
             i_qubit = multi_index[-1]
-            actual_pvm_idx = pvm_idx[multi_index] % self._n_PVMs
-            twirl = pvm_idx[multi_index] // self._n_PVMs
+            actual_pvm_idx = pvm_idx[multi_index] % self._num_PVMs
+            twirl = pvm_idx[multi_index] // self._num_PVMs
 
             theta[multi_index] = self.angles[i_qubit, actual_pvm_idx, 0] + np.pi * (twirl > 0)
             phi[multi_index] = self.angles[i_qubit, actual_pvm_idx, 1]
@@ -453,10 +453,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         Returns:
             A tuple of indices indicating the POVM outcomes on each qubit. For each qubit,
-            the index goes from :math:``0`` to :math:``2 * self.n_PVM - 1``.
+            the index goes from :math:``0`` to :math:``2 * self.num_PVM - 1``.
         """
         return tuple(
-            (pvm_idx[i] % self._n_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._n_PVMs) % 2
+            (pvm_idx[i] % self._num_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._num_PVMs) % 2
             for i, bit in enumerate(bitstring_outcome[::-1])
         )
 
@@ -465,7 +465,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building POVM definition")
 
-        stabilizers: np.ndarray = np.zeros((self.num_qubits, self._n_PVMs, 2, 2), dtype=complex)
+        stabilizers: np.ndarray = np.zeros((self.num_qubits, self._num_PVMs, 2, 2), dtype=complex)
 
         stabilizers[:, :, 0, 0] = np.cos(self.angles[:, :, 0] / 2.0)
         stabilizers[:, :, 0, 1] = (
@@ -477,7 +477,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         stabilizers[:, :, 1, 1] = stabilizers[:, :, 0, 0]  # up to irrelevant global phase e^(i phi)
 
         stabilizers = np.multiply(stabilizers.T, np.sqrt(self.bias).T).T
-        stabilizers = stabilizers.reshape((self.num_qubits, 2 * self._n_PVMs, 2))
+        stabilizers = stabilizers.reshape((self.num_qubits, 2 * self._num_PVMs, 2))
 
         sq_povms = []
         for vecs in stabilizers:
