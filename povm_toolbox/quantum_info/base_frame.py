@@ -49,7 +49,7 @@ class BaseFrame(ABC, Generic[LabelT]):
         """Give the dimension of the Hilbert space on which the effects act."""
 
     @property
-    def n_subsystems(self) -> int:
+    def num_subsystems(self) -> int:
         r"""Return the number of subsystems which the effects act on.
 
         For qubits, this is always :math:`\log_2(`:attr:`.dimension`:math:`)`.

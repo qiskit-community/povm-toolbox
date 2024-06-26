@@ -70,7 +70,7 @@ class MultiQubitFrame(BaseFrame[int]):
 
     def __repr__(self):
         """Return the string representation of a :class:`.MultiQubitFrame` instance."""
-        f_subsystems = f"(num_qubits={self.n_subsystems})" if self.n_subsystems > 1 else ""
+        f_subsystems = f"(num_qubits={self.num_subsystems})" if self.num_subsystems > 1 else ""
         return f"{self.__class__.__name__}{f_subsystems}<{self.num_operators}> at {hex(id(self))}"
 
     @property
