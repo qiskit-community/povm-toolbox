@@ -17,6 +17,8 @@ from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
 from qiskit import QuantumCircuit
 from qiskit.circuit.random import random_circuit
+from qiskit.primitives import PrimitiveResult
+from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer.primitives import SamplerV2 as AerSampler
@@ -48,14 +50,26 @@ class TestPOVMSamplerJob(TestCase):
         cs_shots = 32
         with self.subTest("Result for a single PUB."):
             cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
-            result = cs_job.result()[0]
-            self.assertIsInstance(result, POVMPubResult)
+            result = cs_job.result()
+            self.assertIsInstance(result, PrimitiveResult)
+            self.assertIsInstance(result[0], POVMPubResult)
         with self.subTest("Result for multiple PUBs."):
-            # TODO
-            pass
-        with self.subTest("Error raised if incompatible lengths of raw results and metadata."):
-            # TODO
-            pass
+            cs_job = povm_sampler.run(
+                [qc_random, qc_random], shots=cs_shots, povm=cs_implementation
+            )
+            result = cs_job.result()
+            self.assertIsInstance(result, PrimitiveResult)
+            self.assertEqual(len(result), 2)
+            self.assertIsInstance(result[0], POVMPubResult)
+            self.assertIsInstance(result[1], POVMPubResult)
+        with self.subTest(
+            "Error raised if incompatible lengths of raw results and metadata."
+        ) and self.assertRaises(ValueError):
+            cs_job = povm_sampler.run(
+                [qc_random, qc_random], shots=cs_shots, povm=cs_implementation
+            )
+            cs_job.metadata.pop()
+            _ = cs_job.result()
 
     def test_recover_job(self):
         qc = QuantumCircuit(2)
@@ -107,10 +121,36 @@ class TestPOVMSamplerJob(TestCase):
 
         with self.subTest(
             "Error if id of ``base_job`` does not match the one stored in the metadata file."
-        ):
-            # TODO
-            pass
+        ) and self.assertRaises(ValueError):
+            job.save_metadata(filename="saved_metadata.pkl")
+            job2 = povm_sampler.run(pubs=[qc_isa], shots=1, povm=measurement)
+            _ = POVMSamplerJob.recover_job(filename="saved_metadata.pkl", base_job=job2)
 
     def test_status(self):
         """Test the ``status`` and associated methods."""
-        # TODO
+        povm_sampler = POVMSampler(sampler=self.sampler)
+        num_qubits = 2
+        qc_random = random_circuit(num_qubits=num_qubits, depth=1, measure=False, seed=2)
+        cs_implementation = ClassicalShadows(num_qubits=num_qubits)
+        cs_job = povm_sampler.run([qc_random], shots=1, povm=cs_implementation)
+        job_status, is_done, is_running, is_cancelled, in_final = (
+            cs_job.status(),
+            cs_job.done(),
+            cs_job.running(),
+            cs_job.cancelled(),
+            cs_job.in_final_state(),
+        )
+        self.assertEqual(job_status, JobStatus.RUNNING)
+        self.assertFalse(is_done)
+        self.assertTrue(is_running)
+        self.assertFalse(is_cancelled)
+        self.assertFalse(in_final)
+
+        _ = cs_job.result()
+        self.assertEqual(cs_job.status(), JobStatus.DONE)
+        self.assertTrue(cs_job.done())
+        self.assertFalse(cs_job.running())
+        self.assertFalse(cs_job.cancelled())
+        self.assertTrue(cs_job.in_final_state())
+        cs_job.cancel()
+        self.assertFalse(cs_job.cancelled())
