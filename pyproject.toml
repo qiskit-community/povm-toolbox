@@ -62,6 +62,7 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",
     "nbsphinx",
+    "pytest-doctestplus>=1.2.1",
 ]
 
 [tool.coverage.run]

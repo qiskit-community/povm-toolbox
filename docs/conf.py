@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
@@ -50,6 +51,7 @@ extensions = [
     "sphinx_copybutton",
     "nbsphinx",
     "qiskit_sphinx_theme",
+    "pytest_doctestplus.sphinx.doctestplus",
 ]
 
 html_last_updated_fmt = "%Y/%m/%d"
