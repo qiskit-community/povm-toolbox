@@ -96,3 +96,21 @@ class TestDualFromEmpiricalFrequencies(TestCase):
             exp_value, std = post_processor.get_expectation_value(observable)
             self.assertAlmostEqual(exp_value, 0.9128662937761666)
             self.assertAlmostEqual(std, 0.40472771240833644)
+
+    def test_errors_raised(self):
+        """Test that the method raises the appropriate errors when suitable."""
+        with self.subTest("Error if ``povm`` is not a ``ProductPOVM`."):
+            # TODO
+            pass
+
+        with self.subTest("Error if ``loc`` is invalid."):
+            # TODO
+            pass
+
+        with self.subTest("Error if length of `bias` is invalid."):
+            # TODO
+            pass
+
+        with self.subTest("Error if length of `ansatz` is invalid."):
+            # TODO
+            pass
