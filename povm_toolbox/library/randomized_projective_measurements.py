@@ -34,22 +34,50 @@ LOGGER = logging.getLogger(__name__)
 
 
 class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
-    """A general randomized projective measurements POVM."""
+    """A general randomized projective measurements POVM.
+
+    The example below shows how you construct a RPM POVM. It plots a visual representation of the
+    POVM's definition to exemplify the different randomization for each qubit.
+
+    .. plot::
+       :include-source:
+
+       >>> import numpy as np
+       >>> from povm_toolbox.library import RandomizedProjectiveMeasurements
+       >>> povm = RandomizedProjectiveMeasurements(
+       ...     2,
+       ...     bias=np.array([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
+       ...     angles=np.array([
+       ...         [np.pi/6, 5*np.pi/6, -np.pi/4, -np.pi/2, -np.pi/2, np.pi/4],
+       ...         [np.pi/3, np.pi/3, -np.pi/3, np.pi/3, np.pi/3, -np.pi/3],
+       ...     ]),
+       ... )
+       >>> print(povm)
+       RandomizedProjectiveMeasurements(num_qubits=2, bias=array([[0.1 , 0.6 , 0.3 ], [0.5 , 0.25, 0.25]]),
+           angles=array([[[ 0.52359878,  2.61799388],
+               [-0.78539816, -1.57079633],
+               [-1.57079633,  0.78539816]],
+              [[ 1.04719755,  1.04719755],
+               [-1.04719755,  1.04719755],
+               [ 1.04719755, -1.04719755]]]))
+       >>> povm.definition().draw_bloch()
+       <Figure size 1000x500 with 2 Axes>
+    """
 
     def __init__(
         self,
         num_qubits: int,
         bias: np.ndarray,
         angles: np.ndarray,
-        measurement_twirl: bool = False,
+        *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
+        measurement_twirl: bool = False,
         shot_repetitions: int = 1,
         seed_rng: int | Generator | None = None,
     ) -> None:
-        """Implement a product POVM through the randomization of single-qubit projective measurement.
-
-        If we extend this interface to support different number of effects for each qubit in the
-        future, we may need to move away from np.ndarray input types to sequences of sequences.
+        # NOTE: If we extend this interface to support different number of effects for each qubit in
+        # the future, we may need to move away from np.ndarray input types to sequences of sequences.
+        """Initialize a randomized projective measurements POVM.
 
         Args:
             num_qubits: the number of qubits.
@@ -57,36 +85,33 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs.
                 These floats should sum to 1. If 2D, it will have a new set of biases for each
                 qubit.
-            angles: can be either 1D or 2D. If 1D, it should be a flatten array containing
-                float values to indicate the different angles of each PVM. I.e. its length
-                equals two times the number of PVMs (since we have 2 angles per PVM). If 2D,
-                it will have a new set of angles for each qubit. The angles are expected to
-                be pairs of angles ``(theta, phi)`` for each PVM and correspond to the
-                parameters of the :class:`.qiskit.circuit.library.UGate` instance used to
-                rotate the canonical Z-measurement into an arbitrary projective measurement.
-                Note that this differs from the angles expected during the initialization of
-                a :class:`.MutuallyUnbiasedBasesMeasurements` instance, where a unique
-                triplet of angles ``(theta, phi, lam)`` is expected for each qubit.
-            measurement_twirl : option to randomly twirl the measurements. For each single-qubit
+            angles: can be either 1D or 2D. If 1D, it should be a flatten array containing float
+                values to indicate the different angles of each PVM. I.e. its length equals two
+                times the number of PVMs (since we have 2 angles per PVM). If 2D, it will have a new
+                set of angles for each qubit. The angles are expected to be pairs of angles
+                ``(theta, phi)`` for each PVM and correspond to the parameters of the
+                :class:`~.qiskit.circuit.library.UGate` instance used to rotate the canonical
+                Z-measurement into an arbitrary projective measurement. Note that this differs from
+                the angles expected during the initialization of a
+                :class:`.MutuallyUnbiasedBasesMeasurements` instance, where a unique triplet of
+                angles ``(theta, phi, lam)`` is expected for each qubit.
+            measurement_layout: optional list of indices specifying on which qubits the POVM acts.
+                See :attr:`.measurement_layout` for more details.
+            measurement_twirl: whether to randomly twirl the measurements. For each single-qubit
                 projective measurement, random twirling is equivalent to randomly flipping the
-                measurement. This is equivalent to randomly taking the opposite Bloch vector in
-                the Bloch sphere representation.
-            measurement_layout: list of indices specifying on which qubits the POVM
-                acts. If None, two cases can be distinguished: 1) if a circuit supplied
-                to the :meth:`.compose_circuits` has been transpiled, its final
-                transpile layout will be used as default value, 2) otherwise, a
-                simple one-to-one layout ``list(range(num_qubits))`` is used.
-            shot_repetitions: number of times the measurement is repeated for each
-                sampled PVM. More precisely, a new PVM is sampled for all ``shots``
-                (i.e. the number of times as specified by the user via the ``shots``
-                argument of the method :meth:`.POVMSampler.run`). Then, the parameter
-                ``shot_repetitions`` states how many times we repeat the measurement
-                for each sampled PVM (default is 1). Therefore, the effective total
-                number of measurement shots is ``shots`` multiplied by ``shot_repetitions``.
+                measurement. This is equivalent to randomly taking the opposite Bloch vector in the
+                Bloch sphere representation.
+            shot_repetitions: number of times the measurement is repeated for each sampled PVM. More
+                precisely, a new PVM is sampled for all ``shots`` (i.e. the number of times as
+                specified by the user via the ``shots`` argument of the method
+                :meth:`.POVMSampler.run`). Then, the parameter ``shot_repetitions`` states how many
+                times we repeat the measurement for each sampled PVM (default is 1). Therefore, the
+                effective total number of measurement shots is ``shots`` multiplied by
+                ``shot_repetitions``.
             seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The PVMs are sampled according to the probability distribution(s) specified by
-                ``bias``. The user can also directly provide a random generator. If None, a random
-                seed will be used.
+                ``bias``. The user can also directly provide a random generator. If ``None``, a
+                random seed will be used.
 
         Raises:
             ValueError: If the shape of ``bias`` is not compatible with the shape of ``angles``.
@@ -119,7 +144,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             )
         if not np.allclose(np.sum(bias, axis=-1), 1.0):
             raise ValueError("The probability distribution parameters should sum up to one.")
+
         self.bias = bias
+        """The sampling bias for each PVM per qubit."""
 
         if angles.ndim == 1:
             angles = np.tile(angles, (self.num_qubits, 1))
@@ -129,11 +156,23 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 f" ``num_qubits`` ({num_qubits})."
             )
         self.angles = angles.reshape((self.num_qubits, self._num_PVMs, 2))
-        self.measurement_twirl = measurement_twirl
+        """The angles defining each PVM. These are stored as pairs of ``(theta, phi)`` and
+        correspond to the parameters of the :class:`~.qiskit.circuit.library.UGate` instance used to
+        rotate the canonical Z-measurement into an arbitrary projective measurement."""
 
+        self.measurement_twirl = measurement_twirl
+        """Whether twirling of the PVMs is enabled."""
+
+        # NOTE: this public attribute inherits its docstring from the base class
         self.measurement_circuit = self._build_qc()
 
         self.shot_repetitions = shot_repetitions
+        """The number of times the measurement is repeated for each sampled PVM. More precisely, a
+        new PVM is sampled for all ``shots`` (i.e. the number of times as specified by the user via
+        the ``shots`` argument of the method :meth:`.POVMSampler.run`). Then, this attribute states
+        how many times we repeat the measurement for each sampled PVM (default is 1). Therefore, the
+        effective total number of measurement shots is ``shots`` multiplied by ``shot_repetitions``.
+        """
 
         self._rng: Generator
         if seed_rng is None:
@@ -145,20 +184,30 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         else:
             raise TypeError(f"The type of `seed_rng` ({type(seed_rng)}) is not valid.")
 
+    def __repr__(self) -> str:
+        """Return the string representation of a RandomizedProjectiveMeasurements instance."""
+        return (
+            f"{self.__class__.__name__}(num_qubits={self.num_qubits}, bias={repr(self.bias)}, "
+            f"angles={repr(self.angles)})"
+        )
+
     def _build_qc(self) -> QuantumCircuit:
         """Build the quantum circuit that implements the measurement.
 
-        In the case of randomized projective measurements (PMs), we choose for each shot a PM at random to perform the
-        measurement. Any PM on single qubits can be described by two orthogonal projectors :math:``M_0 = |pi><pi|``
-        and :math:``M_1 = |pi_orth><pi_orth|``. The vector :math:``|pi> = U(theta, phi, 0) |0>`` can be defined by the
-        first two usual Euler angles. The third Euler angles defines the global phase, which is irrelevant here.
-        We then have :math:``|pi_orth> = U(theta, phi, 0) |1>`` up to another irrelevant global phase. To implement
-        this measurement, we use the fact that :math:``p_i = Tr[rho M_i] = Tr[rho U|i><i|U_dag] = Tr[U_dag rho U |i><i|]``.
-        In other words, we can first let the state evolve under :math:``U_dag`` and then perform a computational basis
-        measurement. Note that we have :math:``U(theta, phi, lambda)_dag = U(-theta, -lambda, -phi)``.
+        In the case of randomized projective measurements (PMs), we choose for each shot a PM at
+        random to perform the measurement. Any PM on single qubits can be described by two
+        orthogonal projectors :math:``M_0 = |pi><pi|`` and :math:``M_1 = |pi_orth><pi_orth|``. The
+        vector :math:``|pi> = U(theta, phi, 0) |0>`` can be defined by the first two usual Euler
+        angles. The third Euler angles defines the global phase, which is irrelevant here. We then
+        have :math:``|pi_orth> = U(theta, phi, 0) |1>`` up to another irrelevant global phase. To
+        implement this measurement, we use the fact that :math:``p_i = Tr[rho M_i] = Tr[rho
+        U|i><i|U_dag] = Tr[U_dag rho U |i><i|]``. In other words, we can first let the state evolve
+        under :math:``U_dag`` and then perform a computational basis measurement. Note that we have
+        :math:``U(theta, phi, lambda)_dag = U(-theta, -lambda, -phi)``.
 
         Returns:
-            Parametrized quantum circuit that can implement any product of single-qubit projective measurements.
+            Parametrized quantum circuit that can implement any product of single-qubit projective
+            measurements.
         """
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
@@ -193,35 +242,33 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         circuit: QuantumCircuit,
         circuit_binding: BindingsArray,
         shots: int,
+        *,
         pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, RPMMetadata]:
         """Append the measurement circuit(s) to the supplied circuit.
 
-        This method takes a supplied circuit and append the measurement circuit
-        to it. As the measurement circuit is parametrized, its parameters values
-        are concatenated with the parameter values associated with the supplied
-        quantum circuit. TODO: explain how the distribution of the shots is done.
-        If a randomized POVM is used, the end user's parameters have to be
-        concatenated with the sampled POVM parameters. The POVM parameters are a
-        2-D (TODO: update docstring in next PR, which will change this method anyways)
+        This method takes a supplied circuit and appends the measurement circuit(s) to it. If the
+        measurement circuit is parametrized, its parameters values should be concatenated with the
+        parameter values associated with the supplied quantum circuit.
+
+        .. warning::
+           The actual number of measurements executed will depend not only on the provided ``shots``
+           value but also on the value of :attr:`.shot_repetitions`.
 
         Args:
             circuit: A quantum circuit.
             circuit_binding: A bindings array.
-            shots: A specific number of shots to run with. Note that ``shots`` is
-                effectively the number of times we sample PVMs. Then, for each
-                sampled PVM, the measurement is repeated ``self.shot_repetitions``
-                times. Therefore, the actual total number of measurement shots is
-                then ``shots`` multiplied by ``self.shot_repetitions``.
-            pass_manager: An optional pass manager. After the supplied circuit has
-                been composed with the measurement circuit, the pass manager will
+            shots: A specific number of shots to run with.
+            .. note::
+               test
+            pass_manager: An optional transpilation pass manager. After the supplied circuit has
+                been composed with the measurement circuit, the pass manager will be used to
                 transpile the composed circuit.
 
         Returns:
-            A tuple of a sampler pub and a dictionary of metadata which include
-            the ``POVMImplementation`` object itself. The metadata should contain
-            all the information necessary to extract the POVM outcomes out of raw
-            bitstrings. (TODO: explain what is it exactly)
+            A tuple of a sampler pub and a dictionary of metadata which includes the
+            :class:`.POVMImplementation` object itself. The metadata should contain all the
+            information necessary to extract the POVM outcomes out of raw bitstrings.
         """
         t1 = time.time()
         LOGGER.info("Piecing together SamplerPub")
@@ -320,7 +367,6 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         return (pub, metadata)
 
     def reshape_data_bin(self, data: DataBin) -> DataBin:
-        """TODO."""
         t1 = time.time()
         LOGGER.info("Reshaping result DataBin")
 
@@ -361,7 +407,6 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         povm_metadata: RPMMetadata,
         loc: int | tuple[int, ...] | None = None,
     ) -> list[tuple[int, ...]]:
-        """TODO."""
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")
 
@@ -405,7 +450,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         """Return the concrete parameter values associated to a PVM label.
 
         Args:
-            pvm_idx: an array of integers with shape `(*pv, povm_sampler_pub.shots, num_qubits)`.
+            pvm_idx: an array of integers with shape ``(*pv, povm_sampler_pub.shots, num_qubits)``.
 
         Returns:
             Parameter values for the specified PVM.
@@ -441,10 +486,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
     ) -> tuple[int, ...]:
         """Transform a PVM index and a bitstring outcome to a POVM outcome.
 
-        The method takes into account the possible twirling of the measurements
-        and un-do its effect. For single-qubit projective measurements, it means
-        to perform a bit-flip of the classical outcome for each twirled projective
-        measurement.
+        The method takes into account the possible twirling of the measurements and un-does its
+        effect. For single-qubit projective measurements, it means to perform a bit-flip of the
+        classical outcome for each twirled projective measurement.
 
         Args:
             pvm_idx: qubit-wise index indicating which PVM was used to perform the measurement.
@@ -461,7 +505,6 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         )
 
     def definition(self) -> ProductPOVM:
-        """Return the POVM corresponding to this implementation."""
         t1 = time.time()
         LOGGER.info("Building POVM definition")
 
