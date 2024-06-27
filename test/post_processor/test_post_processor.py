@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Tests for the MultiQubitPOVM class."""
+"""Tests for the POVMPostProcessor class."""
 
 from unittest import TestCase
 
@@ -21,19 +21,18 @@ from qiskit.quantum_info import SparsePauliOp
 
 
 class TestPostProcessor(TestCase):
-    """TODO."""
+    """Test the methods and attributes of the :class:`.POVMPostProcessor class`."""
 
     def test_init(self):
-        """TODO."""
-
+        """Test that ``__init__`` works correctly."""
         qc = QuantumCircuit(2)
         qc.h(0)
         qc.cx(0, 1)
 
-        sampler = Sampler()
+        sampler = Sampler(seed=1)
         povm_sampler = POVMSampler(sampler=sampler)
 
-        measurement = ClassicalShadows(num_qubits=2)
+        measurement = ClassicalShadows(num_qubits=2, seed_rng=2)
 
         job = povm_sampler.run([qc], shots=256, povm=measurement)
         result = job.result()
@@ -41,9 +40,36 @@ class TestPostProcessor(TestCase):
 
         observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
 
-        post_processor = POVMPostProcessor(pub_result)
+        with self.subTest("Initialization with default ``dual``."):
+            post_processor = POVMPostProcessor(pub_result)
+            exp_val, std = post_processor.get_expectation_value(observable)
+            self.assertIsInstance(exp_val, float)  # TODO : assert value instead of type
+            self.assertIsInstance(std, float)  # TODO : assert value instead of type
 
-        exp_val, std = post_processor.get_expectation_value(observable)
+        with self.subTest("Initialization with valid ``dual`` argument."):
+            # TODO
+            pass
 
-        self.assertIsInstance(exp_val, float)
-        self.assertIsInstance(std, float)
+        with self.subTest("Initialization with invalid ``dual`` argument."):
+            # TODO
+            pass
+
+    def test_dual(self):
+        """Test that the ``dual`` property and setter work correctly."""
+        # TODO
+        return
+
+    def test_get_decomposition_weights(self):
+        """Test that the ``get_decomposition_weights`` method works correctly."""
+        # TODO
+        return
+
+    def test_get_expectation_value(self):
+        """Test that the ``get_expectation_value`` method works correctly."""
+        # TODO
+        return
+
+    def test_single_exp_value_and_std(self):
+        """Test that the ``_single_exp_value_and_std`` method works correctly."""
+        # TODO
+        return
