@@ -46,9 +46,16 @@ class TestPOVMSamplerJob(TestCase):
         qc_random = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=41)
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
-        cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
-        result = cs_job.result()[0]
-        self.assertIsInstance(result, POVMPubResult)
+        with self.subTest("Result for a single PUB."):
+            cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
+            result = cs_job.result()[0]
+            self.assertIsInstance(result, POVMPubResult)
+        with self.subTest("Result for multiple PUBs."):
+            # TODO
+            pass
+        with self.subTest("Error raised if incompatible lengths of raw results and metadata."):
+            # TODO
+            pass
 
     def test_recover_job(self):
         qc = QuantumCircuit(2)
@@ -65,29 +72,45 @@ class TestPOVMSamplerJob(TestCase):
         runtime_sampler = RuntimeSampler(backend=backend)
         povm_sampler = POVMSampler(runtime_sampler)
         job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
-        job.save_metadata(filename="saved_metadata.pkl")
         tmp = job.base_job
 
-        job_recovered = POVMSamplerJob.recover_job(filename="saved_metadata.pkl", base_job=tmp)
-        self.assertIsInstance(job_recovered, POVMSamplerJob)
-        result = job_recovered.result()
-        pub_result = result[0]
-        observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
-        post_processor = POVMPostProcessor(pub_result)
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 3.53125)
-        self.assertAlmostEqual(std, 0.3590672895231641)
+        with self.subTest("Save job with specific filename."):
+            job.save_metadata(filename="saved_metadata.pkl")
+            job_recovered = POVMSamplerJob.recover_job(filename="saved_metadata.pkl", base_job=tmp)
+            self.assertIsInstance(job_recovered, POVMSamplerJob)
+            result = job_recovered.result()
+            pub_result = result[0]
+            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
+            post_processor = POVMPostProcessor(pub_result)
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 3.53125)
+            self.assertAlmostEqual(std, 0.3590672895231641)
 
-        job.save_metadata()
+        with self.subTest("Save job with default filename."):
+            job.save_metadata()
+            job_recovered = POVMSamplerJob.recover_job(
+                filename=f"job_metadata_{job.base_job.job_id()}.pkl", base_job=tmp
+            )
+            self.assertIsInstance(job_recovered, POVMSamplerJob)
+            result = job_recovered.result()
+            pub_result = result[0]
+            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
+            post_processor = POVMPostProcessor(pub_result)
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 3.53125)
+            self.assertAlmostEqual(std, 0.3590672895231641)
 
-        job_recovered = POVMSamplerJob.recover_job(
-            filename=f"job_metadata_{job.base_job.job_id()}.pkl", base_job=tmp
-        )
-        self.assertIsInstance(job_recovered, POVMSamplerJob)
-        result = job_recovered.result()
-        pub_result = result[0]
-        observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
-        post_processor = POVMPostProcessor(pub_result)
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 3.53125)
-        self.assertAlmostEqual(std, 0.3590672895231641)
+        with self.subTest("Test default ``base_job``."):
+            # TODO
+            # It requires QiskitRuntimeService. How can we test this ?
+            pass
+
+        with self.subTest(
+            "Error if id of ``base_job`` does not match the one stored in the metadata file."
+        ):
+            # TODO
+            pass
+
+    def test_status(self):
+        """Test the ``status`` and associated methods."""
+        # TODO
