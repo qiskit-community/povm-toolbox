@@ -45,7 +45,6 @@ This will run the following tools:
   basic linting rules
 - [`nbqa`](https://nbqa.readthedocs.io/en/latest/index.html): to check our
   jupyter notebooks
-- [`pydocstyle`](http://www.pydocstyle.org/en/stable/): to check our docstrings
 - [`mypy`](https://mypy.readthedocs.io/en/stable/): to check our type hints
 - [`pylint`](https://pylint.readthedocs.io/en/stable/): for additional linting
   rules

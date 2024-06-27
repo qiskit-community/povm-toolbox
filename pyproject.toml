@@ -46,7 +46,6 @@ style = [
 ]
 lint = [
     "povm_toolbox[style]",
-    "pydocstyle>=6.3.0",
     "mypy>=1.10.0",
     "pylint>=3.1.0",
     "toml",
@@ -148,6 +147,9 @@ ignore = [
     "PLR2004",
 ]
 explicit-preview-rules = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
 [tool.ruff.lint.pylint]
 max-args = 10

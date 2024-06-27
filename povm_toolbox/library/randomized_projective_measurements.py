@@ -13,7 +13,13 @@
 from __future__ import annotations
 
 import logging
+import sys
 import time
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 import numpy as np
 from numpy.random import Generator, default_rng
@@ -366,6 +372,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         return (pub, metadata)
 
+    @override
     def reshape_data_bin(self, data: DataBin) -> DataBin:
         t1 = time.time()
         LOGGER.info("Reshaping result DataBin")
@@ -492,7 +499,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         Args:
             pvm_idx: qubit-wise index indicating which PVM was used to perform the measurement.
-            bitstring_outcomes: the outcome of the measurements performed with the PVM label
+            bitstring_outcome: the outcome of the measurements performed with the PVM label
                 by ``pvm_idx``. The order of qubit is assumed to be reversed.
 
         Returns:
@@ -504,6 +511,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             for i, bit in enumerate(bitstring_outcome[::-1])
         )
 
+    @override
     def definition(self) -> ProductPOVM:
         t1 = time.time()
         LOGGER.info("Building POVM definition")
