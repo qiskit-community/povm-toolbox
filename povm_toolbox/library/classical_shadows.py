@@ -29,7 +29,6 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
     representation of the POVM's definition to exemplify the equal measurement probabilities.
 
     .. plot::
-       :context:
        :include-source:
 
        >>> from povm_toolbox.library import ClassicalShadows
@@ -66,9 +65,9 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
                 times we repeat the measurement for each sampled PVM (default is 1). Therefore, the
                 effective total number of measurement shots is ``shots`` multiplied by
                 ``shot_repetitions``.
-            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample
-                measurement bases. The user can also directly provide a random generator.
-                If ``None``, a random seed will be used.
+            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
+                The user can also directly provide a random generator. If ``None``, a random seed
+                will be used.
         """
         bias = 1.0 / 3.0 * np.ones(3)
         super().__init__(
@@ -79,3 +78,7 @@ class ClassicalShadows(LocallyBiasedClassicalShadows):
             shot_repetitions=shot_repetitions,
             seed_rng=seed_rng,
         )
+
+    def __repr__(self) -> str:
+        """Return the string representation of a ClassicalShadows instance."""
+        return f"{self.__class__.__name__}(num_qubits={self.num_qubits})"
