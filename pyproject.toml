@@ -21,7 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "povm_toolbox[test,nbtest,lint,docs,notebook-dependencies]",
+    "povm_toolbox[test,doctest,nbtest,lint,docs,notebook-dependencies]",
 ]
 basetest = [
     "tox>=4.0",
@@ -30,6 +30,10 @@ basetest = [
 ]
 test = [
     "povm_toolbox[basetest]",
+]
+doctest = [
+    "povm_toolbox[basetest]",
+    "pytest-doctestplus>=1.2.1",
 ]
 nbtest = [
     "povm_toolbox[basetest]",
