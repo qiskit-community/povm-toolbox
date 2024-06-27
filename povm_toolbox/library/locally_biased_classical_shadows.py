@@ -90,4 +90,4 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
 
     def __repr__(self) -> str:
         """Return the string representation of a LocallyBiasedClassicalShadows instance."""
-        return f"{self.__class__.__name__}(num_qubits={self.num_qubits}, bias={repr(self.bias)})"
+        return f"{self.__class__.__name__}(num_qubits={self.num_qubits}, bias={self.bias!r})"

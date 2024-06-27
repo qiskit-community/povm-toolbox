@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""RandomizedProjectiveMeasurements."""
 
 from __future__ import annotations
 
@@ -187,8 +187,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
     def __repr__(self) -> str:
         """Return the string representation of a RandomizedProjectiveMeasurements instance."""
         return (
-            f"{self.__class__.__name__}(num_qubits={self.num_qubits}, bias={repr(self.bias)}, "
-            f"angles={repr(self.angles)})"
+            f"{self.__class__.__name__}(num_qubits={self.num_qubits}, bias={self.bias!r}, "
+            f"angles={self.angles!r})"
         )
 
     def _build_qc(self) -> QuantumCircuit:
