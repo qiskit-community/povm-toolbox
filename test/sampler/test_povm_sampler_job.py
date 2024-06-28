@@ -27,8 +27,8 @@ from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 class TestPOVMSamplerJob(TestCase):
     """Tests for the ``POVMSampler`` class."""
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    def setUp(self) -> None:
+        super().setUp()
         self.sampler = AerSampler()
 
     def test_initialization(self):
