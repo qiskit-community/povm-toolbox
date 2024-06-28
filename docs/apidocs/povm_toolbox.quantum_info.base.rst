@@ -11,3 +11,6 @@ Interfaces
    :members:
    :no-inherited-members:
    :no-special-members:
+
+.. autoclass:: LabelT
+   :members:
