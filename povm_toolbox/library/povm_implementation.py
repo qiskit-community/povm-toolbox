@@ -232,7 +232,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Args:
             bit_array: The raw bitstrings.
             povm_metadata: The associated metadata.
-            loc: an optional location to splice the bitstrings.
+            loc: an optional location to slice the bitstrings.
 
         Returns:
             The converted POVM outcomes.
@@ -250,7 +250,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Args:
             data: The raw sampled data.
             povm_metadata: The associated metadata.
-            loc: an optional location to splice the bitstrings.
+            loc: an optional location to slice the bitstrings.
 
         Returns:
             The POVM counts.
@@ -281,7 +281,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Args:
             data: The raw sampled data.
             povm_metadata: The associated metadata.
-            loc: an optional location to splice the bitstrings.
+            loc: an optional location to slice the bitstrings.
 
         Returns:
             The POVM bitstrings.

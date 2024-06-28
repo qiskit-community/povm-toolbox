@@ -265,8 +265,6 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             circuit: A quantum circuit.
             circuit_binding: A bindings array.
             shots: A specific number of shots to run with.
-            .. note::
-               test
             pass_manager: An optional transpilation pass manager. After the supplied circuit has
                 been composed with the measurement circuit, the pass manager will be used to
                 transpile the composed circuit.
