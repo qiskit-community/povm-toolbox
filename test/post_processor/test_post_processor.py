@@ -28,8 +28,8 @@ class TestPostProcessor(TestCase):
 
     RNG_SEED = 42
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    def setUp(self) -> None:
+        super().setUp()
 
         qc = QuantumCircuit(2)
         qc.h(0)
