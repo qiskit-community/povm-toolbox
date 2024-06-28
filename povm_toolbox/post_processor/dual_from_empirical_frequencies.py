@@ -18,8 +18,8 @@ import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
 from povm_toolbox.post_processor.povm_post_processor import POVMPostProcessor
-from povm_toolbox.quantum_info import BaseDUAL, ProductPOVM
-from povm_toolbox.quantum_info.product_dual import ProductDUAL
+from povm_toolbox.quantum_info import BaseDual, ProductPOVM
+from povm_toolbox.quantum_info.product_dual import ProductDual
 
 
 def dual_from_empirical_frequencies(
@@ -32,7 +32,7 @@ def dual_from_empirical_frequencies(
     | DensityMatrix
     | Statevector
     | None = None,
-) -> BaseDUAL:
+) -> BaseDual:
     """Return the dual frame of ``povm`` based on the frequencies of the sampled outcomes.
 
     Given outcomes sampled from a product POVM, each local dual frame is parametrized
@@ -130,5 +130,5 @@ def dual_from_empirical_frequencies(
         )
         alphas.append(tuple(sub_alphas / (shots + sub_bias)))
 
-    # Building ProductDUAL from frequencies
-    return ProductDUAL.build_dual_from_frame(povm, alphas=tuple(alphas))
+    # Building ProductDual from frequencies
+    return ProductDual.build_dual_from_frame(povm, alphas=tuple(alphas))

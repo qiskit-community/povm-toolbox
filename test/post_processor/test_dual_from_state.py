@@ -15,7 +15,7 @@ from unittest import TestCase
 import numpy as np
 from povm_toolbox.post_processor import dual_from_state
 from povm_toolbox.quantum_info import MultiQubitPOVM, ProductPOVM, SingleQubitPOVM
-from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
+from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDual
 from qiskit.quantum_info import Operator, random_density_matrix, random_hermitian
 
 
@@ -58,7 +58,7 @@ class TestDualFromState(TestCase):
         exact_exp_val = state.expectation_value(obs).real
 
         with self.subTest("Test canonical dual."):
-            canonical_dual = MultiQubitDUAL.build_dual_from_frame(joint_povm)
+            canonical_dual = MultiQubitDual.build_dual_from_frame(joint_povm)
             canonical_weights = canonical_dual.get_omegas(obs)
             exp_val_canonical = np.dot(probabilities, canonical_weights)
             var_canonical = (

@@ -17,14 +17,14 @@ from abc import ABC, abstractmethod
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
-from .base_dual import BaseDUAL
+from .base_dual import BaseDual
 from .base_frame import BaseFrame, LabelT
 
 
 class BasePOVM(BaseFrame[LabelT], ABC):
     """Abstract base class that contains all methods that any specific POVM subclass should implement."""
 
-    default_dual_class: type[BaseDUAL]
+    default_dual_class: type[BaseDual]
 
     @property
     def num_outcomes(self) -> int:

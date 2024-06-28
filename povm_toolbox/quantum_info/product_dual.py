@@ -15,16 +15,16 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
-from .base_dual import BaseDUAL
+from .base_dual import BaseDual
 from .base_frame import BaseFrame
-from .multi_qubit_dual import MultiQubitDUAL
+from .multi_qubit_dual import MultiQubitDual
 from .product_frame import ProductFrame
 
 
-class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
-    r"""Class to represent a set of product DUAL operators.
+class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
+    r"""Class to represent a set of product Dual operators.
 
-    A product DUAL :math:`D` is made of local DUAL :math:`D1, D2, ...` acting
+    A product Dual :math:`D` is made of local Dual :math:`D1, D2, ...` acting
     on respective subsystems. Each global effect can be written as the tensor
     product of local effects,
     :math:`D_{k_1, k_2, ...} = D1_{k_1} \otimes D2_{k2} \otimes ...`.
@@ -76,7 +76,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
     @classmethod
     def build_dual_from_frame(
         cls, frame: BaseFrame, alphas: tuple[tuple[float, ...] | None, ...] | None = None
-    ) -> ProductDUAL:
+    ) -> ProductDual:
         """Construct a dual frame to another frame.
 
         Args:
@@ -99,7 +99,7 @@ class ProductDUAL(ProductFrame[MultiQubitDUAL], BaseDUAL):
                     f" the number of sub-systems ({len(frame.sub_systems)})."
                 )
             for sub_system, sub_alphas in zip(frame.sub_systems, alphas):
-                dual_operators[sub_system] = MultiQubitDUAL.build_dual_from_frame(
+                dual_operators[sub_system] = MultiQubitDual.build_dual_from_frame(
                     frame[sub_system], sub_alphas
                 )
             return cls(dual_operators)

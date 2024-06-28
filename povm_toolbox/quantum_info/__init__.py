@@ -21,10 +21,10 @@
    SingleQubitPOVM
    ProductPOVM
    BaseFrame
-   BaseDUAL
+   BaseDual
 """
 
-from .base_dual import BaseDUAL
+from .base_dual import BaseDual
 from .base_frame import BaseFrame
 from .base_povm import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
@@ -37,5 +37,5 @@ __all__ = [
     "SingleQubitPOVM",
     "ProductPOVM",
     "BaseFrame",
-    "BaseDUAL",
+    "BaseDual",
 ]

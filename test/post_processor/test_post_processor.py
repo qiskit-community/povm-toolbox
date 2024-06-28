@@ -15,7 +15,7 @@ from unittest import TestCase
 import numpy as np
 from povm_toolbox.library import ClassicalShadows, LocallyBiasedClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
-from povm_toolbox.quantum_info.product_dual import ProductDUAL
+from povm_toolbox.quantum_info.product_dual import ProductDual
 from povm_toolbox.sampler import POVMSampler
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
@@ -51,7 +51,7 @@ class TestPostProcessor(TestCase):
 
         with self.subTest("Initialization with valid ``dual`` argument."):
             povm = self.measurement.definition()
-            dual = ProductDUAL.build_dual_from_frame(povm)
+            dual = ProductDual.build_dual_from_frame(povm)
             post_processor = POVMPostProcessor(self.pub_result, dual=dual)
             self.assertIsInstance(post_processor, POVMPostProcessor)
             self.assertIs(post_processor._dual, dual)
@@ -62,7 +62,7 @@ class TestPostProcessor(TestCase):
             povm = LocallyBiasedClassicalShadows(
                 num_qubits=2, bias=np.array([0.8, 0.1, 0.1])
             ).definition()
-            dual = ProductDUAL.build_dual_from_frame(povm)
+            dual = ProductDual.build_dual_from_frame(povm)
             post_processor = POVMPostProcessor(self.pub_result, dual=dual)
 
     def test_dual(self):
@@ -70,13 +70,13 @@ class TestPostProcessor(TestCase):
         with self.subTest("Test default ``dual``."):
             post_processor = POVMPostProcessor(self.pub_result)
             self.assertIsNone(post_processor._dual)
-            self.assertIsInstance(post_processor.dual, ProductDUAL)
-            self.assertIsInstance(post_processor._dual, ProductDUAL)
+            self.assertIsInstance(post_processor.dual, ProductDual)
+            self.assertIsInstance(post_processor._dual, ProductDual)
         with self.subTest("Test setting ``dual`` after initialization."):
             post_processor = POVMPostProcessor(self.pub_result)
             self.assertIsNone(post_processor._dual)
             povm = self.measurement.definition()
-            dual = ProductDUAL.build_dual_from_frame(povm, alphas=((1, 2, 2, 2, 2, 2), None))
+            dual = ProductDual.build_dual_from_frame(povm, alphas=((1, 2, 2, 2, 2, 2), None))
             post_processor.dual = dual
             self.assertIs(post_processor._dual, dual)
             self.assertIs(post_processor.dual, dual)
@@ -87,7 +87,7 @@ class TestPostProcessor(TestCase):
             povm = LocallyBiasedClassicalShadows(
                 num_qubits=2, bias=np.array([0.8, 0.1, 0.1])
             ).definition()
-            dual = ProductDUAL.build_dual_from_frame(povm)
+            dual = ProductDual.build_dual_from_frame(povm)
             post_processor.dual = dual
 
     def test_get_decomposition_weights(self):
