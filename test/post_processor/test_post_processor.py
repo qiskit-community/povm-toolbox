@@ -26,6 +26,8 @@ from qiskit.quantum_info import SparsePauliOp
 class TestPostProcessor(TestCase):
     """Test the methods and attributes of the :class:`.POVMPostProcessor class`."""
 
+    RNG_SEED = 42
+
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
 
@@ -33,12 +35,10 @@ class TestPostProcessor(TestCase):
         qc.h(0)
         qc.cx(0, 1)
 
-        sampler = Sampler(seed=1)
-        povm_sampler = POVMSampler(sampler=sampler)
+        povm_sampler = POVMSampler(sampler=Sampler(seed=self.RNG_SEED))
+        self.measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
 
-        self.measurement = ClassicalShadows(num_qubits=2, seed_rng=2)
-
-        job = povm_sampler.run([qc], shots=256, povm=self.measurement)
+        job = povm_sampler.run([qc], shots=32, povm=self.measurement)
         result = job.result()
         self.pub_result = result[0]
 
@@ -108,30 +108,28 @@ class TestPostProcessor(TestCase):
 
     def test_get_expectation_value(self):
         """Test that the ``get_expectation_value`` method works correctly."""
-        observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
         post_processor = POVMPostProcessor(self.pub_result)
         with self.subTest("Test with default ``loc`` for un-parametrized circuit."):
+            observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
             exp_val, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_val, -0.6328124999999991)
-            self.assertAlmostEqual(std, 0.7276646052978725)
+            self.assertAlmostEqual(exp_val, -2.2499999999999987)
+            self.assertAlmostEqual(std, 2.3563572213988917)
         with self.subTest("Test with specified ``loc`` argument."):
+            observable = SparsePauliOp(["IZ", "XX", "ZY"], coeffs=[-0.5, 1, -2])
             exp_val, std = post_processor.get_expectation_value(observable, 0)
-            self.assertAlmostEqual(exp_val, -0.6328124999999991)
-            self.assertAlmostEqual(std, 0.7276646052978725)
+            self.assertAlmostEqual(exp_val, -1.6406249999999998)
+            self.assertAlmostEqual(std, 1.3442744428582185)
         with self.subTest("Test with default ``loc`` for parametrized circuit."):
             qc = QuantumCircuit(2)
             qc.h(0)
             qc.cx(0, 1)
-            theta = Parameter("theta")
-            qc.ry(theta=theta, qubit=0)
-            sampler = Sampler(seed=3)
-            povm_sampler = POVMSampler(sampler=sampler)
-            measurement = ClassicalShadows(num_qubits=2, seed_rng=4)
+            qc.ry(theta=Parameter("theta"), qubit=0)
+            povm_sampler = POVMSampler(sampler=Sampler(seed=self.RNG_SEED))
+            measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
             job = povm_sampler.run(
-                [(qc, np.array(2 * [[0, np.pi / 3, np.pi]]))], shots=256, povm=measurement
+                [(qc, np.array(2 * [[0, np.pi / 3, np.pi]]))], shots=32, povm=measurement
             )
-            result = job.result()
-            pub_result = result[0]
+            pub_result = job.result()[0]
             post_processor = POVMPostProcessor(pub_result)
             exp_val, std = post_processor.get_expectation_value(observable)
             self.assertIsInstance(exp_val, np.ndarray)
@@ -140,7 +138,10 @@ class TestPostProcessor(TestCase):
                 np.allclose(
                     exp_val,
                     np.array(
-                        [[-0.66796875, -0.84375, -5.2734375], [-0.80859375, 0.703125, -5.09765625]]
+                        [
+                            [-4.171875, 0.703125, -2.578125],
+                            [-0.5625, -0.5625, -2.15625],
+                        ]
                     ),
                 )
             )
@@ -150,15 +151,18 @@ class TestPostProcessor(TestCase):
                 np.allclose(
                     std,
                     np.array(
-                        [[0.77141384, 0.76831946, 0.57462236], [0.78996484, 0.73757516, 0.55792747]]
+                        [
+                            [1.59914439, 0.41510017, 0.8915795],
+                            [1.46287216, 1.11232782, 1.04977856],
+                        ]
                     ),
                 )
             )
 
     def test_single_exp_value_and_std(self):
         """Test that the ``_single_exp_value_and_std`` method works correctly."""
-        observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
+        observable = SparsePauliOp(["ZX", "XZ", "YY"], coeffs=[1.2, 2, -3])
         post_processor = POVMPostProcessor(self.pub_result)
         exp_val, std = post_processor._single_exp_value_and_std(observable, 0)
-        self.assertAlmostEqual(exp_val, -0.6328124999999991)
-        self.assertAlmostEqual(std, 0.7276646052978725)
+        self.assertAlmostEqual(exp_val, 6.862499999999998)
+        self.assertAlmostEqual(std, 1.9438371907630394)
