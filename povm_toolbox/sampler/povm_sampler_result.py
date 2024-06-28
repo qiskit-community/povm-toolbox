@@ -55,7 +55,7 @@ class POVMPubResult(PubResult):
                 to be obtained.
         """
         return self.metadata.povm_implementation.get_povm_counts_from_raw(
-            self.data, self.metadata, loc
+            self.data, self.metadata, loc=loc
         )
 
     def get_samples(
@@ -70,5 +70,5 @@ class POVMPubResult(PubResult):
                 to be obtained.
         """
         return self.metadata.povm_implementation.get_povm_outcomes_from_raw(
-            self.data, self.metadata, loc
+            self.data, self.metadata, loc=loc
         )

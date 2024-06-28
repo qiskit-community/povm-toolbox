@@ -16,15 +16,19 @@ Each one serves as a factory to generate a specific, concrete POVM and provides 
 
 .. currentmodule:: povm_toolbox.library
 
+Available POVMs
+---------------
+
+Below you find an overview of the implemented POVMs.
+
 .. autosummary::
    :toctree: ../stubs/
    :nosignatures:
 
-   POVMImplementation
-   RandomizedProjectiveMeasurements
-   MutuallyUnbiasedBasesMeasurements
-   LocallyBiasedClassicalShadows
    ClassicalShadows
+   LocallyBiasedClassicalShadows
+   MutuallyUnbiasedBasesMeasurements
+   RandomizedProjectiveMeasurements
 
 Submodules
 ----------
@@ -32,6 +36,7 @@ Submodules
 .. autosummary::
    :toctree:
 
+   povm_implementation
    metadata
 """
 
