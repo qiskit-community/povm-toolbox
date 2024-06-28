@@ -29,6 +29,8 @@ from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 class TestPOVMSamplerJob(TestCase):
     """Tests for the ``POVMSamplerJob`` class."""
 
+    RNG_SEED = 10
+
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
         self.sampler = AerSampler()
@@ -36,7 +38,9 @@ class TestPOVMSamplerJob(TestCase):
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=40)
+        qc_random = random_circuit(
+            num_qubits=num_qubits, depth=3, measure=False, seed=self.RNG_SEED
+        )
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
@@ -45,7 +49,9 @@ class TestPOVMSamplerJob(TestCase):
     def test_result(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=41)
+        qc_random = random_circuit(
+            num_qubits=num_qubits, depth=2, measure=False, seed=self.RNG_SEED
+        )
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
         with self.subTest("Result for a single PUB."):
@@ -77,12 +83,12 @@ class TestPOVMSamplerJob(TestCase):
         qc.cx(0, 1)
 
         backend = FakeSherbrooke()
-        backend.set_options(seed_simulator=25)
+        backend.set_options(seed_simulator=self.RNG_SEED)
         pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
 
         qc_isa = pm.run(qc)
 
-        measurement = ClassicalShadows(2, seed_rng=13)
+        measurement = ClassicalShadows(2, seed_rng=self.RNG_SEED)
         runtime_sampler = RuntimeSampler(backend=backend)
         povm_sampler = POVMSampler(runtime_sampler)
         job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
@@ -97,8 +103,8 @@ class TestPOVMSamplerJob(TestCase):
             observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 3.53125)
-            self.assertAlmostEqual(std, 0.3590672895231641)
+            self.assertAlmostEqual(exp_value, 4.304687499999999)
+            self.assertAlmostEqual(std, 0.39769862592885424)
 
         with self.subTest("Save job with default filename."):
             job.save_metadata()
@@ -108,11 +114,11 @@ class TestPOVMSamplerJob(TestCase):
             self.assertIsInstance(job_recovered, POVMSamplerJob)
             result = job_recovered.result()
             pub_result = result[0]
-            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
+            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 3.53125)
-            self.assertAlmostEqual(std, 0.3590672895231641)
+            self.assertAlmostEqual(exp_value, -1.5312499999999996)
+            self.assertAlmostEqual(std, 0.6691987419300691)
 
         with self.subTest("Test default ``base_job``."):
             # TODO
@@ -130,7 +136,9 @@ class TestPOVMSamplerJob(TestCase):
         """Test the ``status`` and associated methods."""
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(num_qubits=num_qubits, depth=1, measure=False, seed=2)
+        qc_random = random_circuit(
+            num_qubits=num_qubits, depth=1, measure=False, seed=self.RNG_SEED
+        )
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_job = povm_sampler.run([qc_random], shots=1, povm=cs_implementation)
         job_status, is_done, is_running, is_cancelled, in_final = (
