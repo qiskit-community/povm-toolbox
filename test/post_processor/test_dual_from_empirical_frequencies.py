@@ -40,8 +40,8 @@ class TestDualFromEmpiricalFrequencies(TestCase):
 
     RNG_SEED = 30
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    def setUp(self) -> None:
+        super().setUp()
         qc = random_circuit(2, 1, measure=False, seed=self.RNG_SEED)
         num_qubits = qc.num_qubits
         bias = np.array([0.5, 0.25, 0.25])
