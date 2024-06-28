@@ -17,7 +17,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
 
-from .base_povm import BasePOVM
+from .base import BasePOVM
 from .multi_qubit_dual import MultiQubitDual
 from .multi_qubit_frame import MultiQubitFrame
 

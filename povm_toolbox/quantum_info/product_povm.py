@@ -19,7 +19,7 @@ from matplotlib.figure import Figure
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 from qiskit.visualization.utils import matplotlib_close_if_inline
 
-from .base_povm import BasePOVM
+from .base import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
 from .product_dual import ProductDual
 from .product_frame import ProductFrame

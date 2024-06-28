@@ -27,7 +27,7 @@ else:
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
-from .base_frame import BaseFrame
+from .base import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
 
 T = TypeVar("T", bound=MultiQubitFrame)

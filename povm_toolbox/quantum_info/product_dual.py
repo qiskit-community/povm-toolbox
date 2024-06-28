@@ -15,8 +15,7 @@ from __future__ import annotations
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
-from .base_dual import BaseDual
-from .base_frame import BaseFrame
+from .base import BaseDual, BaseFrame
 from .multi_qubit_dual import MultiQubitDual
 from .product_frame import ProductFrame
 

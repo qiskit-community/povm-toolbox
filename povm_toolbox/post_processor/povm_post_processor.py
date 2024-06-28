@@ -17,7 +17,7 @@ from typing import Any
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-from povm_toolbox.quantum_info import BaseDual, BasePOVM
+from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
 from povm_toolbox.sampler import POVMPubResult
 
 

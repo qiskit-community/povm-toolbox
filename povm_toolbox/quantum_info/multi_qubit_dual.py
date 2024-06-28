@@ -17,8 +17,7 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
-from .base_dual import BaseDual
-from .base_frame import BaseFrame
+from .base import BaseDual, BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
 
 

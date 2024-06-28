@@ -27,7 +27,7 @@ from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager, TranspileLayout
 
-from povm_toolbox.quantum_info.base_povm import BasePOVM
+from povm_toolbox.quantum_info.base import BasePOVM
 
 if TYPE_CHECKING:
     from .metadata import POVMMetadata

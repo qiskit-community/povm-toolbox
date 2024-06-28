@@ -18,7 +18,8 @@ import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
 from povm_toolbox.post_processor.povm_post_processor import POVMPostProcessor
-from povm_toolbox.quantum_info import BaseDual, ProductPOVM
+from povm_toolbox.quantum_info import ProductPOVM
+from povm_toolbox.quantum_info.base import BaseDual
 from povm_toolbox.quantum_info.product_dual import ProductDual
 
 

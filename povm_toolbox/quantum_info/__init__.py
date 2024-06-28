@@ -60,23 +60,15 @@ as `frames`. The classes below implement the common functionalities.
    MultiQubitFrame
    ProductFrame
 
-Interfaces
+Submodules
 ----------
 
-Finally, all of the above is based on the following abstract interfaces.
-
 .. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+   :toctree:
 
-   BaseFrame
-   BasePOVM
-   BaseDual
+   base
 """
 
-from .base_dual import BaseDual
-from .base_frame import BaseFrame
-from .base_povm import BasePOVM
 from .multi_qubit_dual import MultiQubitDual
 from .multi_qubit_frame import MultiQubitFrame
 from .multi_qubit_povm import MultiQubitPOVM
@@ -86,14 +78,11 @@ from .product_povm import ProductPOVM
 from .single_qubit_povm import SingleQubitPOVM
 
 __all__ = [
-    "BasePOVM",
     "MultiQubitPOVM",
     "SingleQubitPOVM",
     "ProductPOVM",
-    "BaseDual",
     "MultiQubitDual",
     "ProductDual",
-    "BaseFrame",
     "MultiQubitFrame",
     "ProductFrame",
 ]
