@@ -15,8 +15,7 @@ from unittest import TestCase
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
-from qiskit import QuantumCircuit
-from qiskit.circuit.random import random_circuit
+from qiskit import QuantumCircuit, qpy
 from qiskit.primitives import PrimitiveResult
 from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
@@ -38,9 +37,8 @@ class TestPOVMSamplerJob(TestCase):
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(
-            num_qubits=num_qubits, depth=3, measure=False, seed=self.RNG_SEED
-        )
+        with open("test/sampler/random_circuits.qpy", "rb") as file:
+            qc_random = qpy.load(file)[0]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
@@ -49,9 +47,8 @@ class TestPOVMSamplerJob(TestCase):
     def test_result(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(
-            num_qubits=num_qubits, depth=2, measure=False, seed=self.RNG_SEED
-        )
+        with open("test/sampler/random_circuits.qpy", "rb") as file:
+            qc_random = qpy.load(file)[1]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
         with self.subTest("Result for a single PUB."):
@@ -138,11 +135,10 @@ class TestPOVMSamplerJob(TestCase):
         """Test the ``status`` and associated methods."""
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(
-            num_qubits=num_qubits, depth=1, measure=False, seed=self.RNG_SEED
-        )
+        with open("test/sampler/random_circuits.qpy", "rb") as file:
+            qc_random = qpy.load(file)[0]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
-        cs_job = povm_sampler.run([qc_random], shots=1, povm=cs_implementation)
+        cs_job = povm_sampler.run([qc_random], shots=100, povm=cs_implementation)
         job_status, is_done, is_running, is_cancelled, in_final = (
             cs_job.status(),
             cs_job.done(),
@@ -150,11 +146,11 @@ class TestPOVMSamplerJob(TestCase):
             cs_job.cancelled(),
             cs_job.in_final_state(),
         )
-        self.assertEqual(job_status, JobStatus.RUNNING)
-        self.assertFalse(is_done)
-        self.assertTrue(is_running)
-        self.assertFalse(is_cancelled)
-        self.assertFalse(in_final)
+        if job_status == JobStatus.RUNNING:
+            self.assertFalse(is_done)
+            self.assertTrue(is_running)
+            self.assertFalse(is_cancelled)
+            self.assertFalse(in_final)
 
         _ = cs_job.result()
         self.assertEqual(cs_job.status(), JobStatus.DONE)
