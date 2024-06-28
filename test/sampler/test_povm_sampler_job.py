@@ -84,7 +84,9 @@ class TestPOVMSamplerJob(TestCase):
 
         backend = FakeSherbrooke()
         backend.set_options(seed_simulator=self.RNG_SEED)
-        pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
+        pm = generate_preset_pass_manager(
+            optimization_level=2, backend=backend, seed_transpiler=self.RNG_SEED
+        )
 
         qc_isa = pm.run(qc)
 
