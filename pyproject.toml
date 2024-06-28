@@ -153,6 +153,7 @@ convention = "numpy"
 
 [tool.ruff.lint.pylint]
 max-args = 10
+max-statements = 65
 
 [tool.ruff.lint.extend-per-file-ignores]
 "docs/**/*" = [

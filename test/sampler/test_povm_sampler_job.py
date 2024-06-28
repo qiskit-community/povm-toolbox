@@ -10,6 +10,7 @@
 
 """Tests for the POVMSamplerJob class."""
 
+from pathlib import Path
 from unittest import TestCase
 
 from povm_toolbox.library import ClassicalShadows
@@ -37,6 +38,10 @@ class TestPOVMSamplerJob(TestCase):
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
+        # Load the circuit that was obtained through:
+        #   from qiskit.circuit.random import random_circuit
+        #   qc = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=10)
+        # for qiskit==1.1.1
         with open("test/sampler/random_circuits.qpy", "rb") as file:
             qc_random = qpy.load(file)[0]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
@@ -47,6 +52,10 @@ class TestPOVMSamplerJob(TestCase):
     def test_result(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
+        # Load the circuit that was obtained through:
+        #   from qiskit.circuit.random import random_circuit
+        #   qc = random_circuit(num_qubits=num_qubits, depth=2, measure=False, seed=10)
+        # for qiskit==1.1.1
         with open("test/sampler/random_circuits.qpy", "rb") as file:
             qc_random = qpy.load(file)[1]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
@@ -94,30 +103,40 @@ class TestPOVMSamplerJob(TestCase):
         tmp = job.base_job
 
         with self.subTest("Save job with specific filename."):
-            job.save_metadata(filename="saved_metadata.pkl")
-            job_recovered = POVMSamplerJob.recover_job(filename="saved_metadata.pkl", base_job=tmp)
-            self.assertIsInstance(job_recovered, POVMSamplerJob)
-            result = job_recovered.result()
-            pub_result = result[0]
-            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
-            post_processor = POVMPostProcessor(pub_result)
-            exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 4.445312500000001)
-            self.assertAlmostEqual(std, 0.3881881421165156)
+            filename = "saved_metadata.pkl"
+            job.save_metadata(filename=filename)
+            job_recovered = POVMSamplerJob.recover_job(filename=filename, base_job=tmp)
+            try:
+                self.assertIsInstance(job_recovered, POVMSamplerJob)
+                result = job_recovered.result()
+                pub_result = result[0]
+                observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
+                post_processor = POVMPostProcessor(pub_result)
+                exp_value, std = post_processor.get_expectation_value(observable)
+                self.assertAlmostEqual(exp_value, 4.445312500000001)
+                self.assertAlmostEqual(std, 0.3881881421165156)
+            except BaseException as exc:  # catch anything
+                raise exc
+            finally:
+                Path(filename).unlink(missing_ok=True)
 
         with self.subTest("Save job with default filename."):
             job.save_metadata()
-            job_recovered = POVMSamplerJob.recover_job(
-                filename=f"job_metadata_{job.base_job.job_id()}.pkl", base_job=tmp
-            )
-            self.assertIsInstance(job_recovered, POVMSamplerJob)
-            result = job_recovered.result()
-            pub_result = result[0]
-            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
-            post_processor = POVMPostProcessor(pub_result)
-            exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -1.3906250000000009)
-            self.assertAlmostEqual(std, 0.6732583954195841)
+            filename = f"job_metadata_{job.base_job.job_id()}.pkl"
+            job_recovered = POVMSamplerJob.recover_job(filename=filename, base_job=tmp)
+            try:
+                self.assertIsInstance(job_recovered, POVMSamplerJob)
+                result = job_recovered.result()
+                pub_result = result[0]
+                observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
+                post_processor = POVMPostProcessor(pub_result)
+                exp_value, std = post_processor.get_expectation_value(observable)
+                self.assertAlmostEqual(exp_value, -1.3906250000000009)
+                self.assertAlmostEqual(std, 0.6732583954195841)
+            except BaseException as exc:  # catch anything
+                raise exc
+            finally:
+                Path(filename).unlink(missing_ok=True)
 
         with self.subTest("Test default ``base_job``."):
             # TODO
@@ -127,14 +146,24 @@ class TestPOVMSamplerJob(TestCase):
         with self.subTest(
             "Error if id of ``base_job`` does not match the one stored in the metadata file."
         ) and self.assertRaises(ValueError):
-            job.save_metadata(filename="saved_metadata.pkl")
-            job2 = povm_sampler.run(pubs=[qc_isa], shots=1, povm=measurement)
-            _ = POVMSamplerJob.recover_job(filename="saved_metadata.pkl", base_job=job2)
+            filename = f"job_metadata_{job.base_job.job_id()}.pkl"
+            job.save_metadata(filename=filename)
+            try:
+                job2 = povm_sampler.run(pubs=[qc_isa], shots=1, povm=measurement)
+                _ = POVMSamplerJob.recover_job(filename=filename, base_job=job2.base_job)
+            except BaseException as exc:  # catch anything
+                raise exc
+            finally:
+                Path(filename).unlink(missing_ok=True)
 
     def test_status(self):
         """Test the ``status`` and associated methods."""
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
+        # Load the circuit that was obtained through:
+        #   from qiskit.circuit.random import random_circuit
+        #   qc = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=10)
+        # for qiskit==1.1.1
         with open("test/sampler/random_circuits.qpy", "rb") as file:
             qc_random = qpy.load(file)[0]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
