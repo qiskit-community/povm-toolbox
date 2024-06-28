@@ -33,7 +33,7 @@ class TestPOVMSamplerJob(TestCase):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.sampler = AerSampler()
+        self.sampler = AerSampler(seed=self.RNG_SEED)
 
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
@@ -105,8 +105,8 @@ class TestPOVMSamplerJob(TestCase):
             observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 4.304687499999999)
-            self.assertAlmostEqual(std, 0.39769862592885424)
+            self.assertAlmostEqual(exp_value, 4.445312500000001)
+            self.assertAlmostEqual(std, 0.3881881421165156)
 
         with self.subTest("Save job with default filename."):
             job.save_metadata()
@@ -119,8 +119,8 @@ class TestPOVMSamplerJob(TestCase):
             observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -1.5312499999999996)
-            self.assertAlmostEqual(std, 0.6691987419300691)
+            self.assertAlmostEqual(exp_value, -1.3906250000000009)
+            self.assertAlmostEqual(std, 0.6732583954195841)
 
         with self.subTest("Test default ``base_job``."):
             # TODO
