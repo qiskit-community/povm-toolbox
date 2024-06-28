@@ -31,8 +31,8 @@ class TestPOVMSamplerJob(TestCase):
 
     RNG_SEED = 10
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    def setUp(self) -> None:
+        super().setUp()
         self.sampler = AerSampler(seed=self.RNG_SEED)
 
     def test_initialization(self):
@@ -91,7 +91,7 @@ class TestPOVMSamplerJob(TestCase):
         qc_isa = pm.run(qc)
 
         measurement = ClassicalShadows(2, seed_rng=self.RNG_SEED)
-        runtime_sampler = RuntimeSampler(backend=backend)
+        runtime_sampler = RuntimeSampler(mode=backend)
         povm_sampler = POVMSampler(runtime_sampler)
         job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
         tmp = job.base_job
