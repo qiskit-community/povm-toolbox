@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
@@ -50,6 +51,7 @@ extensions = [
     "sphinx_copybutton",
     "nbsphinx",
     "qiskit_sphinx_theme",
+    "pytest_doctestplus.sphinx.doctestplus",
 ]
 
 html_last_updated_fmt = "%Y/%m/%d"
@@ -65,9 +67,9 @@ rst_prolog = f"""
 autosummary_generate = True
 autosummary_generate_overwrite = False
 autoclass_content = "both"
-autodoc_typehints = "description"
+autodoc_typehints = "both"
 autodoc_typehints_description_target = "documented_params"
-
+autodoc_member_order = "bysource"
 autodoc_default_options = {
     "inherited-members": None,
 }

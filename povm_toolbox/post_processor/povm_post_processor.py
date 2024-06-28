@@ -33,7 +33,7 @@ class POVMPostProcessor:
 
         Args:
             povm_sample: a result from a POVM sampler run.
-            dual_class: the subclass of :class:`.BaseDUAL` that will be used to
+            dual: the subclass of :class:`.BaseDUAL` that will be used to
                 build the dual frame to the POVM of ``povm_sample``. The dual
                 frame is then used to compute the decomposition weights of any
                 observable.
