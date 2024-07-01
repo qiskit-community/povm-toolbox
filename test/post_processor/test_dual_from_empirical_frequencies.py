@@ -26,7 +26,6 @@ from povm_toolbox.quantum_info import MultiQubitPOVM
 from povm_toolbox.sampler import POVMSampler
 from qiskit import qpy
 from qiskit.circuit import Parameter, QuantumCircuit
-from qiskit.circuit.random import random_circuit
 from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import (
     DensityMatrix,
@@ -47,8 +46,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         #   qc = random_circuit(num_qubits=2, depth=1, measure=False, seed=30)
         # for qiskit==1.1.1
         with open("test/post_processor/random_circuit_qubits=2_depth=1_seed=30.qpy", "rb") as file:
-            qc = qpy.load(file)
-        qc = random_circuit(num_qubits=2, depth=1, measure=False, seed=self.RNG_SEED)
+            qc = qpy.load(file)[0]
         num_qubits = qc.num_qubits
         bias = np.array([0.5, 0.25, 0.25])
         angles = np.array(
