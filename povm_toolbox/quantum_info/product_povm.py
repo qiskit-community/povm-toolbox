@@ -19,9 +19,9 @@ from matplotlib.figure import Figure
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 from qiskit.visualization.utils import matplotlib_close_if_inline
 
-from .base_povm import BasePOVM
+from .base import BasePOVM
 from .multi_qubit_povm import MultiQubitPOVM
-from .product_dual import ProductDUAL
+from .product_dual import ProductDual
 from .product_frame import ProductFrame
 
 
@@ -34,7 +34,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
     :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
     """
 
-    default_dual_class = ProductDUAL
+    default_dual_class = ProductDual
 
     def _check_validity(self) -> None:
         """Check if POVM axioms are fulfilled.

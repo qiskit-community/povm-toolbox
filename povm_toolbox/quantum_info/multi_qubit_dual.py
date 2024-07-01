@@ -17,13 +17,12 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
-from .base_dual import BaseDUAL
-from .base_frame import BaseFrame
+from .base import BaseDual, BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
-    """Class that collects all information that any MultiQubit DUAL should specify.
+class MultiQubitDual(MultiQubitFrame, BaseDual):
+    """Class that collects all information that any MultiQubit Dual should specify.
 
     This is a representation of a dual frame. Its elements are specified as a list
     of :class:`~qiskit.quantum_info.Operator`.
@@ -58,7 +57,7 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
     @classmethod
     def build_dual_from_frame(
         cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
-    ) -> MultiQubitDUAL:
+    ) -> MultiQubitDual:
         """Construct a dual frame to another frame.
 
         Args:
@@ -98,6 +97,6 @@ class MultiQubitDUAL(MultiQubitFrame, BaseDUAL):
 
             return cls(dual_operators)
 
-        # We could build a ``MultiQubitDUAL`` instance (i.e. joint dual frame) that
+        # We could build a ``MultiQubitDual`` instance (i.e. joint dual frame) that
         # is a dual frame to a ``ProductFrame``, but we have not implemented this yet.
         raise NotImplementedError(f"Not implemented for {type(frame)}")

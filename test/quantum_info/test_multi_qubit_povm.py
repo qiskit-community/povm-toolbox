@@ -13,7 +13,7 @@
 from unittest import TestCase
 
 import numpy as np
-from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
+from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDual
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from qiskit.quantum_info import Operator, random_hermitian
 
@@ -83,7 +83,7 @@ class TestMultiQubitPOVM(TestCase):
                 ]
             )
             obs = random_hermitian(dims=2**1)
-            dual = MultiQubitDUAL.build_dual_from_frame(povm)
+            dual = MultiQubitDual.build_dual_from_frame(povm)
             omegas = dual.get_omegas(obs)
             dec = np.zeros((2, 2), dtype=complex)
             for k in range(povm.num_outcomes):

@@ -17,8 +17,8 @@ from typing import cast
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
-from povm_toolbox.quantum_info import BaseDUAL, BasePOVM, ProductPOVM
-from povm_toolbox.quantum_info.product_dual import ProductDUAL
+from povm_toolbox.quantum_info import ProductDual, ProductPOVM
+from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
 
 
 def dual_from_marginal_probabilities(
@@ -26,7 +26,7 @@ def dual_from_marginal_probabilities(
     state: SparsePauliOp | DensityMatrix | Statevector,
     *,
     threshold: float = 1e-5,
-) -> BaseDUAL:
+) -> BaseDual:
     """Return the dual frame of ``povm`` based on the marginal distribution of a supplied state.
 
     This methods constructs a product dual frame where each local dual frame
@@ -58,4 +58,4 @@ def dual_from_marginal_probabilities(
         if np.any(np.absolute(marg_prob) < threshold):
             marg_prob += threshold
         alphas.append(tuple(marg_prob))
-    return ProductDUAL.build_dual_from_frame(povm, alphas=tuple(alphas))
+    return ProductDual.build_dual_from_frame(povm, alphas=tuple(alphas))

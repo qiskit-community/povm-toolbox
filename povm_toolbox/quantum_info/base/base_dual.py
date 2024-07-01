@@ -21,12 +21,12 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 from .base_frame import BaseFrame, LabelT
 
 
-class BaseDUAL(BaseFrame[LabelT], ABC):
-    """Abstract base class that contains all methods that any specific DUAL subclass should implement."""
+class BaseDual(BaseFrame[LabelT], ABC):
+    """Abstract base class that contains all methods that any specific Dual subclass should implement."""
 
     @property
     def num_outcomes(self) -> int:
-        """Give the number of outcomes of the DUAL."""
+        """Give the number of outcomes of the Dual."""
         return self.num_operators
 
     @abstractmethod
@@ -44,7 +44,7 @@ class BaseDUAL(BaseFrame[LabelT], ABC):
 
     @classmethod
     @abstractmethod
-    def build_dual_from_frame(cls, frame: BaseFrame, alphas: tuple[Any] | None = None) -> BaseDUAL:
+    def build_dual_from_frame(cls, frame: BaseFrame, alphas: tuple[Any] | None = None) -> BaseDual:
         """Construct a dual frame to another frame.
 
         Args:

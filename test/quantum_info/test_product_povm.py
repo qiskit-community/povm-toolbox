@@ -14,7 +14,7 @@ from unittest import TestCase
 
 import numpy as np
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
-from povm_toolbox.quantum_info.product_dual import ProductDUAL
+from povm_toolbox.quantum_info.product_dual import ProductDual
 from povm_toolbox.quantum_info.product_povm import ProductPOVM
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import DensityMatrix, Operator, random_density_matrix, random_hermitian
@@ -228,7 +228,7 @@ class TestProductPOVM(TestCase):
 
         prod_povm = ProductPOVM.from_list(povm_list)
 
-        dual = ProductDUAL.build_dual_from_frame(prod_povm)
+        dual = ProductDual.build_dual_from_frame(prod_povm)
 
         obs = random_hermitian(dims=2**num_qubits)
         omegas = dual.get_omegas(obs)

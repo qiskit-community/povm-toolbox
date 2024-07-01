@@ -17,7 +17,7 @@ from typing import Any
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-from povm_toolbox.quantum_info import BaseDUAL, BasePOVM
+from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
 from povm_toolbox.sampler import POVMPubResult
 
 
@@ -27,13 +27,13 @@ class POVMPostProcessor:
     def __init__(
         self,
         povm_sample: POVMPubResult,
-        dual: BaseDUAL | None = None,
+        dual: BaseDual | None = None,
     ) -> None:
         """Initialize the POVM post-processor.
 
         Args:
             povm_sample: a result from a POVM sampler run.
-            dual: the subclass of :class:`.BaseDUAL` that will be used to
+            dual: the subclass of :class:`.BaseDual` that will be used to
                 build the dual frame to the POVM of ``povm_sample``. The dual
                 frame is then used to compute the decomposition weights of any
                 observable.
@@ -60,7 +60,7 @@ class POVMPostProcessor:
         return self._povm
 
     @property
-    def dual(self) -> BaseDUAL:
+    def dual(self) -> BaseDual:
         """Return the dual that is used.
 
         .. warning::
@@ -72,7 +72,7 @@ class POVMPostProcessor:
         return self._dual
 
     @dual.setter
-    def dual(self, new_dual: BaseDUAL):
+    def dual(self, new_dual: BaseDual):
         if not new_dual.is_dual_to(self.povm):
             raise ValueError(
                 "The provided ``dual`` instance is not valid. It is not a dual"
