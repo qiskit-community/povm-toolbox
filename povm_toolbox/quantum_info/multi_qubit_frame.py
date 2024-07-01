@@ -212,7 +212,7 @@ class MultiQubitFrame(BaseFrame[int]):
         :math:`|\tilde{\psi} \rangle = \sqrt{\gamma} |\psi \rangle`.
 
         .. note::
-           TODO: what is $\gamma$ in the above?
+           TODO: what is :math:`\gamma` in the above?
 
         Args:
             frame_vectors: list of vectors :math:`|\tilde{\psi} \rangle`. The length of the list

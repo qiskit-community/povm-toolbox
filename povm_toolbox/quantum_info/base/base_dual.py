@@ -37,18 +37,18 @@ class BaseDual(BaseFrame[LabelT], ABC):
     ) -> float | dict[LabelT, float] | np.ndarray:
         r"""Return the decomposition weights of the provided observable.
 
-        Computes the $\omega_k$ in
+        Computes the :math:`\omega_k` in
 
         .. math::
            \mathcal{O} = \sum_{k=1}^n \omega_k M_k
 
-        where $\mathcal{O}$ is the ``observable`` and $M_k$ are the effects of the POVM of which ``self`` is
-        the dual. The closed form for computing $\omega_k$ is
+        where :math:`\mathcal{O}` is the ``observable`` and :math:`M_k` are the effects of the POVM
+        of which ``self`` is the dual. The closed form for computing :math:`\omega_k` is
 
         .. math::
            \omega_k = \text{Tr}\left[\mathcal{O} D_k\right]
 
-        where $D_k$ make of this dual frame (i.e. ``self``).
+        where :math:`D_k` make of this dual frame (i.e. ``self``).
 
         .. note::
            TODO: explain how this relates to the :meth:`.BaseFrame.analysis` method.
