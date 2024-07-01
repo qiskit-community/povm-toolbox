@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""MultiQubitPOVM."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from .multi_qubit_frame import MultiQubitFrame
 
 
 class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
-    """Class that collects all information that any MultiQubit POVM should specify.
+    """Class that collects all information that any POVM over multiple qubits should specify.
 
     This is a representation of a positive operator-valued measure (POVM). The effects are
     specified as a list of :class:`~qiskit.quantum_info.Operator`.
@@ -32,7 +32,7 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
     default_dual_class = MultiQubitDual
 
     def _check_validity(self) -> None:
-        r"""Check if POVM axioms are fulfilled.
+        """Check if POVM axioms are fulfilled.
 
         Raises:
             ValueError: if any of the POVM operators is not hermitian.
@@ -59,18 +59,6 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         rho: SparsePauliOp | DensityMatrix | Statevector,
         outcome_idx: int | set[int] | None = None,
     ) -> float | dict[int, float] | np.ndarray:
-        r"""Return the outcome probabilities given a state ``rho``.
-
-        Each outcome :math:`k` is associated with an effect :math:`M_k` of the POVM. The probability of obtaining
-        the outcome :math:`k` when measuring a state ``rho`` is given by :math:`p_k = Tr[M_k \rho]`.
-
-        Args:
-            rho: the input state over which to compute the outcome probabilities.
-            outcome_idx: label(s) indicating which outcome probabilities are queried.
-
-        Returns:
-            An array of probabilities. The length of the array is given by the number of outcomes of the POVM.
-        """
         if not isinstance(rho, SparsePauliOp):
             rho = Operator(rho)
         return self.analysis(rho, outcome_idx)
@@ -85,7 +73,12 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         font_size: float | None = None,
         colorbar: bool = False,
     ) -> Figure:
-        """Draw the Bloch vectors of a :class:`.MultiQubitPOVM` instance.
+        """Plot the Bloch vector of each effect of the POVM.
+
+        .. warning::
+           This method is not actually implemented for a generic multi-qubit POVM. However, it is
+           available for single-qubit POVMs (see :meth:`.SingleQubitPOVM.draw_bloch`) as well as
+           products of such single-qubit POVMs (see :meth:`.ProductPOVM.draw_bloch`).
 
         Args:
             title: A string that represents the plot title.
@@ -96,5 +89,8 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and
                 add a colormap to keep track of the norm of the vectors. It can
                 help to visualize the vector if they have a small norm.
+
+        Returns:
+            The resulting figure.
         """
         raise NotImplementedError

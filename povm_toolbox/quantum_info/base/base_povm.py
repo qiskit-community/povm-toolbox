@@ -38,14 +38,18 @@ class BasePOVM(BaseFrame[LabelT], ABC):
         rho: SparsePauliOp | DensityMatrix | Statevector,
         outcome_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
-        r"""Return the outcome probabilities given a state, $\rho$.
+        r"""Return the outcome probabilities given a state, :math:`\rho`.
+
+        Each outcome :math:`k` is associated with an effect :math:`M_k` of the POVM. The probability
+        of obtaining the outcome :math:`k` when measuring a state ``rho`` is given by
+        :math:`p_k = Tr[M_k \rho]`.
 
         .. note::
            TODO: explain how this relates to the :meth:`.BaseFrame.analysis` method.
 
         Args:
             rho: the state for which to compute the outcome probabilities.
-            outcome_idx: TODO.
+            outcome_idx: label(s) indicating which outcome probabilities are queried.
 
         Returns:
             TODO explain the different output types and how these represent the outcome
