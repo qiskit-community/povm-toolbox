@@ -55,7 +55,7 @@ class BaseDual(BaseFrame[LabelT], ABC):
 
         Args:
             observable: the observable for which to compute the decomposition weights.
-            outcome_idx: TODO.
+            outcome_idx: label(s) indicating which decomposition weights are queried.
 
         Returns:
             TODO explain the different output types and how these represent the decomposition

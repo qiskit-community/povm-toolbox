@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""MultiQubitDual."""
 
 from __future__ import annotations
 
@@ -22,34 +22,18 @@ from .multi_qubit_frame import MultiQubitFrame
 
 
 class MultiQubitDual(MultiQubitFrame, BaseDual):
-    """Class that collects all information that any MultiQubit Dual should specify.
+    """Class that collects all information that any Dual over multiple qubits should specify.
 
-    This is a representation of a dual frame. Its elements are specified as a list
-    of :class:`~qiskit.quantum_info.Operator`.
+    This is a representation of a dual frame. Its elements are specified as a list of
+    :class:`~qiskit.quantum_info.Operator`.
     """
 
     def get_omegas(
         self, observable: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
     ) -> float | dict[int, float] | np.ndarray:
-        r"""Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual.
-
-        Here the POVM itself is not explicitly needed, its dual is sufficient. Given
-        an observable :math:`O` which is in the span of a given POVM, one can write the
-        observable :math:`O` as the weighted sum of the POVM effects, :math:`O = \sum_k w_k M_k`
-        for real weights :math:`w_k`. There might be infinitely many valid sets of weight.
-        This method returns a possible set of weights.
-
-        Args:
-            observable: the observable to be decomposed into the POVM effects.
-            outcome_idx: label(s) indicating which decomposition weights are queried.
-
-        Returns:
-            An array of decomposition weights.
-        """
         return self.analysis(observable, outcome_idx)
 
     def is_dual_to(self, frame: BaseFrame) -> bool:
-        """Check if ``self`` is a dual to another frame."""
         if isinstance(frame, MultiQubitFrame):
             return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
         raise NotImplementedError
@@ -58,17 +42,6 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
     def build_dual_from_frame(
         cls, frame: BaseFrame, alphas: tuple[float, ...] | None = None
     ) -> MultiQubitDual:
-        """Construct a dual frame to another frame.
-
-        Args:
-            frame: the primal frame from which we will build the dual frame.
-            alphas: parameters of the frame super-operator used to build the
-                dual frame. If None, the parameters are set as the traces of
-                each operator in the primal frame.
-
-        Returns:
-            A multi-qubit dual frame to the supplied ``frame``.
-        """
         if isinstance(frame, MultiQubitFrame):
             # Set default values for alphas if none is provided.
             if alphas is None:
