@@ -27,6 +27,21 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
 
     This is a representation of a positive operator-valued measure (POVM). The effects are
     specified as a list of :class:`~qiskit.quantum_info.Operator`.
+
+    Below is a simple example showing how you define some 2-qubit POVM:
+
+    >>> from qiskit.quantum_info import Operator
+    >>> from povm_toolbox.quantum_info import MultiQubitPOVM
+    >>> povm = MultiQubitPOVM(
+    ...     [
+    ...         Operator.from_label("00"),
+    ...         Operator.from_label("01"),
+    ...         Operator.from_label("10"),
+    ...         Operator.from_label("11"),
+    ...     ]
+    ... )
+    >>> print(povm)
+    MultiQubitPOVM(num_qubits=2)<4> at 0x...
     """
 
     default_dual_class = MultiQubitDual

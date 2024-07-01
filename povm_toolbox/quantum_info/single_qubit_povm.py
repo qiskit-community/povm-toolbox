@@ -24,6 +24,24 @@ from .multi_qubit_povm import MultiQubitPOVM
 
 class SingleQubitPOVM(MultiQubitPOVM):
     """A convenience class to represent a single-qubit :class:`.MultiQubitPOVM` instance.
+
+    Below is a simple example showing how you define a symmetric and informationally-complete POVM
+    (SIC-POVM):
+
+    >>> import cmath
+    >>> import numpy as np
+    >>> from povm_toolbox.quantum_info import SingleQubitPOVM
+    >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+    ...     [
+    ...         [1, 0],
+    ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
+    ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(2.0j * np.pi / 3)],
+    ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(4.0j * np.pi / 3)],
+    ...     ]
+    ... )
+    >>> sic_povm = SingleQubitPOVM.from_vectors(vecs)
+    >>> print(sic_povm)
+    SingleQubitPOVM<4> at 0x...
     """
 
     def _check_validity(self) -> None:
@@ -53,6 +71,27 @@ class SingleQubitPOVM(MultiQubitPOVM):
         where :math:`\vec{\sigma}` is the usual Pauli vector and :math:`||\vec{a}_k||^2=1`.
         We then define the Bloch vector of a rank-1 effect as
         :math:`\vec{r}_k = \gamma_k \vec{a}_k`, which uniquely defines the rank-1 effect.
+
+        Example:
+
+        >>> import cmath
+        >>> import numpy as np
+        >>> from povm_toolbox.quantum_info import SingleQubitPOVM
+        >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+        ...     [
+        ...         [1, 0],
+        ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
+        ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(2.0j * np.pi / 3)],
+        ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(4.0j * np.pi / 3)],
+        ...     ]
+        ... )
+        >>> sic_povm = SingleQubitPOVM.from_vectors(vecs)
+        >>> bloch_vectors = sic_povm.get_bloch_vectors()
+        >>> print(bloch_vectors)  # doctest: +FLOAT_CMP
+        [[ 0.          0.          0.5       ]
+         [ 0.47140452  0.         -0.16666667]
+         [-0.23570226  0.40824829 -0.16666667]
+         [-0.23570226 -0.40824829 -0.16666667]]
 
         Returns:
             The Bloch vector of all POVM effects.
@@ -85,6 +124,24 @@ class SingleQubitPOVM(MultiQubitPOVM):
         colorbar: bool = False,
     ) -> Figure:
         """Plot the Bloch vector of each effect of the POVM.
+
+        .. plot::
+           :include-source:
+
+           >>> import cmath
+           >>> import numpy as np
+           >>> from povm_toolbox.quantum_info import SingleQubitPOVM
+           >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+           ...     [
+           ...         [1, 0],
+           ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
+           ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(2.0j * np.pi / 3)],
+           ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0) * cmath.exp(4.0j * np.pi / 3)],
+           ...     ]
+           ... )
+           >>> sic_povm = SingleQubitPOVM.from_vectors(vecs)
+           >>> sic_povm.draw_bloch()
+           <Figure size 500x500 with 1 Axes>
 
         Args:
             title: A string that represents the plot title.
