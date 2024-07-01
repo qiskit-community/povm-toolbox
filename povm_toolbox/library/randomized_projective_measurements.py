@@ -30,8 +30,7 @@ from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager
 
-from povm_toolbox.quantum_info.product_povm import ProductPOVM
-from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
+from povm_toolbox.quantum_info import ProductPOVM, SingleQubitPOVM
 
 from .metadata import RPMMetadata
 from .povm_implementation import POVMImplementation

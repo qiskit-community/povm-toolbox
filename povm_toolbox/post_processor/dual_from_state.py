@@ -17,9 +17,8 @@ from typing import cast
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
-from povm_toolbox.quantum_info import MultiQubitPOVM
+from povm_toolbox.quantum_info import MultiQubitDual, MultiQubitPOVM
 from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
-from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDual
 
 
 def dual_from_state(

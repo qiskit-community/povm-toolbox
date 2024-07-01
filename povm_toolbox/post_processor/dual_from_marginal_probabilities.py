@@ -17,9 +17,8 @@ from typing import cast
 import numpy as np
 from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 
-from povm_toolbox.quantum_info import ProductPOVM
+from povm_toolbox.quantum_info import ProductDual, ProductPOVM
 from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
-from povm_toolbox.quantum_info.product_dual import ProductDual
 
 
 def dual_from_marginal_probabilities(
