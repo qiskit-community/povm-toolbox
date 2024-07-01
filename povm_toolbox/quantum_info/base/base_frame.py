@@ -87,7 +87,7 @@ class BaseFrame(ABC, Generic[LabelT]):
 
         Args:
             hermitian_op: a hermitian operator whose frame coefficients to compute.
-            frame_op_idx: TODO.
+            frame_op_idx: label(s) indicating which frame coefficients are queried.
 
         Returns:
             TODO explain the different output types and how these represent the frame coefficients
