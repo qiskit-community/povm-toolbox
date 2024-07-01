@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""ProductPOVM."""
 
 from __future__ import annotations
 
@@ -28,23 +28,46 @@ from .product_frame import ProductFrame
 class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
     r"""Class to represent a set of product POVM operators.
 
-    A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting
-    on respective subsystems. Each global effect can be written as the tensor
-    product of local effects,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
+    A product POVM :math:`M` is made of local POVMs :math:`M_1, M2, ...` acting on respective
+    subsystems. Each global effect can be written as the tensor product of local effects,
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes \ldots`.
+
+    Below is an example of how to construct an instance of this class.
+
+    >>> from qiskit.quantum_info import Operator
+    >>> from povm_toolbox.quantum_info import SingleQubitPOVM, MultiQubitPOVM, ProductPOVM
+    >>> sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+    >>> mqp = MultiQubitPOVM(
+    ...     [
+    ...         Operator.from_label("00"),
+    ...         Operator.from_label("01"),
+    ...         Operator.from_label("10"),
+    ...         Operator.from_label("11"),
+    ...     ]
+    ... )
+    >>> product = ProductPOVM({(0,): sqp, (1, 3): mqp, (2,): sqp})
+
+    .. note::
+        For most cases, you may find that :meth:`ProductPOVM.from_list` works just fine and is
+        easier to use.
     """
 
     default_dual_class = ProductDual
 
     def _check_validity(self) -> None:
-        """Check if POVM axioms are fulfilled.
+        """Check if frame axioms are fulfilled for all local frames.
+
+        In addition to the checks performed by the super-class, the following errors may be raised.
 
         Raises:
-            TODO.
+            TypeError: if any internal frame is not a :class:`.MultiQubitPOVM` instance.
         """
         for povm in self._frames.values():
             if not isinstance(povm, MultiQubitPOVM):
-                raise TypeError
+                raise TypeError(
+                    "Expected the internal frame to be of type `MultiQubitPOVM` but found an object"
+                    f" of type `{type(povm)}` instead."
+                )
             povm._check_validity()
 
     def get_prob(
@@ -53,6 +76,9 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
         """Return the outcome probabilities given a state rho.
+
+        .. note::
+           TODO: align this docstring with that of :class:`.BasePOVM`.
 
         Args:
             rho: the input state over which to compute the outcome probabilities.
@@ -93,6 +119,13 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and
                 add a colormap to keep track of the norm of the vectors. It can
                 help to visualize the vector if they have a small norm.
+
+        Returns:
+            The resulting figure.
+
+        Raises:
+            NotImplementedError: if this product POVM contains a :class:`.MultiQubitPOVM` acting on
+                more than a single qubit.
         """
         # Number of subplots (one per qubit)
         num = self.num_subsystems
