@@ -42,7 +42,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
         Raises:
             TODO.
         """
-        for povm in self._povms.values():
+        for povm in self._frames.values():
             if not isinstance(povm, MultiQubitPOVM):
                 raise TypeError
             povm._check_validity()
