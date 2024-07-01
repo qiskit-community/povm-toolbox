@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""BaseDual."""
 
 from __future__ import annotations
 
@@ -22,11 +22,11 @@ from .base_frame import BaseFrame, LabelT
 
 
 class BaseDual(BaseFrame[LabelT], ABC):
-    """Abstract base class that contains all methods that any specific Dual subclass should implement."""
+    """Abstract base class that contains all methods that any specific Dual should implement."""
 
     @property
     def num_outcomes(self) -> int:
-        """Give the number of outcomes of the Dual."""
+        """The number of outcomes of the Dual."""
         return self.num_operators
 
     @abstractmethod
@@ -35,23 +35,57 @@ class BaseDual(BaseFrame[LabelT], ABC):
         observable: SparsePauliOp | Operator,
         outcome_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
-        """Return the decomposition weights of the provided observable into the POVM effects to which ``self`` is a dual."""
+        r"""Return the decomposition weights of the provided observable.
+
+        Computes the $\omega_k$ in
+
+        .. math::
+           \mathcal{O} = \sum_{k=1}^n \omega_k M_k
+
+        where $\mathcal{O}$ is the ``observable`` and $M_k$ are the effects of the POVM of which ``self`` is
+        the dual. The closed form for computing $\omega_k$ is
+
+        .. math::
+           \omega_k = \text{Tr}\left[\mathcal{O} D_k\right]
+
+        where $D_k$ make of this dual frame (i.e. ``self``).
+
+        .. note::
+           TODO: explain how this relates to the :meth:`.BaseFrame.analysis` method.
+
+        Args:
+            observable: the observable for which to compute the decomposition weights.
+            outcome_idx: TODO.
+
+        Returns:
+            TODO explain the different output types and how these represent the decomposition
+            weights of the provided observable.
+        """
+        # TODO: why is this method labeled abstract but still has an implementation? One of these
+        # should be removed.
         return self.analysis(observable, outcome_idx)
 
     @abstractmethod
     def is_dual_to(self, frame: BaseFrame) -> bool:
-        """Check if `self` is a dual to another frame."""
+        """Check if ``self`` is a dual to another frame.
+
+        Args:
+            frame: the other frame to check duality against.
+
+        Returns:
+            Whether ``self`` is dual to ``frame``.
+        """
 
     @classmethod
     @abstractmethod
     def build_dual_from_frame(cls, frame: BaseFrame, alphas: tuple[Any] | None = None) -> BaseDual:
-        """Construct a dual frame to another frame.
+        """Construct a dual frame to another (primal) frame.
 
         Args:
             frame: The primal frame from which we will build the dual frame.
-            alphas: parameters of the frame super-operator used to build the
-                dual frame. If None, the parameters are set as the traces of
-                each operator in the primal frame.
+            alphas: parameters of the frame super-operator used to build the dual frame.
+                If ``None``, the parameters are set as the traces of each operator in the primal
+                frame.
 
         Returns:
             A dual frame to the supplied ``frame``.

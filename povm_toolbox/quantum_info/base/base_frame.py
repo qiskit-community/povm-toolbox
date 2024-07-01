@@ -38,21 +38,27 @@ class BaseFrame(ABC, Generic[LabelT]):
 
     If a set of operators does not span the entire Hilbert space, it can still be considered as a
     frame on the subspace it spans.
+
+    .. warning::
+       TODO: missing explanation of what an ``effect`` is in order to make the following
+       documentation easier to understand. We should check whether the notion of an `effect` is
+       needed and if/how it differs from `operator` (e.g. :attr:`num_operators` seems to mix these
+       names interchangeably).
     """
 
     @property
     @abstractmethod
     def informationally_complete(self) -> bool:
-        """Return if the frame spans the entire Hilbert space."""
+        """If the frame spans the entire Hilbert space."""
 
     @property
     @abstractmethod
     def dimension(self) -> int:
-        """Give the dimension of the Hilbert space on which the effects act."""
+        """The dimension of the Hilbert space on which the effects act."""
 
     @property
     def num_subsystems(self) -> int:
-        r"""Return the number of subsystems which the effects act on.
+        r"""The number of subsystems which the effects act on.
 
         For qubits, this is always :math:`\log_2(`:attr:`.dimension`:math:`)`.
         """
@@ -61,7 +67,7 @@ class BaseFrame(ABC, Generic[LabelT]):
     @property
     @abstractmethod
     def num_operators(self) -> int:
-        """Give the number of effects of the frame."""
+        """The number of effects of the frame."""
 
     @abstractmethod
     def _check_validity(self) -> None:
@@ -77,4 +83,13 @@ class BaseFrame(ABC, Generic[LabelT]):
         hermitian_op: SparsePauliOp | Operator,
         frame_op_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
-        """Return the frame coefficients of ``hermitian_op``."""
+        """Return the frame coefficients of ``hermitian_op``.
+
+        Args:
+            hermitian_op: a hermitian operator whose frame coefficients to compute.
+            frame_op_idx: TODO.
+
+        Returns:
+            TODO explain the different output types and how these represent the frame coefficients
+            of the provided hermitian operator.
+        """
