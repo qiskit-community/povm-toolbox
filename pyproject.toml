@@ -14,14 +14,14 @@ dependencies = [
     "numpy>=1.23",
     "numba>=0.59",
     "qiskit>=1.0",
-    "qiskit-ibm-runtime>=0.22",
+    "qiskit-ibm-runtime>=0.24",
     "qiskit-aer>=0.14",
     "matplotlib",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "povm_toolbox[test,nbtest,lint,docs,notebook-dependencies]",
+    "povm_toolbox[test,doctest,nbtest,lint,docs,notebook-dependencies]",
 ]
 basetest = [
     "tox>=4.0",
@@ -30,6 +30,10 @@ basetest = [
 ]
 test = [
     "povm_toolbox[basetest]",
+]
+doctest = [
+    "povm_toolbox[basetest]",
+    "pytest-doctestplus>=1.2.1",
 ]
 nbtest = [
     "povm_toolbox[basetest]",
@@ -42,7 +46,6 @@ style = [
 ]
 lint = [
     "povm_toolbox[style]",
-    "pydocstyle>=6.3.0",
     "mypy>=1.10.0",
     "pylint>=3.1.0",
     "toml",
@@ -58,6 +61,7 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",
     "nbsphinx",
+    "pytest-doctestplus>=1.2.1",
 ]
 
 [tool.coverage.run]
@@ -144,8 +148,12 @@ ignore = [
 ]
 explicit-preview-rules = true
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
 [tool.ruff.lint.pylint]
 max-args = 10
+max-statements = 65
 
 [tool.ruff.lint.extend-per-file-ignores]
 "docs/**/*" = [

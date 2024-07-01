@@ -10,13 +10,15 @@
 
 """Tests for the POVMSamplerJob class."""
 
+from pathlib import Path
 from unittest import TestCase
 
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
-from qiskit import QuantumCircuit
-from qiskit.circuit.random import random_circuit
+from qiskit import QuantumCircuit, qpy
+from qiskit.primitives import PrimitiveResult
+from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer.primitives import SamplerV2 as AerSampler
@@ -25,16 +27,23 @@ from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 
 
 class TestPOVMSamplerJob(TestCase):
-    """Tests for the ``POVMSampler`` class."""
+    """Tests for the ``POVMSamplerJob`` class."""
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
-        self.sampler = AerSampler()
+    RNG_SEED = 10
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.sampler = AerSampler(seed=self.RNG_SEED)
 
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=40)
+        # Load the circuit that was obtained through:
+        #   from qiskit.circuit.random import random_circuit
+        #   qc = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=10)
+        # for qiskit==1.1.1
+        with open("test/sampler/random_circuits.qpy", "rb") as file:
+            qc_random = qpy.load(file)[0]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
@@ -43,12 +52,36 @@ class TestPOVMSamplerJob(TestCase):
     def test_result(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
-        qc_random = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=41)
+        # Load the circuit that was obtained through:
+        #   from qiskit.circuit.random import random_circuit
+        #   qc = random_circuit(num_qubits=num_qubits, depth=2, measure=False, seed=10)
+        # for qiskit==1.1.1
+        with open("test/sampler/random_circuits.qpy", "rb") as file:
+            qc_random = qpy.load(file)[1]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
-        cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
-        result = cs_job.result()[0]
-        self.assertIsInstance(result, POVMPubResult)
+        with self.subTest("Result for a single PUB."):
+            cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
+            result = cs_job.result()
+            self.assertIsInstance(result, PrimitiveResult)
+            self.assertIsInstance(result[0], POVMPubResult)
+        with self.subTest("Result for multiple PUBs."):
+            cs_job = povm_sampler.run(
+                [qc_random, qc_random], shots=cs_shots, povm=cs_implementation
+            )
+            result = cs_job.result()
+            self.assertIsInstance(result, PrimitiveResult)
+            self.assertEqual(len(result), 2)
+            self.assertIsInstance(result[0], POVMPubResult)
+            self.assertIsInstance(result[1], POVMPubResult)
+        with self.subTest(
+            "Error raised if incompatible lengths of raw results and metadata."
+        ) and self.assertRaises(ValueError):
+            cs_job = povm_sampler.run(
+                [qc_random, qc_random], shots=cs_shots, povm=cs_implementation
+            )
+            cs_job.metadata.pop()
+            _ = cs_job.result()
 
     def test_recover_job(self):
         qc = QuantumCircuit(2)
@@ -56,38 +89,103 @@ class TestPOVMSamplerJob(TestCase):
         qc.cx(0, 1)
 
         backend = FakeSherbrooke()
-        backend.set_options(seed_simulator=25)
-        pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
+        backend.set_options(seed_simulator=self.RNG_SEED)
+        pm = generate_preset_pass_manager(
+            optimization_level=2, backend=backend, seed_transpiler=self.RNG_SEED
+        )
 
         qc_isa = pm.run(qc)
 
-        measurement = ClassicalShadows(2, seed_rng=13)
-        runtime_sampler = RuntimeSampler(backend=backend)
+        measurement = ClassicalShadows(2, seed_rng=self.RNG_SEED)
+        runtime_sampler = RuntimeSampler(mode=backend)
         povm_sampler = POVMSampler(runtime_sampler)
         job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
-        job.save_metadata(filename="saved_metadata.pkl")
         tmp = job.base_job
 
-        job_recovered = POVMSamplerJob.recover_job(filename="saved_metadata.pkl", base_job=tmp)
-        self.assertIsInstance(job_recovered, POVMSamplerJob)
-        result = job_recovered.result()
-        pub_result = result[0]
-        observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
-        post_processor = POVMPostProcessor(pub_result)
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 3.53125)
-        self.assertAlmostEqual(std, 0.3590672895231641)
+        with self.subTest("Save job with specific filename."):
+            filename = "saved_metadata.pkl"
+            job.save_metadata(filename=filename)
+            job_recovered = POVMSamplerJob.recover_job(filename=filename, base_job=tmp)
+            try:
+                self.assertIsInstance(job_recovered, POVMSamplerJob)
+                result = job_recovered.result()
+                pub_result = result[0]
+                observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
+                post_processor = POVMPostProcessor(pub_result)
+                exp_value, std = post_processor.get_expectation_value(observable)
+                self.assertAlmostEqual(exp_value, 4.445312500000001)
+                self.assertAlmostEqual(std, 0.3881881421165156)
+            except BaseException as exc:  # catch anything
+                raise exc
+            finally:
+                Path(filename).unlink(missing_ok=True)
 
-        job.save_metadata()
+        with self.subTest("Save job with default filename."):
+            job.save_metadata()
+            filename = f"job_metadata_{job.base_job.job_id()}.pkl"
+            job_recovered = POVMSamplerJob.recover_job(filename=filename, base_job=tmp)
+            try:
+                self.assertIsInstance(job_recovered, POVMSamplerJob)
+                result = job_recovered.result()
+                pub_result = result[0]
+                observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
+                post_processor = POVMPostProcessor(pub_result)
+                exp_value, std = post_processor.get_expectation_value(observable)
+                self.assertAlmostEqual(exp_value, -1.3906250000000009)
+                self.assertAlmostEqual(std, 0.6732583954195841)
+            except BaseException as exc:  # catch anything
+                raise exc
+            finally:
+                Path(filename).unlink(missing_ok=True)
 
-        job_recovered = POVMSamplerJob.recover_job(
-            filename=f"job_metadata_{job.base_job.job_id()}.pkl", base_job=tmp
+        with self.subTest("Test default ``base_job``."):
+            # TODO
+            # It requires QiskitRuntimeService. How can we test this ?
+            pass
+
+        with self.subTest(
+            "Error if id of ``base_job`` does not match the one stored in the metadata file."
+        ) and self.assertRaises(ValueError):
+            filename = f"job_metadata_{job.base_job.job_id()}.pkl"
+            job.save_metadata(filename=filename)
+            try:
+                job2 = povm_sampler.run(pubs=[qc_isa], shots=1, povm=measurement)
+                _ = POVMSamplerJob.recover_job(filename=filename, base_job=job2.base_job)
+            except BaseException as exc:  # catch anything
+                raise exc
+            finally:
+                Path(filename).unlink(missing_ok=True)
+
+    def test_status(self):
+        """Test the ``status`` and associated methods."""
+        povm_sampler = POVMSampler(sampler=self.sampler)
+        num_qubits = 2
+        # Load the circuit that was obtained through:
+        #   from qiskit.circuit.random import random_circuit
+        #   qc = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=10)
+        # for qiskit==1.1.1
+        with open("test/sampler/random_circuits.qpy", "rb") as file:
+            qc_random = qpy.load(file)[0]
+        cs_implementation = ClassicalShadows(num_qubits=num_qubits)
+        cs_job = povm_sampler.run([qc_random], shots=100, povm=cs_implementation)
+        job_status, is_done, is_running, is_cancelled, in_final = (
+            cs_job.status(),
+            cs_job.done(),
+            cs_job.running(),
+            cs_job.cancelled(),
+            cs_job.in_final_state(),
         )
-        self.assertIsInstance(job_recovered, POVMSamplerJob)
-        result = job_recovered.result()
-        pub_result = result[0]
-        observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
-        post_processor = POVMPostProcessor(pub_result)
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 3.53125)
-        self.assertAlmostEqual(std, 0.3590672895231641)
+        if job_status == JobStatus.RUNNING:
+            self.assertFalse(is_done)
+            self.assertTrue(is_running)
+            self.assertFalse(is_cancelled)
+            self.assertFalse(in_final)
+
+        _ = cs_job.result()
+        self.assertEqual(cs_job.status(), JobStatus.DONE)
+        self.assertTrue(cs_job.done())
+        self.assertFalse(cs_job.running())
+        self.assertFalse(cs_job.cancelled())
+        self.assertTrue(cs_job.in_final_state())
+        cs_job.cancel()
+        self.assertFalse(cs_job.cancelled())

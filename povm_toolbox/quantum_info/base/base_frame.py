@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""BaseFrame."""
 
 from __future__ import annotations
 
@@ -19,10 +19,12 @@ from typing import Generic, TypeVar
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
-# Each operator in the frame is identified by a label. ``LabelT`` is the type of
-# these labels. For instance, labels could be strings, integers, or it could be
-# tuples of integers among other possibilities.
 LabelT = TypeVar("LabelT")
+"""Each operator in the frame is identified by a label.
+
+This is the type of these labels. For instance, labels could be strings, integers, or it could be
+tuples of integers among other possibilities.
+"""
 
 
 class BaseFrame(ABC, Generic[LabelT]):

@@ -17,8 +17,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
 
-from .base_povm import BasePOVM
-from .multi_qubit_dual import MultiQubitDUAL
+from .base import BasePOVM
+from .multi_qubit_dual import MultiQubitDual
 from .multi_qubit_frame import MultiQubitFrame
 
 
@@ -29,7 +29,7 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
     specified as a list of :class:`~qiskit.quantum_info.Operator`.
     """
 
-    default_dual_class = MultiQubitDUAL
+    default_dual_class = MultiQubitDual
 
     def _check_validity(self) -> None:
         r"""Check if POVM axioms are fulfilled.

@@ -15,15 +15,17 @@ from unittest import TestCase
 import numpy as np
 from povm_toolbox.post_processor import dual_from_state
 from povm_toolbox.quantum_info import MultiQubitPOVM, ProductPOVM, SingleQubitPOVM
-from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDUAL
+from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDual
 from qiskit.quantum_info import Operator, random_density_matrix, random_hermitian
 
 
 class TestDualFromState(TestCase):
     """Test that we can construct optimal dual of a POVM from a state."""
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    RNG_SEED = 28
+
+    def setUp(self) -> None:
+        super().setUp()
         self.povm = MultiQubitPOVM(
             [
                 0.3 * Operator.from_label("0"),
@@ -38,27 +40,27 @@ class TestDualFromState(TestCase):
     def test_not_implemented(self):
         """Test that errors are correctly raised."""
         prod_povm: ProductPOVM = ProductPOVM.from_list([self.povm, self.povm])
-        state = random_density_matrix(4, seed=12)
+        state = random_density_matrix(4, seed=self.RNG_SEED)
         with self.assertRaises(NotImplementedError):
             _ = dual_from_state(prod_povm, state)
 
     def test_implemented(self):
         """Test that the method constructs a valid dual."""
         joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
-        state = random_density_matrix(2, seed=12)
+        state = random_density_matrix(2, seed=self.RNG_SEED)
         dual = dual_from_state(joint_povm, state)
         self.assertTrue(dual.is_dual_to(joint_povm))
 
     def test_optimal_dual(self):
         """Test that the method constructs a valid dual."""
         joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
-        state = random_density_matrix(2, seed=12)
-        obs = random_hermitian(2, seed=13)
+        state = random_density_matrix(2, seed=self.RNG_SEED)
+        obs = random_hermitian(2, seed=self.RNG_SEED)
         probabilities = joint_povm.get_prob(state)
         exact_exp_val = state.expectation_value(obs).real
 
         with self.subTest("Test canonical dual."):
-            canonical_dual = MultiQubitDUAL.build_dual_from_frame(joint_povm)
+            canonical_dual = MultiQubitDual.build_dual_from_frame(joint_povm)
             canonical_weights = canonical_dual.get_omegas(obs)
             exp_val_canonical = np.dot(probabilities, canonical_weights)
             var_canonical = (
@@ -66,7 +68,10 @@ class TestDualFromState(TestCase):
             )
             self.assertTrue(canonical_dual.is_dual_to(joint_povm))
             self.assertAlmostEqual(exp_val_canonical, exact_exp_val)
-            self.assertAlmostEqual(var_canonical, 19.939516226261677)
+            self.assertAlmostEqual(
+                var_canonical,
+                np.dot(probabilities, np.power(canonical_weights, 2)) - exact_exp_val**2,
+            )
 
         with self.subTest("Test optimal dual."):
             optimal_dual = dual_from_state(joint_povm, state)
@@ -75,4 +80,6 @@ class TestDualFromState(TestCase):
             var_optimal = np.dot(probabilities, np.power(optimal_weights, 2)) - exp_val_optimal**2
             self.assertTrue(optimal_dual.is_dual_to(joint_povm))
             self.assertAlmostEqual(exp_val_optimal, exact_exp_val)
-            self.assertAlmostEqual(var_optimal, 19.310408719153827)
+            self.assertAlmostEqual(
+                var_optimal, np.dot(probabilities, np.power(optimal_weights, 2)) - exact_exp_val**2
+            )

@@ -10,22 +10,26 @@
 
 """Tests for the `dual_from_empirical_frequencies` function."""
 
+from copy import deepcopy
 from unittest import TestCase
 
 import numpy as np
-from numpy.random import default_rng
 from povm_toolbox.library import (
+    ClassicalShadows,
     RandomizedProjectiveMeasurements,
 )
 from povm_toolbox.post_processor import (
     POVMPostProcessor,
     dual_from_empirical_frequencies,
 )
+from povm_toolbox.quantum_info import MultiQubitPOVM
 from povm_toolbox.sampler import POVMSampler
-from qiskit.circuit.random import random_circuit
+from qiskit import qpy
+from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import (
     DensityMatrix,
+    Operator,
     SparsePauliOp,
 )
 
@@ -33,10 +37,16 @@ from qiskit.quantum_info import (
 class TestDualFromEmpiricalFrequencies(TestCase):
     """Test that we can construct optimal dual of a POVM from empirical frequencies."""
 
-    def test_empirical_dual(self):
-        """Test that the method constructs a valid dual."""
-        qc = random_circuit(2, 1, measure=False, seed=12)
-        rng = default_rng(96568)
+    RNG_SEED = 30
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Load the circuit that was obtained through:
+        #   from qiskit.circuit.random import random_circuit
+        #   qc = random_circuit(num_qubits=2, depth=1, measure=False, seed=30)
+        # for qiskit==1.1.1
+        with open("test/post_processor/random_circuit_qubits=2_depth=1_seed=30.qpy", "rb") as file:
+            qc = qpy.load(file)[0]
         num_qubits = qc.num_qubits
         bias = np.array([0.5, 0.25, 0.25])
         angles = np.array(
@@ -47,52 +57,86 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         )
 
         measurement = RandomizedProjectiveMeasurements(
-            num_qubits, bias=bias, angles=angles, seed_rng=rng
+            num_qubits, bias=bias, angles=angles, seed_rng=self.RNG_SEED
         )
-        sampler = StatevectorSampler(seed=rng)
-        povm_sampler = POVMSampler(sampler=sampler)
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
         job = povm_sampler.run([qc], shots=127, povm=measurement)
         pub_result = job.result()[0]
+        self.post_processor = POVMPostProcessor(pub_result)
 
-        observable = SparsePauliOp(
-            ["XI", "YI", num_qubits * "Y", num_qubits * "Z"], coeffs=[1.3, 1.2, -1, 1.4]
-        )
-
-        post_processor = POVMPostProcessor(pub_result)
+    def test_empirical_dual(self):
+        """Test that the method constructs a valid dual."""
+        observable = SparsePauliOp(["XI", "YI", 2 * "Y", 2 * "Z"], coeffs=[1.3, 1.2, -1, 1.4])
 
         with self.subTest("Test canonical dual."):
-            exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 1.255719986997053)
-            self.assertAlmostEqual(std, 0.5312929210892221)
+            exp_value, std = self.post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -1.920301957227794)
+            self.assertAlmostEqual(std, 0.468920055605158)
 
         with self.subTest("Test empirical dual with default arguments."):
-            post_processor.dual = dual_from_empirical_frequencies(
-                povm_post_processor=post_processor
+            self.post_processor.dual = dual_from_empirical_frequencies(
+                povm_post_processor=self.post_processor
             )
-            exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.9128662937761666)
-            self.assertAlmostEqual(std, 0.40472771240833644)
+            exp_value, std = self.post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -4.156136105226559)
+            self.assertAlmostEqual(std, 0.10312825405831737)
 
         with self.subTest("Test empirical dual with lists arguments."):
-            post_processor.dual = dual_from_empirical_frequencies(
-                povm_post_processor=post_processor,
+            self.post_processor.dual = dual_from_empirical_frequencies(
+                povm_post_processor=self.post_processor,
                 loc=0,
                 bias=[6, 6],
-                ansatz=[DensityMatrix(np.eye(2) / 2), DensityMatrix(np.eye(2) / 2)],
+                ansatz=[
+                    DensityMatrix(np.eye(2) / 2),
+                    DensityMatrix(np.array([[2, 0], [1, 0]]) / 3),
+                ],
             )
-            exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.9128662937761666)
-            self.assertAlmostEqual(std, 0.40472771240833644)
+            exp_value, std = self.post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -4.16623022578294)
+            self.assertAlmostEqual(std, 0.1035227891358374)
 
         with self.subTest(
             "Test empirical dual with `bias` and `ansatz` arguments repeated for all qubits."
         ):
-            post_processor.dual = dual_from_empirical_frequencies(
-                povm_post_processor=post_processor,
+            self.post_processor.dual = dual_from_empirical_frequencies(
+                povm_post_processor=self.post_processor,
                 loc=0,
-                bias=6,
+                bias=15,
                 ansatz=SparsePauliOp(["I"], coeffs=np.array([0.5])),
             )
-            exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.9128662937761666)
-            self.assertAlmostEqual(std, 0.40472771240833644)
+            exp_value, std = self.post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -4.0202588245449125)
+            self.assertAlmostEqual(std, 0.11724423989411743)
+
+    def test_errors_raised(self):
+        """Test that the method raises the appropriate errors when suitable."""
+        with self.subTest("Error if ``povm`` is not a ``ProductPOVM`.") and self.assertRaises(
+            NotImplementedError
+        ):
+            post_processor_2 = deepcopy(self.post_processor)
+            post_processor_2._povm = MultiQubitPOVM([Operator(np.eye(4))])
+            _ = dual_from_empirical_frequencies(post_processor_2)
+
+        with self.subTest("Error if length of `bias` is invalid.") and self.assertRaises(
+            ValueError
+        ):
+            _ = dual_from_empirical_frequencies(self.post_processor, bias=[1.0])
+
+        with self.subTest("Error if length of `ansatz` is invalid.") and self.assertRaises(
+            ValueError
+        ):
+            _ = dual_from_empirical_frequencies(
+                self.post_processor, ansatz=[DensityMatrix(np.eye(2) / 2)]
+            )
+
+        with self.subTest("Error if default ``loc`` is not applicable.") and self.assertRaises(
+            ValueError
+        ):
+            qc = QuantumCircuit(2)
+            qc.ry(theta=Parameter("theta"), qubit=0)
+            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
+            measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
+            job = povm_sampler.run([(qc, np.array([0, np.pi]))], shots=16, povm=measurement)
+            pub_result = job.result()[0]
+            post_processor_3 = POVMPostProcessor(pub_result)
+            _ = dual_from_empirical_frequencies(post_processor_3)
