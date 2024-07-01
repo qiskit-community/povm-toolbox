@@ -164,14 +164,17 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
     @property
     def informationally_complete(self) -> bool:
+        """If the frame spans the entire Hilbert space."""
         return self._informationally_complete
 
     @property
     def dimension(self) -> int:
+        """The dimension of the Hilbert space on which the effects act."""
         return self._dimension
 
     @property
     def num_operators(self) -> int:
+        """The number of effects of the frame."""
         return self._num_operators
 
     @property

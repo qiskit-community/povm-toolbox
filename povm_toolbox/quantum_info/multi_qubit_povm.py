@@ -12,6 +12,13 @@
 
 from __future__ import annotations
 
+import sys
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
+
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -69,6 +76,7 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         if not np.allclose(summed_op, np.identity(self.dimension, dtype=complex), atol=1e-5):
             raise ValueError(f"POVM operators not summing up to the identity : \n{summed_op}")
 
+    @override
     def get_prob(
         self,
         rho: SparsePauliOp | DensityMatrix | Statevector,

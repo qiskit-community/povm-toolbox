@@ -12,6 +12,13 @@
 
 from __future__ import annotations
 
+import sys
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
+
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
 
@@ -62,6 +69,7 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
         # TODO: check that observable is Hermitian ?
         return self.analysis(observable, outcome_idx)
 
+    @override
     def is_dual_to(self, frame: BaseFrame) -> bool:
         if isinstance(frame, ProductFrame) and set(self.sub_systems) == set(frame.sub_systems):
             return all([self[idx].is_dual_to(frame[idx]) for idx in self.sub_systems])
@@ -73,6 +81,7 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
         #      have not implemented the check for this. Then we should raise an NotImplementedError.
         raise NotImplementedError
 
+    @override
     @classmethod
     def build_dual_from_frame(
         cls, frame: BaseFrame, alphas: tuple[tuple[float, ...] | None, ...] | None = None
