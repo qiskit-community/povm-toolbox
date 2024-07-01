@@ -14,7 +14,7 @@ dependencies = [
     "numpy>=1.23",
     "numba>=0.59",
     "qiskit>=1.0",
-    "qiskit-ibm-runtime>=0.22",
+    "qiskit-ibm-runtime>=0.24",
     "qiskit-aer>=0.14",
     "matplotlib",
 ]
@@ -153,6 +153,7 @@ convention = "numpy"
 
 [tool.ruff.lint.pylint]
 max-args = 10
+max-statements = 65
 
 [tool.ruff.lint.extend-per-file-ignores]
 "docs/**/*" = [
