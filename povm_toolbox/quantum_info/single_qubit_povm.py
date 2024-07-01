@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""SingleQubitPOVM."""
 
 from __future__ import annotations
 
@@ -23,13 +23,16 @@ from .multi_qubit_povm import MultiQubitPOVM
 
 
 class SingleQubitPOVM(MultiQubitPOVM):
-    """Class to represent a set of IC single-qubit POVM operators."""
+    """A convenience class to represent a single-qubit :class:`.MultiQubitPOVM` instance.
+    """
 
     def _check_validity(self) -> None:
-        """TODO.
+        """Check if POVM axioms are fulfilled.
+
+        In addition to the checks performed by the super-class, the following errors may be raised.
 
         Raises:
-            ValueError: TODO.
+            ValueError: if the dimension does not equal 2 (i.e. the POVM acts on more than 1 qubit).
         """
         if not self.dimension == 2:
             raise ValueError(
@@ -47,10 +50,15 @@ class SingleQubitPOVM(MultiQubitPOVM):
             M_k = \gamma_k |\psi_k \rangle \langle \psi_k | = \gamma_k
             \frac{1}{2} \left( \mathbb{I} + \vec{a}_k \cdot \vec{\sigma} \right)
 
-        where :math:`\vec{\sigma}` is the usual Pauli vector and
-        :math:`||\vec{a}_k||^2=1`. We then define the Bloch vector of a rank-1
-        effect as :math:`\vec{r}_k = \gamma_k \vec{a}_k`, which uniquely defines
-        the rank-1 effect.
+        where :math:`\vec{\sigma}` is the usual Pauli vector and :math:`||\vec{a}_k||^2=1`.
+        We then define the Bloch vector of a rank-1 effect as
+        :math:`\vec{r}_k = \gamma_k \vec{a}_k`, which uniquely defines the rank-1 effect.
+
+        Returns:
+            The Bloch vector of all POVM effects.
+
+        Raises:
+            ValueError: if any effect of this POVM has a rank greater than 1.
         """
         r = np.empty((self.num_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
@@ -87,6 +95,9 @@ class SingleQubitPOVM(MultiQubitPOVM):
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and
                 add a colormap to keep track of the norm of the vectors. It can
                 help to visualize the vector if they have a small norm.
+
+        Returns:
+            The resulting figure.
         """
         if figsize is None:
             figsize = (5, 4) if colorbar else (5, 5)
