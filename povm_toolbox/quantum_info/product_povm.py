@@ -28,9 +28,9 @@ from .product_frame import ProductFrame
 class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
     r"""Class to represent a set of product POVM operators.
 
-    A product POVM :math:`M` is made of local POVMs :math:`M_1, M2, ...` acting on respective
+    A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting on respective
     subsystems. Each global effect can be written as the tensor product of local effects,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes \ldots`.
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \ldots`.
 
     Below is an example of how to construct an instance of this class.
 

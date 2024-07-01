@@ -36,9 +36,9 @@ T = TypeVar("T", bound=MultiQubitFrame)
 class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     r"""Class to represent a set of product frame operators.
 
-    A product frame :math:`M` is made of local frames :math:`M_1, M2, ...` acting on respective
+    A product frame :math:`M` is made of local frames :math:`M1, M2, ...` acting on respective
     subsystems. Each global operator can be written as the tensor product of local operators,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes \ldots`.
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \ldots`.
 
     .. note::
        This is a base class which collects functionality common to various subclasses. As an
