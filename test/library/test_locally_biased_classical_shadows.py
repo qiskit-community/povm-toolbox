@@ -43,7 +43,7 @@ class TestRandomizedPMs(TestCase):
         self.Y1 = np.outer(basis_minus_i, basis_minus_i.conj())
 
     def test_init(self):
-        """Test the implementation of mutually-unbiased-bases POVMs."""
+        """Test the implementation of locally-biased classical shadows."""
 
         qc = QuantumCircuit(2)
         qc.h(0)
