@@ -122,12 +122,6 @@ class POVMSamplerPub(ShapedMixin):
         Returns:
             A coerced POVM sampler pub.
         """
-        # Validate shots kwarg if provided
-        if shots is not None and (
-            not isinstance(shots, int) or isinstance(shots, bool) or shots <= 0
-        ):
-            raise TypeError("shots must be a positive integer")
-
         if isinstance(pub, POVMSamplerPub):
             if pub.shots is None and shots is not None:
                 return cls(
@@ -135,7 +129,7 @@ class POVMSamplerPub(ShapedMixin):
                     parameter_values=pub.parameter_values,
                     shots=shots,
                     povm=pub.povm,
-                    validate=False,  # Assume Pub is already validated
+                    validate=True,
                 )
             return pub
 
@@ -203,9 +197,9 @@ class POVMSamplerPub(ShapedMixin):
                 "The number of shots must be specified, either for this particular "
                 "pub or set a default POVM for all pubs."
             )
-        if not isinstance(self.shots, Integral) or isinstance(self.shots, bool):
+        if not isinstance(self.shots, int):
             raise TypeError("shots must be an integer")
-        if self.shots < 0:
+        if self.shots <= 0:
             raise ValueError("shots must be positive")
 
         # Cross validate circuits and parameter values
@@ -228,6 +222,8 @@ class POVMSamplerPub(ShapedMixin):
                 "The POVM must be specified, either for this particular pub or "
                 "set a default POVM for all pubs."
             )
+        if not isinstance(self.povm, POVMImplementation):
+            raise TypeError("`povm` must be a `POVMImplementation` instance.")
 
     def to_sampler_pub(
         self,
