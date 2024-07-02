@@ -39,7 +39,7 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
         )
         self.assertEqual(povm.__repr__(), mub_str)
 
-    def test_twirling(self):
+    def test_init(self):
         """Test the implementation of mutually-unbiased-bases POVMs."""
         rng = default_rng(13)
 
