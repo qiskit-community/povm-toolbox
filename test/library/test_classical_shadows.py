@@ -14,13 +14,19 @@ from unittest import TestCase
 
 import numpy as np
 from povm_toolbox.library import ClassicalShadows
+from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
-from qiskit.quantum_info import Operator
+from povm_toolbox.sampler import POVMSampler
+from qiskit import QuantumCircuit
+from qiskit.primitives import StatevectorSampler
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 
 class TestClassicalShadows(TestCase):
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    RNG_SEED = 147234
+
+    def setUp(self) -> None:
+        super().setUp()
 
         basis_0 = np.array([1.0, 0], dtype=complex)
         basis_1 = np.array([0, 1.0], dtype=complex)
@@ -35,6 +41,35 @@ class TestClassicalShadows(TestCase):
         self.X1 = np.outer(basis_minus, basis_minus.conj())
         self.Y0 = np.outer(basis_plus_i, basis_plus_i.conj())
         self.Y1 = np.outer(basis_minus_i, basis_minus_i.conj())
+
+    def test_init(self):
+        """Test the implementation of classical shadow POVMs."""
+
+        qc = QuantumCircuit(2)
+        qc.h(0)
+
+        num_qubits = qc.num_qubits
+
+        measurement = ClassicalShadows(
+            num_qubits,
+            seed_rng=self.RNG_SEED,
+        )
+        sampler = StatevectorSampler(seed=self.RNG_SEED)
+        povm_sampler = POVMSampler(sampler=sampler)
+
+        job = povm_sampler.run([qc], shots=32, povm=measurement)
+        pub_result = job.result()[0]
+
+        post_processor = POVMPostProcessor(pub_result)
+
+        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        exp_value, std = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, 0.84375)
+        self.assertAlmostEqual(std, 0.24225659134146815)
+        observable = SparsePauliOp(["ZY"], coeffs=[1.0])
+        exp_value, std = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, -0.8437500000000002)
+        self.assertAlmostEqual(std, 0.47116314336043985)
 
     def test_qc_build(self):
         """Test if we can build a standard Classical Shadow POVM from the generic class"""
@@ -59,3 +94,11 @@ class TestClassicalShadows(TestCase):
                 self.assertEqual(cs_povm._povms[(i,)].num_outcomes, sqpovm.num_outcomes)
                 for k in range(sqpovm.num_outcomes):
                     self.assertAlmostEqual(cs_povm._povms[(i,)][k], sqpovm[k])
+
+    def test_repr(self):
+        """Test that the ``__repr__`` method works correctly."""
+        cs_str = "ClassicalShadows(num_qubits=1)"
+        povm = ClassicalShadows(
+            1,
+        )
+        self.assertEqual(povm.__repr__(), cs_str)
