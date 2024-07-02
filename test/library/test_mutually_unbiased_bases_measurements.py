@@ -23,7 +23,22 @@ from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector
 
 
-class TestRandomizedPMs(TestCase):
+class TestMutuallyUnbiasedBasesMeasurements(TestCase):
+    def test_init_errors(self):
+        """Test that the ``__init__`` method raises errors correctly."""
+        with self.subTest("Test invalid shape for ``bias``.") and self.assertRaises(ValueError):
+            MutuallyUnbiasedBasesMeasurements(1, bias=np.ones(2) / 2, angles=np.zeros(3))
+        with self.subTest("Test invalid shape for ``angles``.") and self.assertRaises(ValueError):
+            MutuallyUnbiasedBasesMeasurements(1, bias=np.ones(3) / 3, angles=np.zeros(2))
+
+    def test_repr(self):
+        """Test that the ``__repr__`` method works correctly."""
+        mub_str = "MutuallyUnbiasedBasesMeasurements(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]), angles=array([0, 1, 2]))"
+        povm = MutuallyUnbiasedBasesMeasurements(
+            1, bias=np.array([0.2, 0.3, 0.5]), angles=np.arange(3)
+        )
+        self.assertEqual(povm.__repr__(), mub_str)
+
     def test_twirling(self):
         """Test the implementation of mutually-unbiased-bases POVMs."""
         rng = default_rng(13)
