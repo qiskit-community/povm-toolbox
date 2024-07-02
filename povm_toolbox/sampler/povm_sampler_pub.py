@@ -129,7 +129,7 @@ class POVMSamplerPub(ShapedMixin):
                     parameter_values=pub.parameter_values,
                     shots=shots,
                     povm=pub.povm,
-                    validate=False,  # Assume Pub is already validated
+                    validate=True,
                 )
             return pub
 
@@ -197,7 +197,7 @@ class POVMSamplerPub(ShapedMixin):
                 "The number of shots must be specified, either for this particular "
                 "pub or set a default POVM for all pubs."
             )
-        if not isinstance(self.shots, int) or isinstance(self.shots, bool):
+        if not isinstance(self.shots, int):
             raise TypeError("shots must be an integer")
         if self.shots <= 0:
             raise ValueError("shots must be positive")
