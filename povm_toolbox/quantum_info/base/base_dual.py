@@ -29,7 +29,6 @@ class BaseDual(BaseFrame[LabelT], ABC):
         """The number of outcomes of the Dual."""
         return self.num_operators
 
-    @abstractmethod
     def get_omegas(
         self,
         observable: SparsePauliOp | Operator,
@@ -51,18 +50,22 @@ class BaseDual(BaseFrame[LabelT], ABC):
         where :math:`D_k` make of this dual frame (i.e. ``self``).
 
         .. note::
-           TODO: explain how this relates to the :meth:`.BaseFrame.analysis` method.
+            In the frame theory formalism, the mapping
+            :math:`A: \mathcal{O} \mapsto \{\text{Tr}\left[\mathcal{O} D_k\right]\}_k`
+            is referred to as the *analysis operator*, which is implemented by
+            the :meth:`.analysis` method.
 
         Args:
             observable: the observable for which to compute the decomposition weights.
-            outcome_idx: label(s) indicating which decomposition weights are queried.
+            outcome_idx: label or set of labels indicating which decomposition weights
+                are queried. If ``None``, all weights are queried.
 
         Returns:
-            TODO explain the different output types and how these represent the decomposition
-            weights of the provided observable.
+            Decomposition weight(s) associated to the effect(s) specified by ``outcome_idx``.
+            If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
+            queried, a dictionary mapping outcome labels to weights is returned. If all outcomes were
+            queried, an array with all weights is returned.
         """
-        # TODO: why is this method labeled abstract but still has an implementation? One of these
-        # should be removed.
         return self.analysis(observable, outcome_idx)
 
     @abstractmethod

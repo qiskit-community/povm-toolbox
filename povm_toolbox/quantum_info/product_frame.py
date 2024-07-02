@@ -23,6 +23,11 @@ if sys.version_info < (3, 11):
 else:
     from typing import Self
 
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
+
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
@@ -38,7 +43,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
     A product frame :math:`M` is made of local frames :math:`M1, M2, ...` acting on respective
     subsystems. Each global operator can be written as the tensor product of local operators,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \ldots`.
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \cdots`.
 
     .. note::
        This is a base class which collects functionality common to various subclasses. As an
@@ -276,36 +281,12 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
         return float(p_idx.real)
 
+    @override
     def analysis(
         self,
         hermitian_op: SparsePauliOp | Operator,
         frame_op_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        """Return the frame coefficients of ``hermitian_op``.
-
-        .. note::
-           TODO: align this docstring with that of :class:`.BaseFrame`.
-
-        Args:
-            hermitian_op: TODO.
-            frame_op_idx: the outcomes for which one queries the trace. Each outcome is labeled
-                by a tuple of integers (one index per local POVM). One can query a single outcome or a
-                set of outcomes. If ``None``, all outcomes are queried.
-
-        Returns:
-            Frame coefficients, specified by ``frame_op_idx``, with respect to the Hermitian operator
-            ``hermitian_op``. If a specific coefficient was queried, a ``float`` is returned. If a
-            specific set of coefficients was queried, a dictionary mapping labels to coefficients
-            is returned. If all coefficients were queried, a high-dimensional array with one dimension
-            per local frame stored inside ``self`` is returned. The length of each dimension is given
-            by the number of operators of the frame encoded along that axis.
-
-        Raises:
-            TypeError: when the provided single or sequence of labels ``frame_op_idx`` does not have
-                a valid type.
-            ValueError: when the provided ``operator`` does not act on the same number of qubits as
-                ``self``.
-        """
         if not isinstance(hermitian_op, SparsePauliOp):
             # Convert the provided operator to a Pauli operator.
             hermitian_op = SparsePauliOp.from_operator(hermitian_op)

@@ -19,6 +19,11 @@ if sys.version_info < (3, 11):
 else:
     from typing import Self
 
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
+
 import numpy as np
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import Operator, SparsePauliOp
@@ -168,28 +173,12 @@ class MultiQubitFrame(BaseFrame[int]):
         """
         return self._array
 
+    @override
     def analysis(
         self,
         hermitian_op: SparsePauliOp | Operator,
         frame_op_idx: int | set[int] | None = None,
     ) -> float | dict[int, float] | np.ndarray:
-        r"""Return the frame coefficients given an operator ``hermitian_op``.
-
-        Given a Hermitian operator :math:`\mathcal{O}`, one can compute its frame coefficients
-        :math:`c_k = Tr[M_k \mathcal{O}]`, where :math:`M_k` is the frame operator labelled by
-        :math:`k`. In frame theory, this operation is called the "analysis operation".
-
-        Args:
-            hermitian_op: the Hermitian operator whose frame coefficient(s) are queried.
-            frame_op_idx: label(s) indicating which frame coefficients are queried.
-
-        Returns:
-            TODO explain the different output types and how these represent the frame coefficients
-            of the provided hermitian operator.
-
-        Raises:
-            TypeError: if the label(s) ``frame_op_idx`` do not have a valid type.
-        """
         if isinstance(hermitian_op, SparsePauliOp):
             hermitian_op = hermitian_op.to_operator()
         op_vectorized = np.conj(matrix_to_double_ket(hermitian_op.data))

@@ -82,7 +82,7 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         rho: SparsePauliOp | DensityMatrix | Statevector,
         outcome_idx: int | set[int] | None = None,
     ) -> float | dict[int, float] | np.ndarray:
-        if not isinstance(rho, SparsePauliOp):
+        if isinstance(rho, (DensityMatrix, Statevector)):
             rho = Operator(rho)
         return self.analysis(rho, outcome_idx)
 

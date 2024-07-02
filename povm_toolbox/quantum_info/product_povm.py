@@ -12,6 +12,13 @@
 
 from __future__ import annotations
 
+import sys
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
@@ -30,7 +37,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
 
     A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting on respective
     subsystems. Each global effect can be written as the tensor product of local effects,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \ldots`.
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \cdots`.
 
     Below is an example of how to construct an instance of this class.
 
@@ -70,30 +77,12 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
                 )
             povm._check_validity()
 
+    @override
     def get_prob(
         self,
         rho: SparsePauliOp | DensityMatrix | Statevector,
         outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        """Return the outcome probabilities given a state rho.
-
-        .. note::
-           TODO: align this docstring with that of :class:`.BasePOVM`.
-
-        Args:
-            rho: the input state over which to compute the outcome probabilities.
-            outcome_idx: the outcomes for which one queries the probability. Each outcome is labeled
-                by a tuple of integers (one index per local POVM). One can query a single outcome or a
-                set of outcomes. If ``None``, all outcomes are queried.
-
-        Returns:
-            Probabilities of obtaining the outcome(s) specified by ``outcome_idx`` over the state ``rho``.
-            If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
-            queried, a dictionary mapping outcomes to probabilities is returned. If all outcomes were
-            queried, a high-dimensional array with one dimension per local POVM stored inside this
-            :class:`.`ProductPOVM` is returned. The length of each dimension is given by the number of outcomes
-            of the POVM encoded along that axis.
-        """
         if not isinstance(rho, SparsePauliOp):
             rho = SparsePauliOp.from_operator(rho)
         return self.analysis(rho, outcome_idx)

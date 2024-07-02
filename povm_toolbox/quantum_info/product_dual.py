@@ -32,41 +32,15 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
 
     A product Dual :math:`D` is made of local Duals :math:`D1, D2, ...` acting on respective
     subsystems. Each global effect can be written as the tensor product of local effects,
-    :math:`D_{k_1, k_2, ...} = D1_{k_1} \otimes D2_{k__2} \otimes ...`.
+    :math:`D_{k_1, k_2, ...} = D1_{k_1} \otimes D2_{k__2} \otimes \cdots`.
     """
 
+    @override
     def get_omegas(
         self,
         observable: SparsePauliOp | Operator,
         outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        r"""Return the decomposition weights of the provided observable.
-
-        .. note::
-           TODO: align this docstring with that of :class:`.BaseFrame`.
-
-        Here the POVM itself is not explicitly needed, its dual is sufficient. Given
-        an observable :math:`O` which is in the span of a given POVM, one can write the
-        observable :math:`O` as the weighted sum of the POVM effects, :math:`O = \sum_k w_k M_k`
-        for real weights :math:`w_k`. There might be infinitely many valid sets of weight.
-        This method returns a possible set of weights.
-
-        Args:
-            observable: the observable to be decomposed into the POVM effects.
-            outcome_idx: the outcomes for which one queries the probability. Each outcome is labeled
-                by a tuple of integers (one index per local POVM). One can query a single outcome or a
-                set of outcomes. If ``None``, all outcomes are queried.
-
-
-        Returns:
-            Decomposition weight(s) associated to the effect(s) specified by ``outcome_idx``.
-            If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
-            queried, a dictionary mapping outcome labels to weights is returned. If all outcomes were
-            queried, a high-dimensional array with one dimension per local POVM stored inside this
-            :class:`.ProductPOVM` instance is returned. The length of each dimension is given by
-            the number of outcomes of the POVM encoded along that axis.
-        """
-        # TODO: check that observable is Hermitian ?
         return self.analysis(observable, outcome_idx)
 
     @override
