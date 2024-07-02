@@ -50,7 +50,7 @@ class TestRandomizedPMs(TestCase):
 
         num_qubits = qc.num_qubits
 
-        with self.subTest("Test uniform angles across qubits."):
+        with self.subTest("Test uniform bias across qubits."):
             measurement = LocallyBiasedClassicalShadows(
                 num_qubits,
                 bias=np.array([0.2, 0.3, 0.5]),
@@ -73,7 +73,7 @@ class TestRandomizedPMs(TestCase):
             self.assertAlmostEqual(exp_value, -1.2499999999999993)
             self.assertAlmostEqual(std, 0.593988704139364)
 
-        with self.subTest("Test specific angles for each qubit."):
+        with self.subTest("Test specific bias for each qubit."):
             measurement = LocallyBiasedClassicalShadows(
                 num_qubits,
                 bias=np.array([[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]]),
