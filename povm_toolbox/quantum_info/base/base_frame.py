@@ -38,12 +38,6 @@ class BaseFrame(ABC, Generic[LabelT]):
 
     If a set of operators does not span the entire Hilbert space, it can still be considered as a
     frame on the subspace it spans.
-
-    .. warning::
-       TODO: missing explanation of what an ``effect`` is in order to make the following
-       documentation easier to understand. We should check whether the notion of an `effect` is
-       needed and if/how it differs from `operator` (e.g. :attr:`num_operators` seems to mix these
-       names interchangeably).
     """
 
     @property
@@ -54,11 +48,11 @@ class BaseFrame(ABC, Generic[LabelT]):
     @property
     @abstractmethod
     def dimension(self) -> int:
-        """The dimension of the Hilbert space on which the effects act."""
+        """The dimension of the Hilbert space on which the frame operators act."""
 
     @property
     def num_subsystems(self) -> int:
-        r"""The number of subsystems which the effects act on.
+        r"""The number of subsystems which the frame operators act on.
 
         For qubits, this is always :math:`\log_2(`:attr:`.dimension`:math:`)`.
         """
@@ -67,7 +61,7 @@ class BaseFrame(ABC, Generic[LabelT]):
     @property
     @abstractmethod
     def num_operators(self) -> int:
-        """The number of effects of the frame."""
+        """The number of frame operators of the frame."""
 
     @abstractmethod
     def _check_validity(self) -> None:
@@ -75,7 +69,7 @@ class BaseFrame(ABC, Generic[LabelT]):
 
     @abstractmethod
     def __len__(self) -> int:
-        """Return the number of effects of the POVM."""
+        """Return the number of frame operators of the POVM."""
 
     @abstractmethod
     def analysis(
