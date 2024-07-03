@@ -119,7 +119,7 @@ class TestRandomizedPMs(TestCase):
                 )
                 self.assertEqual(cs_povm._frames[(i,)].num_outcomes, sqpovm.num_outcomes)
                 for k in range(sqpovm.num_outcomes):
-                    self.assertTrue(np.allclose(cs_povm._povms[(i,)][k], sqpovm[k]))
+                    self.assertTrue(np.allclose(cs_povm._frames[(i,)][k], sqpovm[k]))
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
