@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""ProductFrame."""
 
 from __future__ import annotations
 
@@ -23,6 +23,11 @@ if sys.version_info < (3, 11):
 else:
     from typing import Self
 
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
+
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
@@ -36,136 +41,145 @@ T = TypeVar("T", bound=MultiQubitFrame)
 class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     r"""Class to represent a set of product frame operators.
 
-    A product frame :math:`M` is made of local frames :math:`M1, M2, ...` acting
-    on respective subsystems. Each global effect can be written as the tensor
-    product of local operators,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
+    A product frame :math:`M` is made of local frames :math:`M1, M2, ...` acting on respective
+    subsystems. Each global operator can be written as the tensor product of local operators,
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \cdots`.
+
+    .. note::
+       This is a base class which collects functionality common to various subclasses. As an
+       end-user you would not use this class directly. Check out :mod:`povm_toolbox.quantum_info`
+       for more general information.
     """
 
-    def __init__(self, povms: dict[tuple[int, ...], T]):
-        """Initialize a :class:`.ProductFrame` instance.
+    def __init__(self, frames: dict[tuple[int, ...], T]) -> None:
+        """Initialize from a mapping of local frames.
 
         Args:
-            povms: a dictionary mapping from a tuple of subsystem indices to a :class:`.MultiQubitFrame`
-                object.
+            frames: a dictionary mapping from a tuple of subsystem indices to a local frame objects.
 
         Raises:
-            ValueError: if any key in ``povms`` is not a tuple consisting of unique integers. In
-                other words, every POVM must act on a distinct set of subsystem indices which do not
-                overlap with each other.
-            ValueError: if any key in ``povms`` re-uses a previously used subsystem index. In other
-                words, all POVMs must act on mutually exclusive subsystem indices.
-            ValueError: if any key in ``povms`` does not specify the number of subsystem indices,
-                which matches the number of systems acted upon by that POVM
+            ValueError: if any key in ``frames`` is not a tuple consisting of unique integers. In
+                other words, every local frame must act on a distinct set of subsystem indices which
+                do not overlap with each other.
+            ValueError: if any key in ``frames`` re-uses a previously used subsystem index. In other
+                words, all local frames must act on mutually exclusive subsystem indices.
+            ValueError: if any key in ``frames`` does not specify the number of subsystem indices,
+                which matches the number of systems acted upon by that local frame
                 (:meth:`MultiQubitFrame.num_subsystems`).
         """
         subsystem_indices = set()
         self._dimension = 1
         self._num_operators = 1
         shape: list[int] = []
-        for idx, povm in povms.items():
+        for idx, frame in frames.items():
             idx_set = set(idx)
             if len(idx) != len(idx_set):
                 raise ValueError(
-                    "The subsystem indices acted upon by any POVM must be mutually exclusive. "
-                    f"The index '{idx}' does not fulfill this criterion."
+                    "The subsystem indices acted upon by any local frame must be mutually "
+                    f"exclusive. The index '{idx}' does not fulfill this criterion."
                 )
             if any(i in subsystem_indices for i in idx):
                 raise ValueError(
-                    "The subsystem indices acted upon by all the POVMs must be mutually exclusive. "
-                    f"However, one of the indices in '{idx}' was already encountered before."
+                    "The subsystem indices acted upon by all the local frames must be mutually "
+                    f"exclusive. However, one of the indices in '{idx}' was already encountered "
+                    "before."
                 )
-            if len(idx_set) != povm.num_subsystems:
+            if len(idx_set) != frame.num_subsystems:
                 raise ValueError(
-                    "The number of subsystem indices for a POVM must match the number of subsystems"
-                    " which it acts upon. This is not satisfied for the POVM specified to act on "
-                    f"subsystems '{idx}' but having support on '{povm.num_subsystems}' subsystems."
+                    "The number of subsystem indices for a local frame must match the number of "
+                    "subsystems which it acts upon. This is not satisfied for the local frame "
+                    f"specified to act on subsystems '{idx}' but having support on "
+                    f"'{frame.num_subsystems}' subsystems."
                 )
             subsystem_indices.update(idx_set)
-            self._dimension *= povm.dimension
-            self._num_operators *= povm.num_operators
-            shape.append(povm.num_operators)
+            self._dimension *= frame.dimension
+            self._num_operators *= frame.num_operators
+            shape.append(frame.num_operators)
 
         self._informationally_complete: bool = all(
-            [povm.informationally_complete for povm in povms.values()]
+            [frame.informationally_complete for frame in frames.values()]
         )
 
-        self._povms = povms
+        self._frames = frames
         self._shape: tuple[int, ...] = tuple(shape)
 
         self._check_validity()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the string representation of a :class:`.ProductFrame` instance."""
-        f_repr = "\n   " + "\n   ".join(f"{name}: {value}" for name, value in self._povms.items())
-        return f"{self.__class__.__name__}(num_subsystems={self.num_subsystems})<{','.join(map(str, self.shape))}>:{f_repr}"
+        f_repr = "\n   " + "\n   ".join(f"{name}: {value}" for name, value in self._frames.items())
+        return (
+            f"{self.__class__.__name__}(num_subsystems={self.num_subsystems})"
+            f"<{','.join(map(str, self.shape))}>:{f_repr}"
+        )
 
     @classmethod
-    def from_list(cls, povms: Sequence[T]) -> Self:
+    def from_list(cls, frames: Sequence[T]) -> Self:
         """Construct a :class:`.ProductFrame` from a list of :class:`.MultiQubitFrame` objects.
 
-        This is a convenience method to simplify the construction of a :class:`.ProductPOVM` for the cases
-        in which the POVM objects act on a sequential order of subsystems. In other words, this
-        method converts the sequence of POVMs to a dictionary of POVMs in accordance with the input
-        to :meth:`.ProductFrame.__init__` by using the positions along the sequence as subsystem
-        indices.
+        This is a convenience method to simplify the construction of a :class:`.ProductFrame` for
+        the cases in which the local frame objects act on a sequential order of subsystems. In other
+        words, this method converts the sequence of frames to a dictionary of frames in accordance
+        with the input to :meth:`.ProductFrame.__init__` by using the positions along the sequence
+        as subsystem indices.
 
         Below are some examples:
 
-        .. code-block:: python
+        >>> from qiskit.quantum_info import Operator
+        >>> from povm_toolbox.quantum_info import SingleQubitPOVM, MultiQubitPOVM, ProductPOVM
 
-            sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
-            product = ProductPOVM.from_list([sqp, sqp])
-            # is equivalent to
-            product = ProductPOVM({(0,): sqp, (1,): sqp})
+        >>> sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+        >>> product = ProductPOVM.from_list([sqp, sqp])
+        >>> # is equivalent to
+        >>> product = ProductPOVM({(0,): sqp, (1,): sqp})
 
-            mqp = MultiQubitFrame(
-                [
-                    Operator.from_label("00"),
-                    Operator.from_label("01"),
-                    Operator.from_label("10"),
-                    Operator.from_label("11"),
-                ]
-            )
-            product = ProductPOVM.from_list([mqp, mqp])
-            # is equivalent to
-            product = ProductPOVM({(0, 1): mqp, (2, 3): mqp})
+        >>> mqp = MultiQubitPOVM(
+        ...     [
+        ...         Operator.from_label("00"),
+        ...         Operator.from_label("01"),
+        ...         Operator.from_label("10"),
+        ...         Operator.from_label("11"),
+        ...     ]
+        ... )
+        >>> product = ProductPOVM.from_list([mqp, mqp])
+        >>> # is equivalent to
+        >>> product = ProductPOVM({(0, 1): mqp, (2, 3): mqp})
 
-            product = ProductPOVM.from_list([sqp, sqp, mqp])
-            # is equivalent to
-            product = ProductPOVM({(0,): sqp, (1,): sqp, (2, 3): mqp})
+        >>> product = ProductPOVM.from_list([sqp, sqp, mqp])
+        >>> # is equivalent to
+        >>> product = ProductPOVM({(0,): sqp, (1,): sqp, (2, 3): mqp})
 
-            product = ProductPOVM.from_list([sqp, mqp, sqp])
-            # is equivalent to
-            product = ProductPOVM({(0,): sqp, (1, 2): mqp, (3,): sqp})
+        >>> product = ProductPOVM.from_list([sqp, mqp, sqp])
+        >>> # is equivalent to
+        >>> product = ProductPOVM({(0,): sqp, (1, 2): mqp, (3,): sqp})
 
         Args:
-            povms: a sequence of :class:`.MultiQubitFrame` objects.
+            frames: a sequence of :class:`.MultiQubitFrame` objects.
 
         Returns:
-            A new :class:`.ProductPOVM` instance.
+            A new :class:`.ProductFrame` instance.
         """
-        povm_dict = {}
+        frame_dict = {}
         idx = 0
-        for povm in povms:
+        for frame in frames:
             prev_idx = idx
-            idx += povm.num_subsystems
-            povm_dict[tuple(range(prev_idx, idx))] = povm
-        return cls(povm_dict)
+            idx += frame.num_subsystems
+            frame_dict[tuple(range(prev_idx, idx))] = frame
+        return cls(frame_dict)
 
     @property
     def informationally_complete(self) -> bool:
-        """Return if the frame spans the entire Hilbert space."""
+        """If the frame spans the entire Hilbert space."""
         return self._informationally_complete
 
     @property
     def dimension(self) -> int:
-        """Give the dimension of the Hilbert space on which the effects act."""
+        """The dimension of the Hilbert space on which the effects act."""
         return self._dimension
 
     @property
     def num_operators(self) -> int:
-        """Give the number of single-qubit operators forming the POVM."""
+        """The number of effects of the frame."""
         return self._num_operators
 
     @property
@@ -176,15 +190,15 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     @property
     def sub_systems(self) -> list[tuple[int, ...]]:
         """Give the number of operators per sub-system."""
-        return list(self._povms.keys())
+        return list(self._frames.keys())
 
     def _check_validity(self) -> None:
-        """Check if POVM axioms are fulfilled.
+        """Check if frame axioms are fulfilled for all local frames.
 
-        Raises:
-            TODO.
+        .. note::
+           This raises whatever errors the local frames' methods may raise.
         """
-        for povm in self._povms.values():
+        for povm in self._frames.values():
             povm._check_validity()
 
     def __getitem__(self, sub_system: tuple[int, ...]) -> T:
@@ -196,10 +210,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         Returns:
             The :class:`.MultiQubitFrame` acting on the specified sub-system.
         """
-        return self._povms[sub_system]
+        return self._frames[sub_system]
 
     def __len__(self) -> int:
-        """Return the number of outcomes of the POVM."""
+        """Return the number of outcomes of the product frame."""
         return self.num_operators
 
     def _trace_of_prod(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
@@ -207,8 +221,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         Args:
             operator: the input operator to multiply with a frame operator.
-            frame_op_idx: the label specifying the frame operator to use. The frame operator is labeled
-                by a tuple of integers (one index per local frame).
+            frame_op_idx: the label specifying the frame operator to use. The frame operator is
+                labeled by a tuple of integers (one index per local frame).
 
         Returns:
             The trace of the product of the input operator with the specified frame operator.
@@ -216,7 +230,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         Raises:
             IndexError: when the provided outcome label (tuple of integers) has a number of integers
                 which does not correspond to the number of local frames making up the product frame.
-            IndexError: when a local index exceed the number of operators of the corresponding local frame.
+            IndexError: when a local index exceeds the number of operators of the corresponding
+                local frame.
             ValueError: when the output is not a real number.
         """
         p_idx = 0.0 + 0.0j
@@ -229,7 +244,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             #     of the high-dimensional array ``p_init`` along which this local POVM is encoded.
             #   - ``idx`` are the qubit indices on which this local POVM acts.
             #   - ``povm`` is the actual local POVM object.
-            for j, (idx, povm) in enumerate(self._povms.items()):
+            for j, (idx, povm) in enumerate(self._frames.items()):
                 # Extract the local Pauli term on the qubit indices of this local POVM.
                 sublabel = "".join(label[-(i + 1)] for i in idx)
                 # Try to obtain the coefficient of the local POVM for this local Pauli term.
@@ -244,13 +259,15 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 except IndexError as exc:
                     if len(frame_op_idx) <= j:
                         raise IndexError(
-                            f"The outcome label {frame_op_idx} does not match the expected shape. It is"
-                            f" supposed to contain {len(self._povms)} integers, but has {len(frame_op_idx)}."
+                            f"The outcome label {frame_op_idx} does not match the expected shape. "
+                            f"It is supposed to contain {len(self._frames)} integers, but has "
+                            f"{len(frame_op_idx)}."
                         ) from exc
                     if povm.num_operators <= frame_op_idx[j]:
                         raise IndexError(
                             f"Outcome index '{frame_op_idx[j]}' is out of range for the local POVM"
-                            f" acting on subsystems {idx}. This POVM has {povm.num_operators} outcomes."
+                            f" acting on subsystems {idx}. This POVM has {povm.num_operators}"
+                            "outcomes."
                         ) from exc
                     raise exc
                 else:
@@ -264,33 +281,12 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
         return float(p_idx.real)
 
+    @override
     def analysis(
         self,
         hermitian_op: SparsePauliOp | Operator,
         frame_op_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        """TODO.
-
-        Args:
-            hermitian_op: TODO.
-            frame_op_idx: the outcomes for which one queries the trace. Each outcome is labeled
-                by a tuple of integers (one index per local POVM). One can query a single outcome or a
-                set of outcomes. If ``None``, all outcomes are queried.
-
-        Returns:
-            Frame coefficients, specified by ``frame_op_idx``, with respect to the Hermitian operator
-            ``hermitian_op``. If a specific coefficient was queried, a ``float`` is returned. If a
-            specific set of coefficients was queried, a dictionary mapping labels to coefficients
-            is returned. If all coefficients were queried, a high-dimensional array with one dimension
-            per local frame stored inside ``self`` is returned. The length of each dimension is given
-            by the number of operators of the frame encoded along that axis.
-
-        Raises:
-            TypeError: when the provided single or sequence of labels ``frame_op_idx`` does not have
-                a valid type.
-            ValueError: when the provided ``operator`` does not act on the same number of qubits as
-                ``self``.
-        """
         if not isinstance(hermitian_op, SparsePauliOp):
             # Convert the provided operator to a Pauli operator.
             hermitian_op = SparsePauliOp.from_operator(hermitian_op)
@@ -298,20 +294,23 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         # Assert matching operator and POVM sizes.
         if hermitian_op.num_qubits != self.num_subsystems:
             raise ValueError(
-                f"Size of the operator ({hermitian_op.num_qubits}) does not match the size of the povm ({math.log2(self.dimension)})."
+                f"Size of the operator ({hermitian_op.num_qubits}) does not match the size of the "
+                f"povm ({math.log2(self.dimension)})."
             )
 
         # If frame_op_idx is ``None``, it means all outcomes are queried
         if frame_op_idx is None:
             # Extract the number of outcomes for each local POVM.
 
-            # Create the output probability array as a high-dimensional matrix. This matrix will have
-            # its number of dimensions equal to the number of POVMs stored inside the ProductPOVM. The
-            # length of each dimension is given by the number of outcomes of the POVM encoded along it.
+            # Create the output probability array as a high-dimensional matrix. This matrix will
+            # have its number of dimensions equal to the number of POVMs stored inside the
+            # ProductPOVM. The length of each dimension is given by the number of outcomes of the
+            # POVM encoded along it.
             p_init: np.ndarray = np.zeros(self.shape, dtype=float)
 
-            # First, we iterate over all the positions of ``p_init``. This corresponds to the different
-            # probabilities for the different outcomes whose probability we want to compute.
+            # First, we iterate over all the positions of ``p_init``. This corresponds to the
+            # different probabilities for the different outcomes whose probability we want to
+            # compute.
             #   - ``m`` is the multi-dimensional index into the high-dimensional ``p_init`` array.
             for m, _ in np.ndenumerate(p_init):
                 p_init[m] = self._trace_of_prod(hermitian_op, m)

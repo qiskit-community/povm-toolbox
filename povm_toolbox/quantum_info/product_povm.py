@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""ProductPOVM."""
 
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 from qiskit.visualization.utils import matplotlib_close_if_inline
 
 from .base import BasePOVM
@@ -28,49 +27,47 @@ from .product_frame import ProductFrame
 class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
     r"""Class to represent a set of product POVM operators.
 
-    A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting
-    on respective subsystems. Each global effect can be written as the tensor
-    product of local effects,
-    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k2} \otimes ...`.
+    A product POVM :math:`M` is made of local POVMs :math:`M1, M2, ...` acting on respective
+    subsystems. Each global effect can be written as the tensor product of local effects,
+    :math:`M_{k_1, k_2, ...} = M1_{k_1} \otimes M2_{k_2} \otimes \cdots`.
+
+    Below is an example of how to construct an instance of this class.
+
+    >>> from qiskit.quantum_info import Operator
+    >>> from povm_toolbox.quantum_info import SingleQubitPOVM, MultiQubitPOVM, ProductPOVM
+    >>> sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+    >>> mqp = MultiQubitPOVM(
+    ...     [
+    ...         Operator.from_label("00"),
+    ...         Operator.from_label("01"),
+    ...         Operator.from_label("10"),
+    ...         Operator.from_label("11"),
+    ...     ]
+    ... )
+    >>> product = ProductPOVM({(0,): sqp, (1, 3): mqp, (2,): sqp})
+
+    .. note::
+        For most cases, you may find that :meth:`ProductPOVM.from_list` works just fine and is
+        easier to use.
     """
 
     default_dual_class = ProductDual
 
     def _check_validity(self) -> None:
-        """Check if POVM axioms are fulfilled.
+        """Check if frame axioms are fulfilled for all local frames.
+
+        In addition to the checks performed by the super-class, the following errors may be raised.
 
         Raises:
-            TODO.
+            TypeError: if any internal frame is not a :class:`.MultiQubitPOVM` instance.
         """
-        for povm in self._povms.values():
+        for povm in self._frames.values():
             if not isinstance(povm, MultiQubitPOVM):
-                raise TypeError
+                raise TypeError(
+                    "Expected the internal frame to be of type `MultiQubitPOVM` but found an object"
+                    f" of type `{type(povm)}` instead."
+                )
             povm._check_validity()
-
-    def get_prob(
-        self,
-        rho: SparsePauliOp | DensityMatrix | Statevector,
-        outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
-    ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        """Return the outcome probabilities given a state rho.
-
-        Args:
-            rho: the input state over which to compute the outcome probabilities.
-            outcome_idx: the outcomes for which one queries the probability. Each outcome is labeled
-                by a tuple of integers (one index per local POVM). One can query a single outcome or a
-                set of outcomes. If ``None``, all outcomes are queried.
-
-        Returns:
-            Probabilities of obtaining the outcome(s) specified by ``outcome_idx`` over the state ``rho``.
-            If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
-            queried, a dictionary mapping outcomes to probabilities is returned. If all outcomes were
-            queried, a high-dimensional array with one dimension per local POVM stored inside this
-            :class:`.`ProductPOVM` is returned. The length of each dimension is given by the number of outcomes
-            of the POVM encoded along that axis.
-        """
-        if not isinstance(rho, SparsePauliOp):
-            rho = SparsePauliOp.from_operator(rho)
-        return self.analysis(rho, outcome_idx)
 
     def draw_bloch(
         self,
@@ -93,6 +90,13 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             colorbar: If ``True``, normalize the vectors on the Bloch sphere and
                 add a colormap to keep track of the norm of the vectors. It can
                 help to visualize the vector if they have a small norm.
+
+        Returns:
+            The resulting figure.
+
+        Raises:
+            NotImplementedError: if this product POVM contains a :class:`.MultiQubitPOVM` acting on
+                more than a single qubit.
         """
         # Number of subplots (one per qubit)
         num = self.num_subsystems

@@ -117,7 +117,7 @@ class TestRandomizedPMs(TestCase):
                         q[i, 2] * Operator.from_label("l"),
                     ]
                 )
-                self.assertEqual(cs_povm._povms[(i,)].num_outcomes, sqpovm.num_outcomes)
+                self.assertEqual(cs_povm._frames[(i,)].num_outcomes, sqpovm.num_outcomes)
                 for k in range(sqpovm.num_outcomes):
                     self.assertTrue(np.allclose(cs_povm._povms[(i,)][k], sqpovm[k]))
 
