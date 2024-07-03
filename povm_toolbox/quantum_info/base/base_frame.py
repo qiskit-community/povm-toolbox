@@ -43,16 +43,16 @@ class BaseFrame(ABC, Generic[LabelT]):
     @property
     @abstractmethod
     def informationally_complete(self) -> bool:
-        """Return if the frame spans the entire Hilbert space."""
+        """If the frame spans the entire Hilbert space."""
 
     @property
     @abstractmethod
     def dimension(self) -> int:
-        """Give the dimension of the Hilbert space on which the effects act."""
+        """The dimension of the Hilbert space on which the frame operators act."""
 
     @property
     def num_subsystems(self) -> int:
-        r"""Return the number of subsystems which the effects act on.
+        r"""The number of subsystems which the frame operators act on.
 
         For qubits, this is always :math:`\log_2(`:attr:`.dimension`:math:`)`.
         """
@@ -61,7 +61,7 @@ class BaseFrame(ABC, Generic[LabelT]):
     @property
     @abstractmethod
     def num_operators(self) -> int:
-        """Give the number of effects of the frame."""
+        """The number of frame operators of the frame."""
 
     @abstractmethod
     def _check_validity(self) -> None:
@@ -69,7 +69,7 @@ class BaseFrame(ABC, Generic[LabelT]):
 
     @abstractmethod
     def __len__(self) -> int:
-        """Return the number of effects of the POVM."""
+        """Return the number of frame operators of the POVM."""
 
     @abstractmethod
     def analysis(
@@ -77,4 +77,30 @@ class BaseFrame(ABC, Generic[LabelT]):
         hermitian_op: SparsePauliOp | Operator,
         frame_op_idx: LabelT | set[LabelT] | None = None,
     ) -> float | dict[LabelT, float] | np.ndarray:
-        """Return the frame coefficients of ``hermitian_op``."""
+        r"""Return the frame coefficients of ``hermitian_op``.
+
+        This method implements the *analysis operator* :math:`A` of the frame :math:`\{F_k\}_k`:
+
+        .. math::
+            A: \mathcal{O} \mapsto \{ \mathrm{Tr}\left[F_k \mathcal{O} \right] \}_k,
+
+        where :math:`c_k =  \mathrm{Tr}\left[F_k \mathcal{O} \right]` are called the *frame
+        coefficients* of the Hermitian operator :math:`\mathcal{O}`.
+
+        Args:
+            hermitian_op: a hermitian operator whose frame coefficients to compute.
+            frame_op_idx: label or set of labels indicating which coefficients are
+                queried. If ``None``, all coefficients are queried.
+
+        Returns:
+            Frame coefficients, specified by ``frame_op_idx``, of the Hermitian operator
+            ``hermitian_op``. If a specific coefficient was queried, a ``float`` is returned. If a
+            specific set of coefficients was queried, a dictionary mapping labels to coefficients is
+            returned. If all coefficients were queried, an array with all coefficients is returned.
+
+        Raises:
+            TypeError: when the provided single or sequence of labels ``frame_op_idx`` does not have
+                a valid type.
+            ValueError: when the dimension of the provided ``hermitian_op`` does not match the
+                dimension of the frame operators.
+        """

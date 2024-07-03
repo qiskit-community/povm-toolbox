@@ -10,6 +10,10 @@
 
 """A module for working with POVMs on a quantum-informational setting.
 
+.. note::
+   In this module, we use the formalism of frame theory. POVMs are considered special cases
+   of *frames* and, for this reason, the *effects* of POVMs are often called *frame operators*.
+
 .. currentmodule:: povm_toolbox.quantum_info
 
 POVM Classes
