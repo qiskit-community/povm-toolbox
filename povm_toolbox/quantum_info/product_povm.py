@@ -12,18 +12,10 @@
 
 from __future__ import annotations
 
-import sys
-
-if sys.version_info < (3, 12):
-    from typing_extensions import override
-else:
-    from typing import override
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from qiskit.quantum_info import DensityMatrix, SparsePauliOp, Statevector
 from qiskit.visualization.utils import matplotlib_close_if_inline
 
 from .base import BasePOVM
@@ -76,16 +68,6 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
                     f" of type `{type(povm)}` instead."
                 )
             povm._check_validity()
-
-    @override
-    def get_prob(
-        self,
-        rho: SparsePauliOp | DensityMatrix | Statevector,
-        outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
-    ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        if not isinstance(rho, SparsePauliOp):
-            rho = SparsePauliOp.from_operator(rho)
-        return self.analysis(rho, outcome_idx)
 
     def draw_bloch(
         self,

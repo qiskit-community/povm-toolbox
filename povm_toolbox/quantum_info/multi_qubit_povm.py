@@ -12,17 +12,9 @@
 
 from __future__ import annotations
 
-import sys
-
-if sys.version_info < (3, 12):
-    from typing_extensions import override
-else:
-    from typing import override
-
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from qiskit.quantum_info import DensityMatrix, Operator, SparsePauliOp, Statevector
 
 from .base import BasePOVM
 from .multi_qubit_dual import MultiQubitDual
@@ -75,16 +67,6 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
 
         if not np.allclose(summed_op, np.identity(self.dimension, dtype=complex), atol=1e-5):
             raise ValueError(f"POVM operators not summing up to the identity : \n{summed_op}")
-
-    @override
-    def get_prob(
-        self,
-        rho: SparsePauliOp | DensityMatrix | Statevector,
-        outcome_idx: int | set[int] | None = None,
-    ) -> float | dict[int, float] | np.ndarray:
-        if isinstance(rho, (DensityMatrix, Statevector)):
-            rho = Operator(rho)
-        return self.analysis(rho, outcome_idx)
 
     def draw_bloch(
         self,

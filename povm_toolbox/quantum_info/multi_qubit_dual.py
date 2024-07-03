@@ -20,7 +20,7 @@ else:
     from typing import override
 
 import numpy as np
-from qiskit.quantum_info import Operator, SparsePauliOp
+from qiskit.quantum_info import Operator
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
@@ -34,12 +34,6 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
     This is a representation of a dual frame. Its elements are specified as a list of
     :class:`~qiskit.quantum_info.Operator`.
     """
-
-    @override
-    def get_omegas(
-        self, observable: SparsePauliOp | Operator, outcome_idx: int | set[int] | None = None
-    ) -> float | dict[int, float] | np.ndarray:
-        return self.analysis(observable, outcome_idx)
 
     @override
     def is_dual_to(self, frame: BaseFrame) -> bool:

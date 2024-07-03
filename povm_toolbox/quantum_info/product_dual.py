@@ -19,9 +19,6 @@ if sys.version_info < (3, 12):
 else:
     from typing import override
 
-import numpy as np
-from qiskit.quantum_info import Operator, SparsePauliOp
-
 from .base import BaseDual, BaseFrame
 from .multi_qubit_dual import MultiQubitDual
 from .product_frame import ProductFrame
@@ -34,14 +31,6 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
     subsystems. Each global effect can be written as the tensor product of local effects,
     :math:`D_{k_1, k_2, ...} = D1_{k_1} \otimes D2_{k__2} \otimes \cdots`.
     """
-
-    @override
-    def get_omegas(
-        self,
-        observable: SparsePauliOp | Operator,
-        outcome_idx: tuple[int, ...] | set[tuple[int, ...]] | None = None,
-    ) -> float | dict[tuple[int, ...], float] | np.ndarray:
-        return self.analysis(observable, outcome_idx)
 
     @override
     def is_dual_to(self, frame: BaseFrame) -> bool:
