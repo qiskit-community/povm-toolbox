@@ -103,19 +103,19 @@ class TestProductPOVM(TestCase):
         with self.subTest("SingleQubitPOVM objects"):
             expected = {(0,): sqp, (1,): sqp}
             product = ProductPOVM.from_list([sqp, sqp])
-            self.assertEqual(expected, product._povms)
+            self.assertEqual(expected, product._frames)
         with self.subTest("MultiQubitPOVM objects"):
             expected = {(0, 1): mqp, (2, 3): mqp}
             product = ProductPOVM.from_list([mqp, mqp])
-            self.assertEqual(expected, product._povms)
+            self.assertEqual(expected, product._frames)
         with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects"):
             expected = {(0,): sqp, (1,): sqp, (2, 3): mqp}
             product = ProductPOVM.from_list([sqp, sqp, mqp])
-            self.assertEqual(expected, product._povms)
+            self.assertEqual(expected, product._frames)
         with self.subTest("SingleQubitPOVM + MultiQubitPOVM objects - interleaved"):
             expected = {(0,): sqp, (1, 2): mqp, (3,): sqp}
             product = ProductPOVM.from_list([sqp, mqp, sqp])
-            self.assertEqual(expected, product._povms)
+            self.assertEqual(expected, product._frames)
 
     def test_get_prob(self):
         """Test if we can build a LB Classical Shadow POVM from the generic class"""

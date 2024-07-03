@@ -36,7 +36,7 @@ class POVMMetadata:
     circuit that is eventually sent to the internal :class:`.BaseSamplerV2`.
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Implement the default ``__repr__`` method to avoid printing large objects.
 
         E.g., the attribute ``composed_circuit`` is a quantum circuit. With the default

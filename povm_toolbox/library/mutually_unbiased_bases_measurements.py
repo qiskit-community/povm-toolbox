@@ -95,9 +95,16 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
                 The MUB measurements are sampled according to the probability distribution(s)
                 specified by ``bias``. The user can also directly provide a random generator. If
                 ``None``, a random seed will be used.
+
+        Raises:
+            ValueError: if the shape of ``bias`` is not valid.
+            ValueError: if the shape of ``angles`` is not valid.
         """
         if bias.shape[-1] != 3:
-            raise ValueError
+            raise ValueError(
+                "The last dimension of ``bias`` is expected to be of length 3, but has"
+                f" length {bias.shape[-1]} instead."
+            )
 
         if angles.shape == (3,):
             theta, phi, lam = angles
@@ -108,7 +115,10 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
                 theta, phi, lam = angles_qubit_i
                 processed_angles[i] = self._process_angles(theta, phi, lam)
         else:
-            raise ValueError
+            raise ValueError(
+                "``angles`` is expected to have shape (3,) or (``num_qubits``, 3)"
+                f" but has shape {angles.shape} instead."
+            )
 
         self.rotation_angles: np.ndarray = angles
         """The angles indicating the rotation to obtain the MUB from an otherwise LBCS POVM."""
