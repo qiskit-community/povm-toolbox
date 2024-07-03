@@ -200,9 +200,10 @@ class MultiQubitFrame(BaseFrame[int]):
     def from_vectors(cls, frame_vectors: np.ndarray) -> Self:
         r"""Initialize a frame from non-normalized bloch vectors.
 
-        The non-normalized Bloch vectors are given by :math:`|\tilde{\psi}_k \rangle = \sqrt{\gamma_k}
-        |\psi_k \rangle`. The resulting frame operators are :math:`F_k = \gamma_k |\psi_k \rangle
-        \langle \psi_k |` where :math:`\gamma_k` is the trace of the :math:`k`'th frame operator.
+        The non-normalized Bloch vectors are given by :math:`|\tilde{\psi}_k \rangle =
+        \sqrt{\gamma_k} |\psi_k \rangle`. The resulting frame operators are :math:`F_k = \gamma_k
+        |\psi_k \rangle \langle \psi_k |` where :math:`\gamma_k` is the trace of the :math:`k`'th
+        frame operator.
 
         Args:
             frame_vectors: list of vectors :math:`|\tilde{\psi_k} \rangle`. The length of the list

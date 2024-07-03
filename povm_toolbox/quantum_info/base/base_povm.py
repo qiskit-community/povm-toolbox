@@ -55,10 +55,10 @@ class BasePOVM(BaseFrame[LabelT], ABC):
                 are queried. If ``None``, all outcome probabilities are queried.
 
         Returns:
-            Probabilities of obtaining the outcome(s) specified by ``outcome_idx`` over the state ``rho``.
-            If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
-            queried, a dictionary mapping outcomes to probabilities is returned. If all outcomes were
-            queried, an array with all probabilities is returned.
+            Probabilities of obtaining the outcome(s) specified by ``outcome_idx`` over the state
+            ``rho``. If a specific outcome was queried, a ``float`` is returned. If a specific set
+            of outcomes was queried, a dictionary mapping outcomes to probabilities is returned. If
+            all outcomes were queried, an array with all probabilities is returned.
         """
         if isinstance(rho, (DensityMatrix, Statevector)):
             rho = Operator(rho)

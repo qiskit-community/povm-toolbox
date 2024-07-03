@@ -84,23 +84,23 @@ class BaseFrame(ABC, Generic[LabelT]):
         .. math::
             A: \mathcal{O} \mapsto \{ \mathrm{Tr}\left[F_k \mathcal{O} \right] \}_k,
 
-        where :math:`c_k =  \mathrm{Tr}\left[F_k \mathcal{O} \right]` are called the *frame coefficients*
-        of the Hermitian operator :math:`\mathcal{O}`.
+        where :math:`c_k =  \mathrm{Tr}\left[F_k \mathcal{O} \right]` are called the *frame
+        coefficients* of the Hermitian operator :math:`\mathcal{O}`.
 
         Args:
             hermitian_op: a hermitian operator whose frame coefficients to compute.
             frame_op_idx: label or set of labels indicating which coefficients are
-            queried. If ``None``, all coefficients are queried.
+                queried. If ``None``, all coefficients are queried.
 
         Returns:
-            Frame coefficients, specified by ``frame_op_idx``, of the Hermitian operator ``hermitian_op``.
-            If a specific coefficient was queried, a ``float`` is returned. If a specific set of
-            coefficients was queried, a dictionary mapping labels to coefficients is returned. If all
-            coefficients were queried, an array with all coefficients is returned.
+            Frame coefficients, specified by ``frame_op_idx``, of the Hermitian operator
+            ``hermitian_op``. If a specific coefficient was queried, a ``float`` is returned. If a
+            specific set of coefficients was queried, a dictionary mapping labels to coefficients is
+            returned. If all coefficients were queried, an array with all coefficients is returned.
 
         Raises:
             TypeError: when the provided single or sequence of labels ``frame_op_idx`` does not have
                 a valid type.
-            ValueError: when the dimension of the provided ``hermitian_op`` does not match the dimension
-                of the frame operators.
+            ValueError: when the dimension of the provided ``hermitian_op`` does not match the
+                dimension of the frame operators.
         """

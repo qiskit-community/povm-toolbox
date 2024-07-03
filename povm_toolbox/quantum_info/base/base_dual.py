@@ -61,10 +61,10 @@ class BaseDual(BaseFrame[LabelT], ABC):
                 are queried. If ``None``, all weights are queried.
 
         Returns:
-            Decomposition weight(s) associated to the effect(s) specified by ``outcome_idx``.
-            If a specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
-            queried, a dictionary mapping outcome labels to weights is returned. If all outcomes were
-            queried, an array with all weights is returned.
+            Decomposition weight(s) associated to the effect(s) specified by ``outcome_idx``. If a
+            specific outcome was queried, a ``float`` is returned. If a specific set of outcomes was
+            queried, a dictionary mapping outcome labels to weights is returned. If all outcomes
+            were queried, an array with all weights is returned.
         """
         return self.analysis(observable, outcome_idx)
 

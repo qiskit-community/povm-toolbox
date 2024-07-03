@@ -294,20 +294,23 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         # Assert matching operator and POVM sizes.
         if hermitian_op.num_qubits != self.num_subsystems:
             raise ValueError(
-                f"Size of the operator ({hermitian_op.num_qubits}) does not match the size of the povm ({math.log2(self.dimension)})."
+                f"Size of the operator ({hermitian_op.num_qubits}) does not match the size of the "
+                f"povm ({math.log2(self.dimension)})."
             )
 
         # If frame_op_idx is ``None``, it means all outcomes are queried
         if frame_op_idx is None:
             # Extract the number of outcomes for each local POVM.
 
-            # Create the output probability array as a high-dimensional matrix. This matrix will have
-            # its number of dimensions equal to the number of POVMs stored inside the ProductPOVM. The
-            # length of each dimension is given by the number of outcomes of the POVM encoded along it.
+            # Create the output probability array as a high-dimensional matrix. This matrix will
+            # have its number of dimensions equal to the number of POVMs stored inside the
+            # ProductPOVM. The length of each dimension is given by the number of outcomes of the
+            # POVM encoded along it.
             p_init: np.ndarray = np.zeros(self.shape, dtype=float)
 
-            # First, we iterate over all the positions of ``p_init``. This corresponds to the different
-            # probabilities for the different outcomes whose probability we want to compute.
+            # First, we iterate over all the positions of ``p_init``. This corresponds to the
+            # different probabilities for the different outcomes whose probability we want to
+            # compute.
             #   - ``m`` is the multi-dimensional index into the high-dimensional ``p_init`` array.
             for m, _ in np.ndenumerate(p_init):
                 p_init[m] = self._trace_of_prod(hermitian_op, m)
