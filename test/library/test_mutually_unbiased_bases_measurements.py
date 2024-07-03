@@ -23,11 +23,11 @@ from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector
 
 
-class TestRandomizedPMs(TestCase):
-    def test_twirling(self):
-        """Test the implementation of mutually-unbiased-bases POVMs."""
-        rng = default_rng(13)
+class TestMutuallyUnbiasedBasesMeasurements(TestCase):
+    RNG_SEED = 17863
 
+    def test_init(self):
+        """Test the implementation of mutually-unbiased-bases POVMs."""
         qc = QuantumCircuit(2)
         qc.h(0)
 
@@ -38,9 +38,9 @@ class TestRandomizedPMs(TestCase):
                 num_qubits,
                 bias=np.ones(3) / 3,
                 angles=np.array([0.75, -np.pi / 3, 0.2]),
-                seed_rng=rng,
+                seed_rng=self.RNG_SEED,
             )
-            sampler = StatevectorSampler(seed=rng)
+            sampler = StatevectorSampler(seed=self.RNG_SEED)
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=128, povm=measurement)
@@ -50,21 +50,21 @@ class TestRandomizedPMs(TestCase):
 
             observable = SparsePauliOp(["ZI"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 1.0162351045000342)
-            self.assertAlmostEqual(std, 0.1292712036194854)
+            self.assertAlmostEqual(exp_value, 0.8203852056374071)
+            self.assertAlmostEqual(std, 0.110717917472513)
             observable = SparsePauliOp(["ZY"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.1504502666075513)
-            self.assertAlmostEqual(std, 0.27055245411115403)
+            self.assertAlmostEqual(exp_value, 0.5861179063820388)
+            self.assertAlmostEqual(std, 0.22424900800106443)
 
         with self.subTest("Test specific angles for each qubit."):
             measurement = MutuallyUnbiasedBasesMeasurements(
                 num_qubits,
                 bias=np.ones(3) / 3,
                 angles=np.array([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
-                seed_rng=rng,
+                seed_rng=self.RNG_SEED,
             )
-            sampler = StatevectorSampler(seed=rng)
+            sampler = StatevectorSampler(seed=self.RNG_SEED)
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=128, povm=measurement)
@@ -74,12 +74,27 @@ class TestRandomizedPMs(TestCase):
 
             observable = SparsePauliOp(["ZI"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.8341406005724791)
-            self.assertAlmostEqual(std, 0.1284174176451904)
+            self.assertAlmostEqual(exp_value, 0.7697473374029422)
+            self.assertAlmostEqual(std, 0.10914516505579042)
             observable = SparsePauliOp(["ZY"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -0.27772649739166505)
-            self.assertAlmostEqual(std, 0.24894801839627123)
+            self.assertAlmostEqual(exp_value, -1.5095011005732455)
+            self.assertAlmostEqual(std, 0.2080399186206604)
+
+    def test_init_errors(self):
+        """Test that the ``__init__`` method raises errors correctly."""
+        with self.subTest("Test invalid shape for ``bias``.") and self.assertRaises(ValueError):
+            MutuallyUnbiasedBasesMeasurements(1, bias=np.ones(2) / 2, angles=np.zeros(3))
+        with self.subTest("Test invalid shape for ``angles``.") and self.assertRaises(ValueError):
+            MutuallyUnbiasedBasesMeasurements(1, bias=np.ones(3) / 3, angles=np.zeros(2))
+
+    def test_repr(self):
+        """Test that the ``__repr__`` method works correctly."""
+        mub_str = "MutuallyUnbiasedBasesMeasurements(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]), angles=array([0, 1, 2]))"
+        povm = MutuallyUnbiasedBasesMeasurements(
+            1, bias=np.array([0.2, 0.3, 0.5]), angles=np.arange(3)
+        )
+        self.assertEqual(povm.__repr__(), mub_str)
 
     def test_process_angles(self):
         """Test if the processing of the angles works correctly."""
