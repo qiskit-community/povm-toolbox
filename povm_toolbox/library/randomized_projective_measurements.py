@@ -420,8 +420,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         try:
             pvm_keys = povm_metadata.pvm_keys if loc is None else povm_metadata.pvm_keys[loc]
-        except KeyError as exc:
-            raise KeyError(
+        except AttributeError as exc:
+            raise AttributeError(
                 "The metadata of povm sampler result associated with a "
                 "RandomizedPMs POVM should specify a list of pvm keys, "
                 "but none were found."
@@ -464,7 +464,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         # shape is assumed to be (*pv, povm_sampler_pub.shots, num_qubits)
         if pvm_idx.shape[-1] != self.num_qubits:
-            raise ValueError
+            raise ValueError(
+                "The shape ``pvm_idx`` is expected to be ``(..., num_qubits="
+                f"{self.num_qubits})``, but got {pvm_idx.shape}."
+            )
         theta: np.ndarray = np.empty(pvm_idx.shape)
         phi: np.ndarray = np.empty(pvm_idx.shape)
         for multi_index in np.ndindex(pvm_idx.shape):
