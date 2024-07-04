@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+from numpy.random import Generator, default_rng
 from qiskit.quantum_info import SparsePauliOp
 
 from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
@@ -171,3 +172,49 @@ class POVMPostProcessor:
         std = np.sqrt((std - exp_val**2) / (shots - 1))
 
         return exp_val, std
+
+    def median_of_means(
+        self,
+        observable: SparsePauliOp,
+        batch_size: int,
+        loc: int | tuple[int, ...],
+        rng: int | Generator | None = None,
+    ) -> float:
+        """Return the expectation value of a given observable using a 'median of means' estimator.
+
+        Args:
+            observable: the observable whose expectation value is queried.
+            batch_size: TODO.
+            loc: index of the results to use. The index corresponds to the set
+                of parameter values that was supplied to the sampler through a
+                :class:`.POVMSamplerPub`. If the circuit was not parametrized,
+                the index ``loc`` should be 0.
+            rng: TODO.
+
+        Raises:
+            TypeError: TODO.
+
+        Returns:
+            A tuple of (estimated) expectation value and standard deviation.
+        """
+        if rng is None:
+            rng = default_rng()
+        elif isinstance(rng, int):
+            rng = default_rng(rng)
+        elif not isinstance(rng, Generator):
+            raise TypeError(f"The type of `rng` ({type(rng)}) is not valid.")
+
+        count = self.counts[loc]
+        shots = sum(count.values())
+        omegas = self.get_decomposition_weights(observable, set(count.keys()))
+
+        sampled_weights = np.zeros(shots)
+        idx = 0
+        for outcome in count:
+            sampled_weights[idx : idx + count[outcome]] = omegas[outcome]
+            idx += count[outcome]
+
+        batches = (rng.permutation(sampled_weights)).reshape((batch_size, -1))
+        median_of_means: float = np.median(batches.mean(axis=0))
+
+        return median_of_means
