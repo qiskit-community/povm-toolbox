@@ -22,10 +22,10 @@
    POVMPubResult
 """
 
+from .povm_pub_result import POVMPubResult
 from .povm_sampler import POVMSampler
 from .povm_sampler_job import POVMSamplerJob
 from .povm_sampler_pub import POVMSamplerPub
-from .povm_sampler_result import POVMPubResult
 
 __all__ = [
     "POVMSampler",

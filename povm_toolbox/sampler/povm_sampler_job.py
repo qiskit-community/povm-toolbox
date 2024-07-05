@@ -23,7 +23,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 
 from povm_toolbox.library.metadata import POVMMetadata
 
-from .povm_sampler_result import POVMPubResult
+from .povm_pub_result import POVMPubResult
 
 LOGGER = logging.getLogger(__name__)
 
