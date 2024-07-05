@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""POVMSamplerJob."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
-    """Job class for the :class:`.POVMSampler`."""
+    """The job returned by :meth:`.POVMSampler.run`."""
 
     def __init__(
         self,

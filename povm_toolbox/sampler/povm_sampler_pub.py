@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""POVMSamplerPub."""
 
 from __future__ import annotations
 
@@ -35,10 +35,11 @@ POVMSamplerPubLike = Union[
         QuantumCircuit, BindingsArrayLike, Union[Integral, None], Union[POVMImplementation, None]
     ],
 ]
+"""The type defining the Pub (Primitive Unified Bloc) structure for :meth:`.POVMSampler.run`."""
 
 
 class POVMSamplerPub(ShapedMixin):
-    """Pub (Primitive Unified Bloc) for the :class:`.POVMSampler`.
+    """The Pub (Primitive Unified Bloc) input structure for :meth:`.POVMSampler.run`.
 
     Pub is composed of tuple (circuit, parameter_values, shots, povm_implementation).
     """

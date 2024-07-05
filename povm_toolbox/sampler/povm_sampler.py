@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""POVMSampler."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class POVMSampler:
-    """A :class:`.BaseSamplerV2`-compatible interface for sampling POVMs."""
+    """A :class:`~qiskit.primitives.base.base_sampler.BaseSamplerV2`-compatible interface for sampling POVMs."""
 
     def __init__(
         self,

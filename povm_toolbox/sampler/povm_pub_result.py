@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""POVMPubResult."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from povm_toolbox.library.metadata import POVMMetadata
 
 
 class POVMPubResult(PubResult):
-    """Result class for the :class:`.POVMSamplerJob`."""
+    """The result of a :class:`.POVMSamplerJob`."""
 
     def __init__(
         self,
