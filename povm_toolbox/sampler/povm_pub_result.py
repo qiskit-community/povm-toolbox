@@ -31,28 +31,43 @@ class POVMPubResult(PubResult):
         """Initialize the result object.
 
         Args:
-            data: The raw data bin object that contains raw measurement
-                bitstrings.
-            metadata: The `POVMMetadata` object that stores the POVM used
-                and all necessary data to interpret the raw measurement bitstring.
-                E.g., for randomized POVMs, each bitstring has to be associated
-                with the corresponding pvm_key to produce a meaningful POVM outcome.
+            data: The raw data bin object that contains raw measurement bitstrings.
+            metadata: The metadata object that stores the POVM used and all necessary data to
+                interpret the raw measurement bitstring. For example, for randomized POVMs, each
+                bitstring has to be associated with the corresponding
+                :class:`~povm_toolbox.library.metadata.RPMMetadata.pvm_keys` to produce a meaningful
+                POVM outcome.
         """
         super().__init__(data, metadata)
 
     @property
     def metadata(self) -> POVMMetadata:
-        """Note: this subclass returns a different type than its base."""
+        """The metadata of this result object.
+
+        .. warning::
+           The object returned by instances of this subclass have a different type than dictated by
+           the :class:`~qiskit.primitives.containers.pub_result.PubResult` interface.
+        """
         return self._metadata  # type:ignore
 
     def get_counts(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
-        """Get the histogram data of an experiment.
+        """Get the histogram data of the result.
+
+        This method will leverage :meth:`~.POVMImplementation.get_povm_counts_from_raw` from the
+        :class:`.POVMImplementation` instance stored inside the :attr:`metadata` to construct a
+        histogram of POVM outcomes.
 
         Args:
-            loc: Which entry of the ``BitArray`` to return a dictionary for.
-                If a ``BindingsArray`` was originally passed to the `POVMSampler``,
-                ``loc`` indicates the set of parameter values for which counts are
-                to be obtained.
+            loc: Which entry of the :class:`~qiskit.primitives.containers.bit_array.BitArray` to
+                return a histogram for. If the Pub that was submitted to :meth:`.POVMSampler.run`
+                contained circuit parameters, ``loc`` can be used to indicate the set of parameter
+                values for which to compute the histogram. If ``loc is None``, the histogram will be
+                computed for all parameter values at once.
+
+        Returns:
+            Either a single or an array of histograms of the POVM outcomes. The shape depends on the
+            value of ``loc`` and the number of parameters that were submitted in the Pub to
+            :meth:`.POVMSampler.run`.
         """
         return self.metadata.povm_implementation.get_povm_counts_from_raw(
             self.data, self.metadata, loc=loc
@@ -61,13 +76,22 @@ class POVMPubResult(PubResult):
     def get_samples(
         self, loc: int | tuple[int, ...] | None = None
     ) -> np.ndarray | list[tuple[int, ...]]:
-        """Get the individual POVM outcomes of an experiment.
+        """Get the individual POVM outcomes of the result.
+
+        This method will leverage :meth:`~.POVMImplementation.get_povm_outcomes_from_raw` from the
+        :class:`.POVMImplementation` instance stored inside the :attr:`metadata` to recover the
+        sampled POVM outcomes.
 
         Args:
-            loc: Which entry of the ``BitArray`` to return the samples for.
-                If a ``BindingsArray`` was originally passed to the `POVMSampler``,
-                ``loc`` indicates the set of parameter values for which counts are
-                to be obtained.
+            loc: Which entry of the :class:`~qiskit.primitives.containers.bit_array.BitArray` to
+                return the samples for. If the Pub that was submitted to :meth:`.POVMSampler.run`
+                contained circuit parameters, ``loc`` can be used to indicate the set of parameter
+                values for which to obtain the samples. If ``loc is None``, the samples will be
+                obtained for all parameter values at once.
+
+        Returns:
+            Either a single or an array of POVM outcomes. The shape depends on the value of ``loc``
+            and the number of parameters that were submitted in the Pub to :meth:`.POVMSampler.run`.
         """
         return self.metadata.povm_implementation.get_povm_outcomes_from_raw(
             self.data, self.metadata, loc=loc
