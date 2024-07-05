@@ -18,8 +18,9 @@ from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasureme
 from povm_toolbox.library.metadata import POVMMetadata
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMSampler
-from qiskit import QuantumCircuit
+from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.primitives import StatevectorSampler
+from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
@@ -153,7 +154,7 @@ class TestRandomizedPMs(TestCase):
 
         backend = FakeManilaV2()
         backend.set_options(seed_simulator=self.RNG_SEED)
-        povm_sampler = POVMSampler(sampler=RuntimeSampler(backend=backend))
+        povm_sampler = POVMSampler(sampler=RuntimeSampler(mode=backend))
 
         pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
 
@@ -181,6 +182,55 @@ class TestRandomizedPMs(TestCase):
         exp_value, std = post_processor.get_expectation_value(observable)
         self.assertAlmostEqual(exp_value, 0.2660390714463396)
         self.assertAlmostEqual(std, 0.2783956923005193)
+
+    def test_binding_parameters(self):
+        num_qubits = 2
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.ry(theta=Parameter("theta"), qubit=0)
+        qc.rx(theta=Parameter("phi"), qubit=1)
+
+        measurement = RandomizedProjectiveMeasurements(
+            num_qubits,
+            bias=np.array([0.2, 0.4, 0.4]),
+            angles=np.array([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
+            seed_rng=self.RNG_SEED,
+        )
+
+        pv_shape = (5, 3)
+        pv = np.arange(np.prod(pv_shape) * qc.num_parameters).reshape(
+            (*pv_shape, qc.num_parameters)
+        )
+        binding = BindingsArray.coerce({tuple(qc.parameters): pv})
+        shots = 16
+
+        pub, metadata = measurement.to_sampler_pub(qc, binding, shots=shots)
+
+        self.assertEqual(pub.shape, (*pv_shape, shots))
+        self.assertTrue(
+            np.all(
+                [
+                    np.all(pub.parameter_values.data[("phi", "theta")][..., i, :] == pv)
+                    for i in range(shots)
+                ]
+            )
+        )
+        self.assertTrue(
+            np.allclose(
+                measurement._get_pvm_bindings_array(metadata.pvm_keys).data[
+                    ("phi_measurement[0]", "phi_measurement[1]")
+                ],
+                pub.parameter_values.data[("phi_measurement[0]", "phi_measurement[1]")],
+            )
+        )
+        self.assertTrue(
+            np.allclose(
+                measurement._get_pvm_bindings_array(metadata.pvm_keys).data[
+                    ("theta_measurement[0]", "theta_measurement[1]")
+                ],
+                pub.parameter_values.data[("theta_measurement[0]", "theta_measurement[1]")],
+            )
+        )
 
     def test_twirling(self):
         """Test if the twirling option works correctly."""
@@ -289,3 +339,6 @@ class TestRandomizedPMs(TestCase):
         with self.assertRaises(ValueError):
             # ``pvm_idx.shape`` is supposed to be ``(..., povm_sampler_pub.shots, num_qubits)``
             measurement._get_pvm_bindings_array(pvm_idx=np.zeros(10))
+
+
+# todo : test ``definition()`` method.

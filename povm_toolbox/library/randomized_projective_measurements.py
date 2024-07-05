@@ -217,8 +217,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
 
-        self._qc_theta = ParameterVector("theta", length=self.num_qubits)
-        self._qc_phi = ParameterVector("phi", length=self.num_qubits)
+        self._qc_theta = ParameterVector("theta_measurement", length=self.num_qubits)
+        self._qc_phi = ParameterVector("phi_measurement", length=self.num_qubits)
 
         qr = QuantumRegister(self.num_qubits, name="povm_qr")
         cr = ClassicalRegister(self.num_qubits, name=self.classical_register_name)
