@@ -21,7 +21,7 @@ from povm_toolbox.sampler import POVMSampler
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.primitives import StatevectorSampler
 from qiskit.primitives.containers.bindings_array import BindingsArray
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2
@@ -340,5 +340,37 @@ class TestRandomizedPMs(TestCase):
             # ``pvm_idx.shape`` is supposed to be ``(..., povm_sampler_pub.shots, num_qubits)``
             measurement._get_pvm_bindings_array(pvm_idx=np.zeros(10))
 
+    def test_definition(self):
+        """Test that errors in ``_get_pvm_bindings_array`` methods are raised correctly."""
+        rng = default_rng()
+        num_qubits = 1
+        num_pvms = 5
 
-# todo : test ``definition()`` method.
+        # randomly pick a bias (distribution) for each qubit
+        bias = rng.dirichlet(alpha=rng.uniform(0, 10, size=num_pvms), size=num_qubits)
+
+        # uniformly sample points on the Bloch sphere to define the effects
+        phi = rng.uniform(0, 2 * np.pi, size=num_pvms * num_qubits).reshape((num_qubits, num_pvms))
+        costheta = rng.uniform(-1, 1, size=num_pvms * num_qubits).reshape((num_qubits, num_pvms))
+        theta = np.arccos(costheta)
+        angles = np.stack((theta, phi), axis=2).reshape((num_qubits, 2 * num_pvms))
+
+        # define measurement and the quantum-informational POVM
+        measurement = RandomizedProjectiveMeasurements(num_qubits, bias=bias, angles=angles)
+        measurement_circuit = measurement.measurement_circuit
+        povm = measurement.definition()
+
+        for i_pvm in range(num_pvms):  # loop on the projective measurements
+            # bound the parameters corresponding to the pvm
+            bc = measurement_circuit.assign_parameters(
+                np.concatenate((phi[:, i_pvm], theta[:, i_pvm]))
+            )
+            bc.remove_final_measurements()
+            # define the change of basis from Z-basis to arbitrary basis defined by (theta, phi)
+            unitary_transformation = Operator(bc.inverse()).data
+            for k in range(2):  # loop on outcomes {0,1}
+                # compute the POVM effect implemented by the circuit
+                vec = unitary_transformation[:, k]
+                effect = bias[0, i_pvm] * np.outer(vec, vec.conj())
+                # check that the circuit implements the correct POVM effect
+                self.assertTrue(np.allclose(effect, povm[(0,)][2 * i_pvm + k].data))
