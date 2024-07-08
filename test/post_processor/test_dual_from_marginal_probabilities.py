@@ -35,7 +35,7 @@ from qiskit.quantum_info import (
 class TestDualFromMarginalProbabilities(TestCase):
     """Test that we can construct optimal dual of a POVM from marginal probabilities."""
 
-    RNG_SEED = 29
+    SEED = 29
 
     def setUp(self) -> None:
         super().setUp()
@@ -53,14 +53,14 @@ class TestDualFromMarginalProbabilities(TestCase):
     def test_not_implemented(self):
         """Test that errors are correctly raised."""
         joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
-        state = random_density_matrix(2, seed=self.RNG_SEED)
+        state = random_density_matrix(2, seed=self.SEED)
         with self.assertRaises(NotImplementedError):
             _ = dual_from_marginal_probabilities(joint_povm, state)
 
     def test_implemented(self):
         """Test that the method constructs a valid dual."""
         prod_povm: ProductPOVM = ProductPOVM.from_list([self.povm, self.povm])
-        state = random_density_matrix(4, seed=self.RNG_SEED)
+        state = random_density_matrix(4, seed=self.SEED)
         dual = dual_from_marginal_probabilities(prod_povm, state)
         self.assertTrue(dual.is_dual_to(prod_povm))
 
@@ -82,9 +82,9 @@ class TestDualFromMarginalProbabilities(TestCase):
         )
 
         measurement = RandomizedProjectiveMeasurements(
-            num_qubits, bias=bias, angles=angles, seed_rng=self.RNG_SEED
+            num_qubits, bias=bias, angles=angles, seed=self.SEED
         )
-        sampler = StatevectorSampler(seed=self.RNG_SEED)
+        sampler = StatevectorSampler(seed=self.SEED)
         povm_sampler = POVMSampler(sampler=sampler)
         job = povm_sampler.run([qc], shots=127, povm=measurement)
         pub_result = job.result()[0]

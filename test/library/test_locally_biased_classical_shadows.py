@@ -23,7 +23,7 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 
 class TestRandomizedPMs(TestCase):
-    RNG_SEED = 13
+    SEED = 13
 
     def setUp(self) -> None:
         super().setUp()
@@ -54,9 +54,9 @@ class TestRandomizedPMs(TestCase):
             measurement = LocallyBiasedClassicalShadows(
                 num_qubits,
                 bias=np.array([0.2, 0.3, 0.5]),
-                seed_rng=self.RNG_SEED,
+                seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.RNG_SEED)
+            sampler = StatevectorSampler(seed=self.SEED)
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=32, povm=measurement)
@@ -77,9 +77,9 @@ class TestRandomizedPMs(TestCase):
             measurement = LocallyBiasedClassicalShadows(
                 num_qubits,
                 bias=np.array([[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]]),
-                seed_rng=self.RNG_SEED,
+                seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.RNG_SEED)
+            sampler = StatevectorSampler(seed=self.SEED)
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=32, povm=measurement)

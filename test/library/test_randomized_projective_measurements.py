@@ -28,7 +28,7 @@ from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 
 class TestRandomizedPMs(TestCase):
-    RNG_SEED = 239486
+    SEED = 239486
 
     def setUp(self) -> None:
         super().setUp()
@@ -94,9 +94,9 @@ class TestRandomizedPMs(TestCase):
             RandomizedProjectiveMeasurements(
                 1, bias=np.array([0.5, 0.5]), angles=np.array([[[0.0, 0.0, 0.5, 0.0]]])
             )
-        with self.subTest("Invalid type for ``seed_rng``.") and self.assertRaises(TypeError):
+        with self.subTest("Invalid type for ``seed``.") and self.assertRaises(TypeError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([0.5, 0.5]), angles=np.array([0.0, 0.0, 0.5, 0.0]), seed_rng=1.2
+                1, bias=np.array([0.5, 0.5]), angles=np.array([0.0, 0.0, 0.5, 0.0]), seed=1.2
             )
 
     def test_init(self):
@@ -107,11 +107,11 @@ class TestRandomizedPMs(TestCase):
         qc.h(0)
         qc.cx(0, 1)
 
-        with self.subTest("Initialization with ``send_rng`` of type ``Generator``."):
-            rng = default_rng(self.RNG_SEED)
-            measurement = ClassicalShadows(num_qubits, seed_rng=rng)
+        with self.subTest("Initialization with ``seed`` of type ``Generator``."):
+            rng = default_rng(self.SEED)
+            measurement = ClassicalShadows(num_qubits, seed=rng)
 
-            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
+            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
             job = povm_sampler.run([qc], shots=128, povm=measurement)
             pub_result = job.result()[0]
             post_processor = POVMPostProcessor(pub_result)
@@ -153,7 +153,7 @@ class TestRandomizedPMs(TestCase):
         qc.h(0)
 
         backend = FakeManilaV2()
-        backend.set_options(seed_simulator=self.RNG_SEED)
+        backend.set_options(seed_simulator=self.SEED)
         povm_sampler = POVMSampler(sampler=RuntimeSampler(mode=backend))
 
         pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
@@ -162,7 +162,7 @@ class TestRandomizedPMs(TestCase):
             num_qubits,
             bias=np.array([0.2, 0.4, 0.4]),
             angles=np.array([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
-            seed_rng=self.RNG_SEED,
+            seed=self.SEED,
         )
 
         job = povm_sampler.run([qc], shots=128, povm=measurement, pass_manager=pm)
@@ -194,7 +194,7 @@ class TestRandomizedPMs(TestCase):
             num_qubits,
             bias=np.array([0.2, 0.4, 0.4]),
             angles=np.array([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
-            seed_rng=self.RNG_SEED,
+            seed=self.SEED,
         )
 
         pv_shape = (5, 3)
@@ -238,9 +238,9 @@ class TestRandomizedPMs(TestCase):
         qc.h(0)
 
         num_qubits = qc.num_qubits
-        measurement = ClassicalShadows(num_qubits, seed_rng=self.RNG_SEED, measurement_twirl=True)
+        measurement = ClassicalShadows(num_qubits, seed=self.SEED, measurement_twirl=True)
 
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
 
         job = povm_sampler.run([qc], shots=128, povm=measurement)
         pub_result = job.result()[0]
@@ -270,9 +270,9 @@ class TestRandomizedPMs(TestCase):
         qc.h(0)
 
         num_qubits = qc.num_qubits
-        measurement = ClassicalShadows(num_qubits, seed_rng=self.RNG_SEED, shot_repetitions=7)
+        measurement = ClassicalShadows(num_qubits, seed=self.SEED, shot_repetitions=7)
 
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
 
         job = povm_sampler.run([qc], shots=128, povm=measurement)
         pub_result = job.result()[0]
@@ -293,11 +293,11 @@ class TestRandomizedPMs(TestCase):
             2,
             bias=np.array([0.3, 0.4, 0.3]),
             angles=np.array([0.0, 0.0, 0.5, 0.0, 0.5, 0.5]),
-            seed_rng=self.RNG_SEED,
+            seed=self.SEED,
         )
         qc = QuantumCircuit(2)
         qc.h(0)
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
         job = povm_sampler.run([qc], shots=10, povm=measurement)
         pub_result = job.result()[0]
 
@@ -329,7 +329,7 @@ class TestRandomizedPMs(TestCase):
             2,
             bias=np.array([0.3, 0.4, 0.3]),
             angles=np.array([0.0, 0.0, 0.5, 0.0, 0.5, 0.5]),
-            seed_rng=self.RNG_SEED,
+            seed=self.SEED,
         )
         with self.assertRaises(ValueError):
             # ``pvm_idx.shape`` is supposed to be ``(..., povm_sampler_pub.shots, num_qubits)``

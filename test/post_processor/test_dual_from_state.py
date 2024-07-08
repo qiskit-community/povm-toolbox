@@ -22,7 +22,7 @@ from qiskit.quantum_info import Operator, random_density_matrix, random_hermitia
 class TestDualFromState(TestCase):
     """Test that we can construct optimal dual of a POVM from a state."""
 
-    RNG_SEED = 28
+    SEED = 28
 
     def setUp(self) -> None:
         super().setUp()
@@ -40,22 +40,22 @@ class TestDualFromState(TestCase):
     def test_not_implemented(self):
         """Test that errors are correctly raised."""
         prod_povm: ProductPOVM = ProductPOVM.from_list([self.povm, self.povm])
-        state = random_density_matrix(4, seed=self.RNG_SEED)
+        state = random_density_matrix(4, seed=self.SEED)
         with self.assertRaises(NotImplementedError):
             _ = dual_from_state(prod_povm, state)
 
     def test_implemented(self):
         """Test that the method constructs a valid dual."""
         joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
-        state = random_density_matrix(2, seed=self.RNG_SEED)
+        state = random_density_matrix(2, seed=self.SEED)
         dual = dual_from_state(joint_povm, state)
         self.assertTrue(dual.is_dual_to(joint_povm))
 
     def test_optimal_dual(self):
         """Test that the method constructs a valid dual."""
         joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
-        state = random_density_matrix(2, seed=self.RNG_SEED)
-        obs = random_hermitian(2, seed=self.RNG_SEED)
+        state = random_density_matrix(2, seed=self.SEED)
+        obs = random_hermitian(2, seed=self.SEED)
         probabilities = joint_povm.get_prob(state)
         exact_exp_val = state.expectation_value(obs).real
 
