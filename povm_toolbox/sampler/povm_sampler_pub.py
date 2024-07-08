@@ -226,7 +226,7 @@ class POVMSamplerPub(ShapedMixin):
         self,
         pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, POVMMetadata]:
-        """Converts this POVM sampler pub to a standard ``SamplerPub``.
+        """Convert this POVM sampler pub to a standard ``SamplerPub``.
 
         This calls :meth:`~.POVMImplementation.to_sampler_pub` of :attr:`.povm`.
 

@@ -22,7 +22,7 @@ To this end, this module provides a number of tools for sampling the state of
 The Sampler
 -----------
 
-As a consuemr of this library, you will be mostly concerned with the :class:`.POVMSampler` class as
+As a consumer of this library, you will be mostly concerned with the :class:`.POVMSampler` class as
 your entry point for submitting POVM sampling jobs.
 
 .. autosummary::
