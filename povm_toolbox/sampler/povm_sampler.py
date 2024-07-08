@@ -30,7 +30,38 @@ LOGGER = logging.getLogger(__name__)
 
 
 class POVMSampler:
-    """A :class:`~qiskit.primitives.base.base_sampler.BaseSamplerV2`-compatible interface for sampling POVMs."""
+    """A :class:`~qiskit.primitives.base.base_sampler.BaseSamplerV2`-compatible interface for sampling POVMs.
+
+    This class does not implement the Sampler primitive interface as a subclass but rather takes an
+    existing instance of a Sampler primitive as its input. In this way, it is trivial for the
+    end-user to switch between simulated or hardware-executed POVM sampling jobs.
+
+    Here is a simple example to get you started:
+
+    >>> from povm_toolbox.library import ClassicalShadows
+    >>> from povm_toolbox.sampler import POVMSampler
+    >>> from qiskit.circuit import QuantumCircuit
+    >>> from qiskit.primitives import StatevectorSampler
+    >>> circ = QuantumCircuit(2)
+    >>> _ = circ.h(0)
+    >>> _ = circ.cx(0, 1)
+    >>> povm = ClassicalShadows(2, seed_rng=42)
+    >>> sampler = StatevectorSampler(seed=42)
+    >>> povm_sampler = POVMSampler(sampler)
+    >>> job = povm_sampler.run([circ], povm=povm, shots=16)
+    >>> result = job.result()
+    >>> print(result[0].get_counts())
+    [Counter({(4, 5): 4, (5, 3): 3, (3, 1): 3, (1, 5): 3, (3, 3): 1, (5, 1): 1, (3, 5): 1})]
+
+    Now, if you want to execute your experiments on real hardware, you can simply replace the
+    :class:`~qiskit.primitives.StatevectorSampler` above by a
+    :class:`~qiskit_ibm_runtime.SamplerV2`:
+
+    .. code:: python
+
+       from qiskit_ibm_runtime import SamplerV2
+       sampler = SamplerV2(...)
+    """
 
     def __init__(
         self,
@@ -39,9 +70,12 @@ class POVMSampler:
         """Initialize the POVM Sampler.
 
         Args:
-            sampler: the ``BaseSampler`` that will be used to collect the POVM samples.
+            sampler: the :class:`~qiskit.primitives.base.base_sampler.BaseSamplerV2` that is used to
+                collect the POVM samples.
         """
         self.sampler = sampler
+        """The :class:`~qiskit.primitives.base.base_sampler.BaseSamplerV2` that is used to collect
+        the POVM samples."""
 
     def run(
         self,
@@ -54,17 +88,15 @@ class POVMSampler:
         """Run and collect samples from each pub.
 
         Args:
-            pubs: An iterable of pub-like objects. For example, a list of circuits
-                or tuples ``(circuit, parameter_values, shots, povm)``.
-            shots: The total number of shots to sample for each pub that does not
-                specify its own shots. If ``None``, the default number of shots
-                of the POVM sampler is used.
-            povm: A POVM implementation that defines the measurement to perform
-                for each pub that does not specify it own POVM. If ``None``, each pub
-                has to specify its own POVM.
-            pass_manager: An optional pass manager. For each pub, its circuit will be
-                composed with the associated measurement circuit. If a pass manager is
-                provided, it will transpile the composed circuits.
+            pubs: An iterable of :class:`~povm_toolbox.sampler.POVMSamplerPubLike` objects. For
+                example, a list of circuits or tuples ``(circuit, parameter_values, shots, povm)``.
+            shots: The total number of shots to sample for each pub that does not specify its own
+                shots. If ``None``, the default number of shots of the :attr:`.sampler` is used.
+            povm: A POVM implementation to sample from for each pub that does not specify it own
+                POVM. If ``None``, each pub has to specify its own POVM.
+            pass_manager: An optional transpilation pass manager. For each pub, after its circuit
+                has been composed with the measurement circuit, the pass manager will be used to
+                transpile the composed circuit.
 
         Returns:
             The POVM sampler job object.
