@@ -50,8 +50,6 @@ class POVMSampler:
     >>> povm_sampler = POVMSampler(sampler)
     >>> job = povm_sampler.run([circ], povm=povm, shots=16)
     >>> result = job.result()
-    >>> print(result[0].get_counts())
-    [Counter({(4, 5): 4, (5, 3): 3, (3, 1): 3, (1, 5): 3, (3, 3): 1, (5, 1): 1, (3, 5): 1})]
 
     Now, if you want to execute your experiments on real hardware, you can simply replace the
     :class:`~qiskit.primitives.StatevectorSampler` above by a
