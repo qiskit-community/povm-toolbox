@@ -78,7 +78,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
         shot_repetitions: int = 1,
-        seed_rng: int | Generator | None = None,
+        seed: int | Generator | None = None,
     ) -> None:
         # NOTE: If we extend this interface to support different number of effects for each qubit in
         # the future, we may need to move away from np.ndarray input types to sequences of sequences.
@@ -113,7 +113,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 times we repeat the measurement for each sampled PVM (default is 1). Therefore, the
                 effective total number of measurement shots is ``shots`` multiplied by
                 ``shot_repetitions``.
-            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
+            seed: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The PVMs are sampled according to the probability distribution(s) specified by
                 ``bias``. The user can also directly provide a random generator. If ``None``, a
                 random seed will be used.
@@ -125,7 +125,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 by ``bias``.
             ValueError: If the probability distribution(s) specified by ``bias`` don't sum up to 1.
             ValueError: If the shape of ``angles`` is not compatible with ``num_qubits``.
-            TypeError: If the type of ``seed_rng`` is not valid.
+            TypeError: If the type of ``seed`` is not valid.
         """
         super().__init__(num_qubits, measurement_layout=measurement_layout)
 
@@ -180,14 +180,14 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         """
 
         self._rng: Generator
-        if seed_rng is None:
+        if seed is None:
             self._rng = default_rng()
-        elif isinstance(seed_rng, int):
-            self._rng = default_rng(seed_rng)
-        elif isinstance(seed_rng, Generator):
-            self._rng = seed_rng
+        elif isinstance(seed, int):
+            self._rng = default_rng(seed)
+        elif isinstance(seed, Generator):
+            self._rng = seed
         else:
-            raise TypeError(f"The type of `seed_rng` ({type(seed_rng)}) is not valid.")
+            raise TypeError(f"The type of `seed` ({type(seed)}) is not valid.")
 
     def __repr__(self) -> str:
         """Return the string representation of a RandomizedProjectiveMeasurements instance."""
@@ -217,8 +217,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
 
-        self._qc_theta = ParameterVector("theta", length=self.num_qubits)
-        self._qc_phi = ParameterVector("phi", length=self.num_qubits)
+        self._qc_theta = ParameterVector("theta_measurement", length=self.num_qubits)
+        self._qc_phi = ParameterVector("phi_measurement", length=self.num_qubits)
 
         qr = QuantumRegister(self.num_qubits, name="povm_qr")
         cr = ClassicalRegister(self.num_qubits, name=self.classical_register_name)
@@ -420,8 +420,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         try:
             pvm_keys = povm_metadata.pvm_keys if loc is None else povm_metadata.pvm_keys[loc]
-        except KeyError as exc:
-            raise KeyError(
+        except AttributeError as exc:
+            raise AttributeError(
                 "The metadata of povm sampler result associated with a "
                 "RandomizedPMs POVM should specify a list of pvm keys, "
                 "but none were found."
@@ -464,7 +464,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         # shape is assumed to be (*pv, povm_sampler_pub.shots, num_qubits)
         if pvm_idx.shape[-1] != self.num_qubits:
-            raise ValueError
+            raise ValueError(
+                "The shape ``pvm_idx`` is expected to be ``(..., num_qubits="
+                f"{self.num_qubits})``, but got {pvm_idx.shape}."
+            )
         theta: np.ndarray = np.empty(pvm_idx.shape)
         phi: np.ndarray = np.empty(pvm_idx.shape)
         for multi_index in np.ndindex(pvm_idx.shape):

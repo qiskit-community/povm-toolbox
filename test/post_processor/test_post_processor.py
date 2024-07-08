@@ -26,7 +26,7 @@ from qiskit.quantum_info import SparsePauliOp
 class TestPostProcessor(TestCase):
     """Test the methods and attributes of the :class:`.POVMPostProcessor class`."""
 
-    RNG_SEED = 42
+    SEED = 42
 
     def setUp(self) -> None:
         super().setUp()
@@ -35,8 +35,8 @@ class TestPostProcessor(TestCase):
         qc.h(0)
         qc.cx(0, 1)
 
-        povm_sampler = POVMSampler(sampler=Sampler(seed=self.RNG_SEED))
-        self.measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
+        povm_sampler = POVMSampler(sampler=Sampler(seed=self.SEED))
+        self.measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
 
         job = povm_sampler.run([qc], shots=32, povm=self.measurement)
         result = job.result()
@@ -124,8 +124,8 @@ class TestPostProcessor(TestCase):
             qc.h(0)
             qc.cx(0, 1)
             qc.ry(theta=Parameter("theta"), qubit=0)
-            povm_sampler = POVMSampler(sampler=Sampler(seed=self.RNG_SEED))
-            measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
+            povm_sampler = POVMSampler(sampler=Sampler(seed=self.SEED))
+            measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
             job = povm_sampler.run(
                 [(qc, np.array(2 * [[0, np.pi / 3, np.pi]]))], shots=32, povm=measurement
             )

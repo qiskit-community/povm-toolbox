@@ -23,7 +23,7 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 
 class TestClassicalShadows(TestCase):
-    RNG_SEED = 147234
+    SEED = 147234
 
     def setUp(self) -> None:
         super().setUp()
@@ -52,9 +52,9 @@ class TestClassicalShadows(TestCase):
 
         measurement = ClassicalShadows(
             num_qubits,
-            seed_rng=self.RNG_SEED,
+            seed=self.SEED,
         )
-        sampler = StatevectorSampler(seed=self.RNG_SEED)
+        sampler = StatevectorSampler(seed=self.SEED)
         povm_sampler = POVMSampler(sampler=sampler)
 
         job = povm_sampler.run([qc], shots=32, povm=measurement)

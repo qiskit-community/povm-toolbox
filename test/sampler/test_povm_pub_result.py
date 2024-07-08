@@ -23,7 +23,7 @@ from qiskit.primitives import StatevectorSampler as Sampler
 class TestPostProcessor(TestCase):
     """Test the methods and attributes of the :class:`.POVMPostProcessor class`."""
 
-    RNG_SEED = 42
+    SEED = 42
 
     def setUp(self) -> None:
         super().setUp()
@@ -35,8 +35,8 @@ class TestPostProcessor(TestCase):
         with open("test/sampler/random_circuits.qpy", "rb") as file:
             qc = qpy.load(file)[0]
 
-        povm_sampler = POVMSampler(sampler=Sampler(seed=self.RNG_SEED))
-        self.measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
+        povm_sampler = POVMSampler(sampler=Sampler(seed=self.SEED))
+        self.measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
 
         job = povm_sampler.run([qc], shots=10, povm=self.measurement)
         result = job.result()
