@@ -14,14 +14,8 @@ from __future__ import annotations
 
 import logging
 import pickle
-import sys
 import time
 import uuid
-
-if sys.version_info < (3, 12):
-    from typing_extensions import override
-else:
-    from typing import override
 
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
 from qiskit.providers import JobStatus
