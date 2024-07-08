@@ -14,8 +14,14 @@ from __future__ import annotations
 
 import logging
 import pickle
+import sys
 import time
 import uuid
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
 from qiskit.providers import JobStatus
@@ -172,20 +178,26 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         # Return the corresponding :class:`.POVMSampler` object:
         return cls(base_job, metadata)
 
+    @override  # type: ignore[misc]
     def status(self) -> JobStatus:
         return self.base_job.status()
 
+    @override  # type: ignore[misc]
     def done(self) -> bool:
         return bool(self.base_job.done())
 
+    @override  # type: ignore[misc]
     def running(self) -> bool:
         return bool(self.base_job.running())
 
+    @override  # type: ignore[misc]
     def cancelled(self) -> bool:
         return bool(self.base_job.cancelled())
 
+    @override  # type: ignore[misc]
     def in_final_state(self) -> bool:
         return bool(self.base_job.in_final_state())
 
+    @override  # type: ignore[misc]
     def cancel(self):
         self.base_job.cancel()
