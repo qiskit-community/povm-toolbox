@@ -78,7 +78,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
         shot_repetitions: int = 1,
-        seed_rng: int | Generator | None = None,
+        seed: int | Generator | None = None,
     ) -> None:
         # NOTE: If we extend this interface to support different number of effects for each qubit in
         # the future, we may need to move away from np.ndarray input types to sequences of sequences.
@@ -113,7 +113,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 times we repeat the measurement for each sampled PVM (default is 1). Therefore, the
                 effective total number of measurement shots is ``shots`` multiplied by
                 ``shot_repetitions``.
-            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
+            seed: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The PVMs are sampled according to the probability distribution(s) specified by
                 ``bias``. The user can also directly provide a random generator. If ``None``, a
                 random seed will be used.
@@ -125,7 +125,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 by ``bias``.
             ValueError: If the probability distribution(s) specified by ``bias`` don't sum up to 1.
             ValueError: If the shape of ``angles`` is not compatible with ``num_qubits``.
-            TypeError: If the type of ``seed_rng`` is not valid.
+            TypeError: If the type of ``seed`` is not valid.
         """
         super().__init__(num_qubits, measurement_layout=measurement_layout)
 
@@ -180,14 +180,14 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         """
 
         self._rng: Generator
-        if seed_rng is None:
+        if seed is None:
             self._rng = default_rng()
-        elif isinstance(seed_rng, int):
-            self._rng = default_rng(seed_rng)
-        elif isinstance(seed_rng, Generator):
-            self._rng = seed_rng
+        elif isinstance(seed, int):
+            self._rng = default_rng(seed)
+        elif isinstance(seed, Generator):
+            self._rng = seed
         else:
-            raise TypeError(f"The type of `seed_rng` ({type(seed_rng)}) is not valid.")
+            raise TypeError(f"The type of `seed` ({type(seed)}) is not valid.")
 
     def __repr__(self) -> str:
         """Return the string representation of a RandomizedProjectiveMeasurements instance."""

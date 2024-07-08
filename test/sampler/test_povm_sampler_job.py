@@ -29,11 +29,11 @@ from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 class TestPOVMSamplerJob(TestCase):
     """Tests for the ``POVMSamplerJob`` class."""
 
-    RNG_SEED = 10
+    SEED = 10
 
     def setUp(self) -> None:
         super().setUp()
-        self.sampler = AerSampler(seed=self.RNG_SEED)
+        self.sampler = AerSampler(seed=self.SEED)
 
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
@@ -89,14 +89,14 @@ class TestPOVMSamplerJob(TestCase):
         qc.cx(0, 1)
 
         backend = FakeSherbrooke()
-        backend.set_options(seed_simulator=self.RNG_SEED)
+        backend.set_options(seed_simulator=self.SEED)
         pm = generate_preset_pass_manager(
-            optimization_level=2, backend=backend, seed_transpiler=self.RNG_SEED
+            optimization_level=2, backend=backend, seed_transpiler=self.SEED
         )
 
         qc_isa = pm.run(qc)
 
-        measurement = ClassicalShadows(2, seed_rng=self.RNG_SEED)
+        measurement = ClassicalShadows(2, seed=self.SEED)
         runtime_sampler = RuntimeSampler(mode=backend)
         povm_sampler = POVMSampler(runtime_sampler)
         job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)

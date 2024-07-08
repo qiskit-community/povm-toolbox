@@ -37,7 +37,7 @@ from qiskit.quantum_info import (
 class TestDualFromEmpiricalFrequencies(TestCase):
     """Test that we can construct optimal dual of a POVM from empirical frequencies."""
 
-    RNG_SEED = 30
+    SEED = 30
 
     def setUp(self) -> None:
         super().setUp()
@@ -57,9 +57,9 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         )
 
         measurement = RandomizedProjectiveMeasurements(
-            num_qubits, bias=bias, angles=angles, seed_rng=self.RNG_SEED
+            num_qubits, bias=bias, angles=angles, seed=self.SEED
         )
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
         job = povm_sampler.run([qc], shots=127, povm=measurement)
         pub_result = job.result()[0]
         self.post_processor = POVMPostProcessor(pub_result)
@@ -134,8 +134,8 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         ):
             qc = QuantumCircuit(2)
             qc.ry(theta=Parameter("theta"), qubit=0)
-            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.RNG_SEED))
-            measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
+            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
+            measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
             job = povm_sampler.run([(qc, np.array([0, np.pi]))], shots=16, povm=measurement)
             pub_result = job.result()[0]
             post_processor_3 = POVMPostProcessor(pub_result)
