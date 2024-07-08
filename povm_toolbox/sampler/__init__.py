@@ -44,6 +44,9 @@ working with the in- and outputs of the :class:`.POVMSampler`.
    POVMSamplerPub
    POVMSamplerJob
    POVMPubResult
+
+.. autoclass:: POVMSamplerPubLike
+   :members:
 """
 
 from .povm_pub_result import POVMPubResult

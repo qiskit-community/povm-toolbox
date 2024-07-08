@@ -73,6 +73,9 @@ autodoc_member_order = "bysource"
 autodoc_default_options = {
     "inherited-members": None,
 }
+autodoc_type_aliases = {
+    "POVMSamplerPubLike": "povm_toolbox.sampler.POVMSamplerPubLike"
+}
 
 
 # This adds numbers to the captions for figures, tables,
