@@ -287,11 +287,6 @@ class TestRandomizedPMs(TestCase):
         self.assertAlmostEqual(exp_value, 0.9843750000000002)
         self.assertAlmostEqual(std, 0.04708403113719653)
 
-    # TODO: write a unittest for each public method of RandomizedProjectiveMeasurements
-
-    # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
-    # errors are raised properly)
-
     def test_povm_outcomes_errors(self):
         """Test that errors in ``_povm_outcomes`` method are raised correctly."""
         measurement = RandomizedProjectiveMeasurements(
