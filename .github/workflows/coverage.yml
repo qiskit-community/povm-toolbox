@@ -36,5 +36,4 @@ jobs:
           QISKIT_IBM_TOKEN: ${{ secrets.QISKIT_IBM_TOKEN }}
           QISKIT_IBM_INSTANCE: ${{ secrets.QISKIT_IBM_INSTANCE }}
         run: |
-          echo "$QISKIT_IBM_URL"
           tox -e coverage
