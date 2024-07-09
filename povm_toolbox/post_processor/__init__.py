@@ -32,7 +32,9 @@ The main entry-point to the post-processing of POVM results is provided by the
 Various Dual Frames
 -------------------
 
-Additionally, this module provides a number of functions to easily construct specific Dual frames:
+Additionally, this module provides a number of functions to easily construct specific Dual frames.
+The functions :func:`.dual_from_state` and :func:`.dual_from_marginal_probabilities` require a
+reference state to be available, while :func:`.dual_from_empirical_frequencies` does not.
 
 .. autosummary::
    :toctree: ../stubs/
