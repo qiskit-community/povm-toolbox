@@ -204,6 +204,6 @@ class POVMPostProcessor:
         exp_val /= shots
         std /= shots
 
-        std = np.sqrt((std - exp_val**2) / (shots - 1))
+        std = float(np.sqrt((std - exp_val**2) / (shots - 1)))
 
         return exp_val, std
