@@ -141,6 +141,8 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         cls,
         filename: str,
         base_job: BasePrimitiveJob | None = None,
+        *,
+        service: QiskitRuntimeService | None = None,
     ) -> POVMSamplerJob:
         """Recover a :class:`.POVMSamplerJob` instance.
 
@@ -153,6 +155,9 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
                 stored inside the original :class:`.POVMSamplerJob` object. If ``None``, the
                 internal job ID stored in the metadata will be used to recover the internal job from
                 the :class:`~qiskit_ibm_runtime.qiskit_runtime_service.QiskitRuntimeService`.
+            service: an optional instance of the :class:`.QiskitRuntimeService`. If ``None``, an
+                instance will be generated with no arguments, resulting in it extracting the saved
+                configuration from disk.
 
         Raises:
             ValueError : if a ``base_job`` is supplied and its ID does not match with the ID stored
@@ -165,8 +170,9 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         job_id, metadata = cls._load_metadata(filename)
 
         if base_job is None:
-            # Use Qiskit Runtime Service to recover the ``BasePrimitiveJob``:
-            service = QiskitRuntimeService()
+            if service is None:  # pragma: no cover
+                # Use Qiskit Runtime Service to recover the ``BasePrimitiveJob``:
+                service = QiskitRuntimeService()  # pragma: no cover
             # Load the ``BasePrimitiveJob`` object:
             base_job = service.job(job_id)
         elif base_job.job_id() != job_id:

@@ -10,9 +10,11 @@
 
 """Tests for the POVMSamplerJob class."""
 
+import os
 from pathlib import Path
 from unittest import TestCase
 
+import pytest
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
@@ -22,6 +24,7 @@ from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer.primitives import SamplerV2 as AerSampler
+from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
 from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 
@@ -138,11 +141,6 @@ class TestPOVMSamplerJob(TestCase):
             finally:
                 Path(filename).unlink(missing_ok=True)
 
-        with self.subTest("Test default ``base_job``."):
-            # TODO
-            # It requires QiskitRuntimeService. How can we test this ?
-            pass
-
         with self.subTest(
             "Error if id of ``base_job`` does not match the one stored in the metadata file."
         ) and self.assertRaises(ValueError):
@@ -155,6 +153,52 @@ class TestPOVMSamplerJob(TestCase):
                 raise exc
             finally:
                 Path(filename).unlink(missing_ok=True)
+
+    @pytest.mark.skipif(
+        os.getenv("QISKIT_IBM_TOKEN") is None, reason="Missing QiskitRuntimeService configuration."
+    )
+    def test_recover_job_runtime(self):
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.cx(0, 1)
+
+        instance = os.getenv("QISKIT_IBM_INSTANCE")
+        token = os.getenv("QISKIT_IBM_TOKEN")
+        url = os.getenv("QISKIT_IBM_URL")
+        if instance is None or token is None or url is None:
+            pytest.skip("Missing QiskitRuntimeService configuration.")
+        channel = "ibm_quantum" if url.find("quantum-computing.ibm.com") >= 0 else "ibm_cloud"
+        service = QiskitRuntimeService(instance=instance, token=token, url=url, channel=channel)
+
+        backend = service.least_busy(operational=True, simulator=True)
+        pm = generate_preset_pass_manager(
+            optimization_level=2, backend=backend, seed_transpiler=self.SEED
+        )
+
+        qc_isa = pm.run(qc)
+
+        measurement = ClassicalShadows(2, seed=self.SEED)
+        runtime_sampler = RuntimeSampler(mode=backend)
+        runtime_sampler.options.simulator.seed_simulator = self.SEED
+        povm_sampler = POVMSampler(runtime_sampler)
+        job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
+
+        try:
+            job.save_metadata()
+            filename = f"job_metadata_{job.base_job.job_id()}.pkl"
+            job_recovered = POVMSamplerJob.recover_job(filename=filename, service=service)
+            self.assertIsInstance(job_recovered, POVMSamplerJob)
+            result = job_recovered.result()
+            pub_result = result[0]
+            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
+            post_processor = POVMPostProcessor(pub_result)
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -1.3906250000000009)
+            self.assertAlmostEqual(std, 0.6732583954195841)
+        except BaseException as exc:  # catch anything
+            raise exc
+        finally:
+            Path(filename).unlink(missing_ok=True)
 
     def test_status(self):
         """Test the ``status`` and associated methods."""
