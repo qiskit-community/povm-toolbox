@@ -46,7 +46,8 @@ def dual_from_state(
         state: the state from which to compute the outcome probabilities.
 
     Raises:
-        NotImplementedError: if ``povm`` is not a :class:`.MultiQubitPOVM` instance.
+        NotImplementedError: if ``povm`` is not a :class:`.MultiQubitPOVM` instance. If you have a
+            :class:`.ProductPOVM`, have a look at :func:`.dual_from_marginal_probabilities`.
 
     Returns:
         The Dual frame with minimal variance of the estimator for any arbitrary observable.
