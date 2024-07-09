@@ -21,7 +21,7 @@ import uuid
 if sys.version_info < (3, 12):
     from typing_extensions import override
 else:
-    from typing import override
+    from typing import override  # pragma: no cover
 
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult
 from qiskit.providers import JobStatus
