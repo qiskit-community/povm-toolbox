@@ -31,6 +31,10 @@ jobs:
           pip install tox
       - name: Test using tox environment
         shell: bash
+        env:
+          QISKIT_IBM_URL: ${{ secrets.QISKIT_IBM_URL }}
+          QISKIT_IBM_TOKEN: ${{ secrets.QISKIT_IBM_TOKEN }}
+          QISKIT_IBM_INSTANCE: ${{ secrets.QISKIT_IBM_INSTANCE }}
         run: |
           pver=${{ matrix.python-version }}
           tox -e py${pver/./}
