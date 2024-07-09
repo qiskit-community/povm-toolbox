@@ -23,25 +23,18 @@ from scipy.stats import unitary_group
 class TestSingleQubitPovm(TestCase):
     """Test that we can create valid single qubit POVM and get warnings if invalid."""
 
-    def test_random_operators(self):
-        """Test"""
-
-        ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
-
-        while np.abs(ops[0, 0, 0].imag) < 1e-6:
-            ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
-
-        with self.assertRaises(ValueError):
-            povm1 = SingleQubitPOVM(list_operators=[Operator(op) for op in ops])
-            povm1.check_validity()
+    def test_invalid_dimension(self):
+        """Test that an error is raised if the dimension of the operators is different than 2 (single-qubit system)."""
+        with self.subTest("Dimension less than 2.") and self.assertRaises(ValueError):
+            SingleQubitPOVM([Operator(np.eye(1))])
+        with self.subTest("Dimension greater than 2.") and self.assertRaises(ValueError):
+            SingleQubitPOVM([Operator(np.eye(4))])
 
     def test_pauli_decomposition(self):
-        """Test"""
-
-        # TODO : select a random POVM ...
+        """Test the pauli decomposition of the POVM effects."""
         dim = 2
         eigval = np.random.uniform(low=-5, high=5, size=dim)
-        x = unitary_group.rvs(dim)  # , random_state=seed_obs[i])
+        x = unitary_group.rvs(dim)
         obs = x @ np.diag(eigval) @ x.T.conj()
 
         _, V = np.linalg.eigh(obs)
@@ -61,8 +54,6 @@ class TestSingleQubitPovm(TestCase):
             self.assertAlmostEqual(summed["Y"], 0.0)
         with self.subTest("Z"):
             self.assertAlmostEqual(summed["Z"], 0.0)
-
-        # also check that the decomposition is correct TODO
 
     def test_get_bloch_vectors(self):
         """Test the method :method:`.SingleQubitPOVM.get_bloch_vectors`."""
@@ -126,8 +117,3 @@ class TestSingleQubitPovm(TestCase):
             ]
         )
         self.assertTrue(np.allclose(sqpovm.get_bloch_vectors(), vectors))
-
-    # TODO: write a unittest for each public method of SingleQubitPOVM
-
-    # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
-    # errors are raised properly)

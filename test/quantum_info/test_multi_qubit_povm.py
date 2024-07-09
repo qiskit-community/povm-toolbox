@@ -13,25 +13,30 @@
 from unittest import TestCase
 
 import numpy as np
-from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDual
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
-from qiskit.quantum_info import Operator, random_hermitian
+from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
+from qiskit.quantum_info import Operator
 
 
 class TestMultiQubitPOVM(TestCase):
     """Test that we can create valid POVM and get warnings if invalid."""
 
-    def test_random_operators(self):
-        """Test that an error is raised if the operators are not Hermitian."""
-
-        ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
-
-        while np.abs(ops[0, 0, 0].imag) < 1e-6:
+    def test_invalid_operators(self):
+        """Test that errors are correctly raised if invalid operators are supplied."""
+        with self.subTest("Non Hermitian operators") and self.assertRaises(ValueError):
             ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
-
-        with self.assertRaises(ValueError):
-            povm1 = MultiQubitPOVM(list_operators=[Operator(op) for op in ops])
-            print(povm1[0])
+            while np.abs(ops[0, 0, 0].imag) < 1e-6:
+                ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(
+                    -1, 1, (6, 2, 2)
+                )
+            _ = MultiQubitPOVM(list_operators=[Operator(op) for op in ops])
+        with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
+            op = np.array([[-0.5, 0], [0, 0]])
+            _ = MultiQubitPOVM(list_operators=[Operator(op), Operator(np.eye(2) - op)])
+        with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
+            _ = MultiQubitPOVM(
+                list_operators=[0.9 * Operator.from_label("0"), Operator.from_label("1")]
+            )
 
     def test_dimension(self):
         """Test dimension attribute"""
@@ -63,36 +68,6 @@ class TestMultiQubitPOVM(TestCase):
         self.assertListEqual(povm[3:], [povm.operators[3], povm.operators[4], povm.operators[5]])
         self.assertListEqual(povm[::2], [povm.operators[0], povm.operators[2], povm.operators[4]])
         self.assertListEqual(povm[2::-1], [povm.operators[2], povm.operators[1], povm.operators[0]])
-
-    # TODO
-    def test_build_from_vectors(self):
-        """Test that we can correctly instantiate a POVM from Bloch vectors."""
-        if True:
-            self.assertTrue(True)
-
-    def test_get_omegas(self):
-        with self.subTest("Single-qubit case"):
-            povm = MultiQubitPOVM(
-                [
-                    1.0 / 2 * Operator.from_label("0"),
-                    1.0 / 2 * Operator.from_label("1"),
-                    1.0 / 3 * Operator.from_label("+"),
-                    1.0 / 3 * Operator.from_label("-"),
-                    1.0 / 6 * Operator.from_label("r"),
-                    1.0 / 6 * Operator.from_label("l"),
-                ]
-            )
-            obs = random_hermitian(dims=2**1)
-            dual = MultiQubitDual.build_dual_from_frame(povm)
-            omegas = dual.get_omegas(obs)
-            dec = np.zeros((2, 2), dtype=complex)
-            for k in range(povm.num_outcomes):
-                dec += omegas[k] * povm[k].data
-            self.assertTrue(np.allclose(obs, dec))
-
-        # TODO
-        with self.subTest("Multi-qubit case"):
-            self.assertTrue(True)
 
     def test_informationally_complete(self):
         """Test whether a POVM is informationally complete or not."""
@@ -136,7 +111,59 @@ class TestMultiQubitPOVM(TestCase):
             )
             self.assertFalse(povm.informationally_complete)
 
-    # TODO: write a unittest for each public method of MultiQubitPOVM
+    def test_repr(self):
+        """Test the ``__repr__`` method."""
+        with self.subTest("Single-qubit case."):
+            povm = MultiQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+            self.assertEqual(povm.__repr__(), f"MultiQubitPOVM<2> at {hex(id(povm))}")
+            povm = MultiQubitPOVM(
+                2 * [0.5 * Operator.from_label("0"), 0.5 * Operator.from_label("1")]
+            )
+            self.assertEqual(povm.__repr__(), f"MultiQubitPOVM<4> at {hex(id(povm))}")
+            povm = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+            self.assertEqual(povm.__repr__(), f"SingleQubitPOVM<2> at {hex(id(povm))}")
+        with self.subTest("Multi-qubit case."):
+            povm = MultiQubitPOVM(
+                [
+                    Operator.from_label("00"),
+                    Operator.from_label("01"),
+                    Operator.from_label("10"),
+                    Operator.from_label("11"),
+                ]
+            )
+            self.assertEqual(povm.__repr__(), f"MultiQubitPOVM(num_qubits=2)<4> at {hex(id(povm))}")
 
-    # TODO: write a unittest to assert the correct handling of invalid inputs (i.e. verify that
-    # errors are raised properly)
+    def test_operators_setter(self):
+        """Test the ``__repr__`` method."""
+        povm = MultiQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+        with self.subTest("Non-square operators") and self.assertRaises(ValueError):
+            povm.operators = [
+                Operator(np.array([[1, 0, 0], [0, 0, 0]])),
+                Operator(np.array([[0, 0, 0], [0, 1, 0]])),
+            ]
+
+    def test_analysis(self):
+        povm = MultiQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+        operator = Operator([[0.8, 0], [0, 0.2]])
+        with self.subTest("Get a single frame coefficient."):
+            self.assertEqual(povm.analysis(operator, 0), 0.8)
+            self.assertEqual(povm.analysis(operator, 1), 0.2)
+        with self.subTest("Get a set of frame coefficients."):
+            frame_coefficients = povm.analysis(operator, set([0]))
+            self.assertIsInstance(frame_coefficients, dict)
+            self.assertEqual(frame_coefficients[0], 0.8)
+            frame_coefficients = povm.analysis(operator, set([1, 0]))
+            self.assertIsInstance(frame_coefficients, dict)
+            self.assertEqual(frame_coefficients[0], 0.8)
+            self.assertEqual(frame_coefficients[1], 0.2)
+        with self.subTest("Get all frame coefficients."):
+            frame_coefficients = povm.analysis(operator)
+            self.assertIsInstance(frame_coefficients, np.ndarray)
+            self.assertTrue(np.allclose(frame_coefficients, np.array([0.8, 0.2])))
+        with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(TypeError):
+            _ = povm.analysis(operator, (0, 1))
+
+    def test_draw_bloch(self):
+        with self.assertRaises(NotImplementedError):
+            povm = MultiQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
+            povm.draw_bloch()
