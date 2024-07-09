@@ -129,7 +129,7 @@ class MultiQubitFrame(BaseFrame[int]):
             mapping Pauli labels to coefficients.
 
         Raises:
-            ValueError: when the frame operators could not be converted to Pauli form (e.g. when
+            QiskitError: when the frame operators could not be converted to Pauli form (e.g. when
                 they are not N-qubit operators).
         """
         if self._pauli_operators is None:
@@ -138,7 +138,9 @@ class MultiQubitFrame(BaseFrame[int]):
                     dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.operators
                 ]
             except QiskitError as exc:
-                raise ValueError("Failed to convert frame operators to Pauli form.") from exc
+                raise QiskitError(
+                    f"Failed to convert frame operators to Pauli form: {exc.message}"
+                ) from exc
         return self._pauli_operators
 
     def _check_validity(self) -> None:

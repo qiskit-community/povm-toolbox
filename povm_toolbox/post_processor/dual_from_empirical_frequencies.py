@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""dual_from_empirical_frequencies."""
 
 from __future__ import annotations
 
@@ -33,51 +33,48 @@ def dual_from_empirical_frequencies(
     | Statevector
     | None = None,
 ) -> BaseDual:
-    """Return the dual frame of ``povm`` based on the frequencies of the sampled outcomes.
+    """Return the Dual frame of ``povm`` based on the frequencies of the sampled outcomes.
 
-    Given outcomes sampled from a product POVM, each local dual frame is parametrized
-    with the alpha-parameters set as the marginal outcome frequencies. For stability,
-    the (local) empirical frequencies can be biased towards the (marginal) outcome
-    probabilities of an ansatz state.
+    Given outcomes sampled from a :class:`.ProductPOVM`, each local Dual frame is parametrized with
+    the alpha-parameters set as the marginal outcome frequencies. For stability, the (local)
+    empirical frequencies can be biased towards the (marginal) outcome probabilities of an
+    ``ansatz`` state.
 
     Args:
-        povm_post_processor: the :class:`.POVMPostProcessor` object from which to
-            extract the POVM and the empirical frequencies to build the dual frame.
-        loc: index of the results to use. This is relevant if multiple sets of
-            parameter values were supplied to the sampler in the same PUB. If None,
-            it is assumed that the supplied circuit was not parametrized or that a
-            unique set of parameter values was supplied. In this case, ``loc`` is
-            trivially set to 0.
-        bias: the strength of the bias towards the outcome distribution of the
-            ``ansatz`` state.  If it is a ``float``, the same bias is  applied
-            to each (local) sub-system. If it is a list of ``float``, a specific
-            bias is applied to each sub-system. If None, the bias for each sub-
-            system is set to be the number of outcomes of the POVM acting on this
+        povm_post_processor: the :class:`.POVMPostProcessor` object from which to extract the
+            :attr:`.POVMPostProcessor.povm` and the empirical frequencies to build the Dual frame.
+        loc: index of the results to use. This is relevant if multiple sets of parameter values were
+            supplied to the sampler in the same Pub. If ``None``, it is assumed that the supplied
+            circuit was not parametrized or that a unique set of parameter values was supplied. In
+            this case, ``loc`` is trivially set to 0.
+        bias: the strength of the bias towards the outcome distribution of the ``ansatz`` state. If
+            it is a ``float``, the same bias is applied to each (local) sub-system. If it is a list
+            of ``float``, a specific bias is applied to each sub-system. If ``None``, the bias for
+            each sub-system is set to be the number of outcomes of the POVM acting on this
             sub-system.
-        ansatz: list of quantum states for each local sub-system. If a single
-            (local) quantum state is supplied, it is used for all sub-systems.
-            From these states, the local outcome probability distributions are
-            computed for each sub-system. The empirical marginal frequencies
-            are biased towards these distributions. If None, the fully mixed
-            state is used for each-subsystem.
+        ansatz: list of quantum states for each local sub-system. If a single (local) quantum state
+            is supplied, it is used for all sub-systems. From these states, the local outcome
+            probability distributions are computed for each sub-system. The empirical marginal
+            frequencies are biased towards these distributions. If None, the fully mixed state is
+            used for each sub-system.
 
     Raises:
-        NotImplementedError: if ``povm_post_processor.povm`` is not a
-            :class:`povm_toolbox.quantum_info.product_povm.ProductPOVM`
+        NotImplementedError: if :attr:`.POVMPostProcessor.povm` is not a :class:`.ProductPOVM`
             instance.
-        ValueError: if ``loc`` is None and that the POVM post-processor stores more
-            than one counter (i.e., multiple sets of parameter values were
-            supplied to the sampler in a single pub).
-        ValueError: if ``bias`` is a list but its length does not match the number
-            of local POVMs forming the product POVM ``povm_post_processor.povm``.
-        ValueError: if ``ansatz`` is a list but its length does not match the number
-            of local POVMs forming the product POVM ``povm_post_processor.povm``.
+        ValueError: if ``loc`` is ``None`` and :attr:`.POVMPostProcessor.counts` stores more than a
+            single counter (i.e., multiple sets of parameter values were supplied to the sampler in
+            a single Pub).
+        ValueError: if ``bias`` is a list but its length does not match the number of local POVMs
+            forming the product POVM.
+        ValueError: if ``ansatz`` is a list but its length does not match the number of local POVMs
+            forming the product POVM.
+
+    Returns:
+        The Dual frame based on the empirical outcome frequencies from the post-processed result.
     """
     povm = povm_post_processor.povm
     if not isinstance(povm, ProductPOVM):
-        raise NotImplementedError(
-            "This method is only implemented for ``povm_toolbox.quantum_info.product_povm.ProductPOVM``."
-        )
+        raise NotImplementedError("This method is only implemented for `ProductPOVM` objects.")
 
     if loc is None:
         if povm_post_processor.counts.shape == (1,):
