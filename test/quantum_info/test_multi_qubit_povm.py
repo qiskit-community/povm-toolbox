@@ -15,6 +15,7 @@ from unittest import TestCase
 import numpy as np
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
+from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import Operator
 
 
@@ -141,6 +142,12 @@ class TestMultiQubitPOVM(TestCase):
                 Operator(np.array([[1, 0, 0], [0, 0, 0]])),
                 Operator(np.array([[0, 0, 0], [0, 1, 0]])),
             ]
+
+    def test_pauli_operators(self):
+        """Test errors are raised  correctly for the ``pauli_operators`` attribute."""
+        povm = MultiQubitPOVM([Operator(np.eye(3))])
+        with self.subTest("Non-qubit operators") and self.assertRaises(QiskitError):
+            _ = povm.pauli_operators
 
     def test_analysis(self):
         povm = MultiQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
