@@ -21,12 +21,12 @@ from typing import Generic, TypeVar
 if sys.version_info < (3, 11):
     from typing_extensions import Self
 else:
-    from typing import Self
+    from typing import Self  # pragma: no cover
 
 if sys.version_info < (3, 12):
     from typing_extensions import override
 else:
-    from typing import override
+    from typing import override  # pragma: no cover
 
 
 import numpy as np

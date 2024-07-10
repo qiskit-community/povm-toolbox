@@ -19,7 +19,7 @@ import time
 if sys.version_info < (3, 12):
     from typing_extensions import override
 else:
-    from typing import override
+    from typing import override  # pragma: no cover
 
 import numpy as np
 from numpy.random import Generator, default_rng
@@ -307,40 +307,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             binding_data[circuit_param] = np.tile(circuit_val[..., np.newaxis, :], (shots, 1))
 
         # We create the array that will store the qubit-wise indices of all the sampled PVMs.
-        pvm_idx = np.zeros((*circuit_binding.shape, shots, self.num_qubits), dtype=int)
-        # We loop over the different qubits :
-        for i in range(self.num_qubits):
-            # For each qubit, we sample PVMs according to the local bias defined on
-            # this particular qubit. We draw a PVM for each "shot" and for
-            # each set of circuit parameter values supplied by the user through the
-            # :method:``POVMSampler.run`` method.
-            pvm_idx[..., i] = self._rng.choice(
-                self._num_PVMs,
-                size=circuit_binding.size * shots,
-                replace=True,
-                p=self.bias[i],
-            ).reshape(  # Reshape to match the shape of ``pvm_idx``.
-                (*circuit_binding.shape, shots)
-            )
-            # If the twirling option is turned on we double the number of PVMs
-            # because each PVM can be twirled. The encoding works as follows :
-            #   `pvm_idx % self._num_PVMs` is the index of the PVM used and
-            #   `pvm_idx // self._num_PVMs` indicates if the PVM has been twirled.
-            # For the example of :class:`ClassicalShadows`, we have:
-            #   num_PVMs = 3
-            #   pvm_idx == 0 -> untwirled Z-measurement: {|0><0|, |1><1|}
-            #   pvm_idx == 1 -> untwirled X-measurement: {|+><+|, |-><-|}
-            #   pvm_idx == 2 -> untwirled Y-measurement: {|+i><+i|, |-i><-i|}
-            #   pvm_idx == 3 -> twirled Z-measurement: {|1><1|, |0><0|}
-            #   pvm_idx == 4 -> twirled X-measurement: {|-><-|, |+><+|}
-            #   pvm_idx == 5 -> twirled Y-measurement: {|-i><-i|, |+i><+i|}
-            if self.measurement_twirl:
-                pvm_idx[..., i] += self._num_PVMs * self._rng.integers(
-                    2,
-                    size=circuit_binding.size * shots,
-                ).reshape(  # Reshape to match the shape of ``pvm_idx``.
-                    (*circuit_binding.shape, shots)
-                )
+        pvm_idx = self._sample_pvm_idxs(circuit_binding, shots)
 
         # Transform the PVM indices into actual measurement parameters that are
         # then coerced into a :class:``BindingsArray`` object.
@@ -449,6 +416,54 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         LOGGER.info(f"Finished creating POVM outcomes. Took {t2 - t1:.6f}s")
 
         return povm_outcomes
+
+    def _sample_pvm_idxs(self, circuit_binding: BindingsArray, shots: int) -> np.ndarray:
+        """Sample the qubit-wise indices of PVMs to use for all shots.
+
+        Args:
+            circuit_binding: A bindings array.
+            shots: A specific number of shots to run with.
+
+        Returns:
+            The sampled PVM indices.
+        """
+        # We create the array that will store the qubit-wise indices of all the sampled PVMs.
+        pvm_idx = np.zeros((*circuit_binding.shape, shots, self.num_qubits), dtype=int)
+        # We loop over the different qubits :
+        for i in range(self.num_qubits):
+            # For each qubit, we sample PVMs according to the local bias defined on
+            # this particular qubit. We draw a PVM for each "shot" and for
+            # each set of circuit parameter values supplied by the user through the
+            # :method:``POVMSampler.run`` method.
+            pvm_idx[..., i] = self._rng.choice(
+                self._num_PVMs,
+                size=circuit_binding.size * shots,
+                replace=True,
+                p=self.bias[i],
+            ).reshape(  # Reshape to match the shape of ``pvm_idx``.
+                (*circuit_binding.shape, shots)
+            )
+            # If the twirling option is turned on we double the number of PVMs
+            # because each PVM can be twirled. The encoding works as follows :
+            #   `pvm_idx % self._num_PVMs` is the index of the PVM used and
+            #   `pvm_idx // self._num_PVMs` indicates if the PVM has been twirled.
+            # For the example of :class:`ClassicalShadows`, we have:
+            #   num_PVMs = 3
+            #   pvm_idx == 0 -> untwirled Z-measurement: {|0><0|, |1><1|}
+            #   pvm_idx == 1 -> untwirled X-measurement: {|+><+|, |-><-|}
+            #   pvm_idx == 2 -> untwirled Y-measurement: {|+i><+i|, |-i><-i|}
+            #   pvm_idx == 3 -> twirled Z-measurement: {|1><1|, |0><0|}
+            #   pvm_idx == 4 -> twirled X-measurement: {|-><-|, |+><+|}
+            #   pvm_idx == 5 -> twirled Y-measurement: {|-i><-i|, |+i><+i|}
+            if self.measurement_twirl:
+                pvm_idx[..., i] += self._num_PVMs * self._rng.integers(
+                    2,
+                    size=circuit_binding.size * shots,
+                ).reshape(  # Reshape to match the shape of ``pvm_idx``.
+                    (*circuit_binding.shape, shots)
+                )
+
+        return pvm_idx
 
     def _get_pvm_bindings_array(self, pvm_idx: np.ndarray) -> BindingsArray:
         """Return the concrete parameter values associated to a PVM label.
