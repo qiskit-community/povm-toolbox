@@ -4,10 +4,6 @@ POVM Toolbox
 
 A toolbox for the implementation of positive operator-valued measures (POVMs).
 
-.. warning::
-   This toolbox is still in development! Breaking changes to the API may be
-   introduced at any time without prior warning.
-
 Installation
 ------------
 
