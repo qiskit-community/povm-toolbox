@@ -18,6 +18,8 @@ from qiskit.circuit.exceptions import CircuitError
 from qiskit.converters import circuit_to_dag
 from qiskit.primitives import StatevectorSampler
 from qiskit.primitives.containers.bindings_array import BindingsArray
+from qiskit.transpiler import PassManager
+from qiskit.transpiler.passes import ApplyLayout, SetLayout
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 
@@ -113,6 +115,33 @@ class TestPOVMImplementation(TestCase):
 
             # compose circuits
             composed_circuit = pvm.compose_circuits(routed_circuit)
+
+            # obtain measurement parameter values
+            pvm_idx = pvm._sample_pvm_idxs(BindingsArray(), shots=128)
+            parameter_values = pvm._get_pvm_bindings_array(pvm_idx)
+
+            # sample composed circuit
+            job = sampler.run([(composed_circuit, parameter_values)], shots=1)
+            result = pvm._get_bitarray(job.result()[0].data)
+
+            # validate outcome
+            expected = {"101": 68, "110": 26, "111": 17, "100": 17}
+            self.assertEqual(result.get_counts(), expected)
+
+        with self.subTest("With a TranspileLayout present"):
+            layout = [2, 0, 1]
+            pm = PassManager(
+                [
+                    SetLayout(layout),
+                    ApplyLayout(),
+                ]
+            )
+            layout_circuit = pm.run(self.circuit)
+
+            pvm = ClassicalShadows(3, seed=self.SEED)
+
+            # compose circuits
+            composed_circuit = pvm.compose_circuits(layout_circuit)
 
             # obtain measurement parameter values
             pvm_idx = pvm._sample_pvm_idxs(BindingsArray(), shots=128)
