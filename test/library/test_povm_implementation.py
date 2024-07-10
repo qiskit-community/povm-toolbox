@@ -16,6 +16,7 @@ import numpy as np
 from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasurements
 from qiskit.circuit import ClassicalRegister, QuantumCircuit
 from qiskit.circuit.exceptions import CircuitError
+from qiskit.converters import circuit_to_dag
 from qiskit.primitives import StatevectorSampler
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
@@ -118,4 +119,30 @@ class TestPOVMImplementation(TestCase):
             # assert the final state is |+01>
             self.assertTrue(
                 set(pvm._get_bitarray(job.result()[0].data).get_counts().keys()) == {"100"}
+            )
+
+        with self.subTest("Using measurement_layout"):
+            # define a ZZX-measurement (inverse qubit order)
+            bias = np.array([1.0])
+            angles = np.array([[0.5 * np.pi, 0.0], [0.0, 0.0]])
+            measurement_layout = [0, 2]
+            pvm = RandomizedProjectiveMeasurements(
+                num_qubits=2, bias=bias, angles=angles, measurement_layout=measurement_layout
+            )
+
+            # compose circuits
+            composed_circuit = pvm.compose_circuits(self.circuit)
+
+            # due to our chosen measurement_layout, we know that for this circuit, qubit at index 1
+            # remains idle
+            dag = circuit_to_dag(composed_circuit)
+            self.assertEqual(list(dag.idle_wires()), [composed_circuit.qubits[1]])
+
+            parameter_values = pvm._get_pvm_bindings_array(np.array([[0, 0]]))
+            sampler = StatevectorSampler()
+            job = sampler.run([(composed_circuit, parameter_values)])
+
+            # assert the final state is |+01>
+            self.assertTrue(
+                set(pvm._get_bitarray(job.result()[0].data).get_counts().keys()) == {"10"}
             )
