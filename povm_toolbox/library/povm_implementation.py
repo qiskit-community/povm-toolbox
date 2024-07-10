@@ -25,7 +25,7 @@ from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
-from qiskit.transpiler import StagedPassManager, TranspileLayout
+from qiskit.transpiler import StagedPassManager
 
 from povm_toolbox.quantum_info.base import BasePOVM
 
@@ -156,8 +156,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             if dest_circuit.layout is None:
                 # Basic one-to-one layout
                 index_layout = list(range(dest_circuit.num_qubits))
-
-            elif isinstance(dest_circuit.layout, TranspileLayout):
+            else:
                 # Extract the final layout of the transpiled circuit (ancillas are filtered).
                 index_layout = dest_circuit.layout.final_index_layout(filter_ancillas=True)
         else:
