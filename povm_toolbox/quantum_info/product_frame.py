@@ -249,7 +249,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 sublabel = "".join(label[-(i + 1)] for i in idx)
                 # Try to obtain the coefficient of the local POVM for this local Pauli term.
                 try:
-                    coeff = povm.pauli_operators[frame_op_idx[j]][sublabel]
+                    local_idx = frame_op_idx[j]
+                    coeff = povm.pauli_operators[local_idx][sublabel]
                 except KeyError:
                     # If it does not exist, the current summand becomes 0 because it would be
                     # multiplied by 0.
@@ -267,7 +268,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                         raise IndexError(
                             f"Outcome index '{frame_op_idx[j]}' is out of range for the local POVM"
                             f" acting on subsystems {idx}. This POVM has {povm.num_operators}"
-                            "outcomes."
+                            " outcomes."
                         ) from exc
                     raise exc
                 else:
@@ -319,4 +320,4 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             return {idx: self._trace_of_prod(hermitian_op, idx) for idx in frame_op_idx}
         if isinstance(frame_op_idx, tuple):
             return self._trace_of_prod(hermitian_op, frame_op_idx)
-        raise TypeError("wrong shape of frame_op_idx")
+        raise TypeError("Wrong type for ``frame_op_idx``.")
