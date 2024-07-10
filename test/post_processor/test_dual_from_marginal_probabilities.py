@@ -107,3 +107,10 @@ class TestDualFromMarginalProbabilities(TestCase):
             exp_value, std = post_processor.get_expectation_value(observable)
             self.assertAlmostEqual(exp_value, -2.431562926033147)
             self.assertAlmostEqual(std, 0.6951590669925843)
+
+        with self.subTest("Test threshold on marginal dual."):
+            post_processor.dual = dual_from_marginal_probabilities(
+                povm=post_processor.povm, state=Statevector(qc), threshold=1.0
+            )
+            self.assertAlmostEqual(exp_value, -2.4315629260331466)
+            self.assertAlmostEqual(std, 0.6951590669925845)
