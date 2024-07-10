@@ -45,7 +45,6 @@ class TestProductPOVM(TestCase):
         if True:
             self.assertTrue(True)
 
-    # TODO
     def test_init(self):
         """Test the ``__init__`` method."""
         sqp = SingleQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
