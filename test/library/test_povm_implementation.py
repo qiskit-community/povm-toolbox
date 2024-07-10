@@ -12,18 +12,19 @@
 
 from unittest import TestCase
 
-import numpy as np
-from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasurements
+from povm_toolbox.library import ClassicalShadows
 from qiskit.circuit import ClassicalRegister, QuantumCircuit
 from qiskit.circuit.exceptions import CircuitError
 from qiskit.converters import circuit_to_dag
 from qiskit.primitives import StatevectorSampler
+from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 
 class TestPOVMImplementation(TestCase):
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    SEED = 42
+
+    def setUp(self) -> None:
         self.num_qubits = 3
         self.povm = ClassicalShadows(num_qubits=self.num_qubits)
 
@@ -84,51 +85,50 @@ class TestPOVMImplementation(TestCase):
     def test_composed_circuits(self):
         """Test the composition of the input circuit with the measurement circuit."""
 
+        sampler = StatevectorSampler(seed=self.SEED)
+
         with self.subTest("Composed circuit."):
-            # define a ZZX-measurement (inverse qubit order)
-            bias = np.array([1.0])
-            angles = np.array([[0.5 * np.pi, 0.0], [0.0, 0.0], [0.0, 0.0]])
-            pvm = RandomizedProjectiveMeasurements(num_qubits=3, bias=bias, angles=angles)
+            pvm = ClassicalShadows(3, seed=self.SEED)
 
             # compose circuits
             composed_circuit = pvm.compose_circuits(self.circuit)
-            parameter_values = pvm._get_pvm_bindings_array(np.array([[0, 0, 0]]))
-            sampler = StatevectorSampler()
-            job = sampler.run([(composed_circuit, parameter_values)])
 
-            # assert the final state is |+01>
-            self.assertTrue(
-                set(pvm._get_bitarray(job.result()[0].data).get_counts().keys()) == {"100"}
-            )
+            # obtain measurement parameter values
+            pvm_idx = pvm._sample_pvm_idxs(BindingsArray(), shots=128)
+            parameter_values = pvm._get_pvm_bindings_array(pvm_idx)
+
+            # sample composed circuit
+            job = sampler.run([(composed_circuit, parameter_values)], shots=1)
+            result = pvm._get_bitarray(job.result()[0].data)
+
+            # validate outcome
+            expected = {"101": 28, "110": 66, "111": 17, "100": 17}
+            self.assertEqual(result.get_counts(), expected)
 
         with self.subTest("Composed after transpilation of input circuit."):
             pm = generate_preset_pass_manager(optimization_level=0, initial_layout=[2, 0, 1])
             routed_circuit = pm.run(self.circuit)
 
-            # define a ZZX-measurement (inverse qubit order)
-            bias = np.array([1.0])
-            angles = np.array([[0.5 * np.pi, 0.0], [0.0, 0.0], [0.0, 0.0]])
-            pvm = RandomizedProjectiveMeasurements(num_qubits=3, bias=bias, angles=angles)
+            pvm = ClassicalShadows(3, seed=self.SEED)
 
-            # compose circuits after the input circuit has been transpiled
+            # compose circuits
             composed_circuit = pvm.compose_circuits(routed_circuit)
-            parameter_values = pvm._get_pvm_bindings_array(np.array([[0, 0, 0]]))
-            sampler = StatevectorSampler()
-            job = sampler.run([(composed_circuit, parameter_values)])
 
-            # assert the final state is |+01>
-            self.assertTrue(
-                set(pvm._get_bitarray(job.result()[0].data).get_counts().keys()) == {"100"}
-            )
+            # obtain measurement parameter values
+            pvm_idx = pvm._sample_pvm_idxs(BindingsArray(), shots=128)
+            parameter_values = pvm._get_pvm_bindings_array(pvm_idx)
+
+            # sample composed circuit
+            job = sampler.run([(composed_circuit, parameter_values)], shots=1)
+            result = pvm._get_bitarray(job.result()[0].data)
+
+            # validate outcome
+            expected = {"101": 68, "110": 26, "111": 17, "100": 17}
+            self.assertEqual(result.get_counts(), expected)
 
         with self.subTest("Using measurement_layout"):
-            # define a ZZX-measurement (inverse qubit order)
-            bias = np.array([1.0])
-            angles = np.array([[0.5 * np.pi, 0.0], [0.0, 0.0]])
             measurement_layout = [0, 2]
-            pvm = RandomizedProjectiveMeasurements(
-                num_qubits=2, bias=bias, angles=angles, measurement_layout=measurement_layout
-            )
+            pvm = ClassicalShadows(2, seed=self.SEED, measurement_layout=measurement_layout)
 
             # compose circuits
             composed_circuit = pvm.compose_circuits(self.circuit)
@@ -138,11 +138,14 @@ class TestPOVMImplementation(TestCase):
             dag = circuit_to_dag(composed_circuit)
             self.assertEqual(list(dag.idle_wires()), [composed_circuit.qubits[1]])
 
-            parameter_values = pvm._get_pvm_bindings_array(np.array([[0, 0]]))
-            sampler = StatevectorSampler()
-            job = sampler.run([(composed_circuit, parameter_values)])
+            # obtain measurement parameter values
+            pvm_idx = pvm._sample_pvm_idxs(BindingsArray(), shots=128)
+            parameter_values = pvm._get_pvm_bindings_array(pvm_idx)
 
-            # assert the final state is |+01>
-            self.assertTrue(
-                set(pvm._get_bitarray(job.result()[0].data).get_counts().keys()) == {"10"}
-            )
+            # sample composed circuit
+            job = sampler.run([(composed_circuit, parameter_values)], shots=1)
+            result = pvm._get_bitarray(job.result()[0].data)
+
+            # validate outcome
+            expected = {"10": 43, "11": 85}
+            self.assertEqual(result.get_counts(), expected)
