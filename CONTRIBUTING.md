@@ -49,6 +49,7 @@ This will run the following tools:
 - [`pylint`](https://pylint.readthedocs.io/en/stable/): for additional linting
   rules
 - [`typos`](https://github.com/crate-ci/typos): to avoid simple typos
+- [`reno`](https://docs.openstack.org/reno/latest/): will lint all release notes
 
 Note, that `tox` will stop as soon as the first linter fails. So after fixing
 one, be sure to re-run the linting check to see if the other tools will pass.
@@ -123,3 +124,15 @@ If you want to start from a fresh build of the documentation, simply run:
 tox -e docs-clean
 ```
 And then rebuild the docs.
+
+### Release Notes
+
+When contributing to the code of this repository, you should create a release
+note which documents and explains your changes. To do so, we use the
+[`reno`](https://docs.openstack.org/reno/latest/) tool.
+Simply put, you create a new release note file via:
+```
+reno new <some-descriptive-filename>
+```
+This will output the path to a release note template file which you can then
+edit and commit.

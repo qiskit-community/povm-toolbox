@@ -48,6 +48,7 @@ lint = [
     "povm_toolbox[style]",
     "mypy>=1.10.0",
     "pylint>=3.1.0",
+    "reno>=4.1",
     "toml",
 ]
 notebook-dependencies = [
@@ -61,6 +62,7 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",
     "nbsphinx",
+    "reno>=4.1",
     "pytest-doctestplus>=1.2.1",
 ]
 

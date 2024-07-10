@@ -48,3 +48,4 @@ If you use this project, please cite the following reference:
    Explanations <explanations/index>
    API Reference <apidocs/povm_toolbox>
    GitHub <https://github.com/qiskit-community/povm-toolbox>
+   Release Notes <release-notes>
