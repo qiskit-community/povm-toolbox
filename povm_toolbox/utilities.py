@@ -50,3 +50,22 @@ def double_ket_to_matrix(op_ket: np.ndarray) -> np.ndarray:
     """
     dim = int(np.sqrt(len(op_ket)))
     return op_ket.reshape((dim, dim), order="F")
+
+
+# Gram-Schmidt
+def gs(X):
+    Q, _ = np.linalg.qr(X)
+    return Q
+
+
+# Unit vector on n-sphere
+def n_sphere(param: np.ndarray):
+    n = len(param)
+    x = np.ones(n + 1)
+    for i in range(n - 1):
+        x[i] *= np.cos(np.pi * param[i])
+        x[i + 1 :] *= np.sin(np.pi * param[i])
+    x[-2] *= np.cos(2 * np.pi * param[-1])
+    x[-1] *= np.sin(2 * np.pi * param[-1])
+
+    return x

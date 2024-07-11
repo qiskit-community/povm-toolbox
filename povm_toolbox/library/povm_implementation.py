@@ -19,8 +19,9 @@ from collections import Counter
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
-from qiskit.circuit import QuantumCircuit
+from qiskit.circuit import AncillaRegister, QuantumCircuit
 from qiskit.circuit.exceptions import CircuitError
+from qiskit.converters import circuit_to_dag
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
@@ -170,6 +171,32 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 " does not match this POVM implementation which acts on"
                 f" {self.num_qubits} qubits."
             )
+
+        # Check if the measurement circuit requires some ancilla qubits
+        if self.measurement_circuit.num_qubits > self.num_qubits:
+            # Get idle qubits in supplied circuit (to be used as ancilla for measurement circuit)
+            idle_qubits = list(circuit_to_dag(dest_circuit).idle_wires())
+            # Get the indices of the idle qubits
+            idle_index = [dest_circuit.qubits.index(qubit) for qubit in idle_qubits]
+            # Remove the idle qubits that will be measured (as specified by index_layout)
+            idle_index = [idx for idx in idle_index if idx not in index_layout]
+            # TODO: why would someone want to measure an idle qubit ? Should we raise a warning ?
+
+            # If exactly enough idle qubits available, we use all of them
+            if self.num_qubits + len(idle_index) == self.measurement_circuit.num_qubits:
+                index_layout += idle_index
+            # If not enough idle qubits are available, we add some ancilla qubits
+            elif self.num_qubits + len(idle_index) < self.measurement_circuit.num_qubits:
+                index_layout += idle_index
+                ancilla_register = AncillaRegister(
+                    self.measurement_circuit.num_qubits - len(index_layout)
+                )
+                ancilla_layout = list(range(len(index_layout), self.measurement_circuit.num_qubits))
+                index_layout += ancilla_layout
+                dest_circuit.add_register(ancilla_register)
+            # If more than enough idle qubits are available, we pick only the necessary number
+            elif self.num_qubits + len(idle_index) > self.measurement_circuit.num_qubits:
+                index_layout += idle_index[: self.measurement_circuit.num_qubits - self.num_qubits]
 
         try:
             dest_circuit.add_register(*self.measurement_circuit.cregs)
