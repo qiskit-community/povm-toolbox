@@ -107,6 +107,6 @@ like to perform, we usually first define the set of achievable unitary
 operations :math:`\mathcal{U}=\{U_i\}_i`. We then determine the
 corresponding set of achievable PVMs :math:`\mathcal{S}=\{\mathbf{P}_i\}_i`,
 where
-:math:`\mathbf{P}_i = \{U_i \ket{k} \bra{k} U_i^\dagger\}_k \in \mathcal{P}(d,n)`.
-Finally, we choose the POVM to be performed from the set
-:math:`\mathcal{S}^\mathrm{sim}`.
+:math:`\mathbf{P}_i = \{U_i \ket{k} \bra{k} U_i^\dagger\}_k, \forall i`.
+Finally, we choose the POVM to be performed from the convex hull
+:math:`\mathcal{S}^\mathrm{conv}`.

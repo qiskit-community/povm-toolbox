@@ -2,6 +2,8 @@
 Introduction
 ============
 
+This toolbox is based on the work [#fischer_dual_frame_2023]_ ...
+
 ------------------------
 Generalized measurements
 ------------------------
@@ -10,7 +12,7 @@ The most general class of measurements in quantum mechanics are
 described by the POVM formalism. An :math:`n`-outcome POVM is a set of
 :math:`n` positive semi-definite Hermitian operators
 :math:`\mathbf{M} = \{M_k\}_{k \in \{1, \dots, n \}}` that sum to the
-identity. Mathematically, this means the set of operators satisfies the following proeperties:
+identity. Mathematically, this means the set of operators satisfies the following properties:
 
    #. :math:`M_k^\dagger = M_k` for all :math:`k \in \{1,2 \dots, n\}`,
    #. :math:`\langle \psi | M_k | \psi \rangle \geq 0` for all :math:`k \in \{1,2 \dots, n\}` and all states :math:`|\psi \rangle`,
@@ -56,7 +58,7 @@ PM-simulable POVMs
 ------------------
 
 Digital quantum computers typically only give access to projective
-measurements (PMs) in a specified computational basis. More general
+measurements **link to section** (PMs) in a specified computational basis. More general
 POVMs can be implemented through additional quantum resources, e.g., by
 coupling to a higher-dimensional space in a Naimark
 dilation [#gelfand1943imbedding]_ with ancilla
@@ -82,7 +84,7 @@ consists of the following two steps for each measurement shot. First,
 randomly pick :math:`\mathbf{M}_1` or :math:`\mathbf{M}_2` with probability
 :math:`p` or :math:`1-p`, respectively, then perform the measurement
 associated with the chosen POVM. We call POVMs that can be achieved by
-randomizations of projective measurements *PM-simulable*. On digital
+randomization of projective measurements **link to section** *PM-simulable*. On digital
 quantum computers the easiest basis transformations are single-qubit
 transformations of the computational basis. POVMs that consist of
 single-qubit PM-simulable POVMs are thus the most readily accessible
@@ -93,26 +95,15 @@ Importantly, PM-simulable informationally-complete POVMs are
 overcomplete [#dariano_classical_2005]_. The
 decomposition of observables from
 Eq. :eq:`expectation_value_decomp` is
-thus not unique. In this work, we leverage these additional degrees of
-freedom to build better observable estimators, see :numref:`overview`.
-
-.. _overview:
-.. figure:: ../_static/overview_schematic.*
-   :width: 50.0%
-
-   Schematic of dual frame optimization. Generalized measurements are
-   performed on the quantum system. Upon obtaining outcome :math:`k`,
-   the corresponding canonical dual operator :math:`D_k` – also known as
-   *classical shadow* – can be efficiently computed and stored on a
-   classical computer. The expectation value of any observable :math:`\mathcal{O}`
-   can be estimated from a sample of dual operators. Leveraging
-   additional degrees of freedom, we can optimize these dual operators
-   through classical post-processing, effectively reducing the
-   estimation variance.
+thus not unique. In this toolbox, we leverage these additional degrees of
+freedom with frame theory. **link to section**
 
 
 .. rubric:: References
 
+.. [#fischer_dual_frame_2023] L. E. Fischer, T. Dao, I. Tavernelli,
+   and F. Tacchino, *Dual-frame optimization for informationally complete
+   quantum measurements*, Phys. Rev. A 109 (2024).
 .. [#d2004informationally] G. M. d'Ariano, P. Perinotti, M. Sacchi, Journal of
    Optics B: Quantum and Semiclassical Optics 6, S487 (2004).
 .. [#gelfand1943imbedding] I. Gelfand, M. Neumark, Matematicheskii Sbornik 12,
