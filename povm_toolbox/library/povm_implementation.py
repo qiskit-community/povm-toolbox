@@ -16,6 +16,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections import Counter
+from copy import copy
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
@@ -174,6 +175,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
         # Check if the measurement circuit requires some ancilla qubits
         if self.measurement_circuit.num_qubits > self.num_qubits:
+            index_layout = copy(index_layout)
             # Get idle qubits in supplied circuit (to be used as ancilla for measurement circuit)
             idle_qubits = list(circuit_to_dag(dest_circuit).idle_wires())
             # Get the indices of the idle qubits
@@ -189,9 +191,12 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             elif self.num_qubits + len(idle_index) < self.measurement_circuit.num_qubits:
                 index_layout += idle_index
                 ancilla_register = AncillaRegister(
-                    self.measurement_circuit.num_qubits - len(index_layout)
+                    self.measurement_circuit.num_qubits - len(index_layout),
+                    name="measurement_ancilla",
                 )
-                ancilla_layout = list(range(len(index_layout), self.measurement_circuit.num_qubits))
+                ancilla_layout = list(
+                    range(dest_circuit.num_qubits, dest_circuit.num_qubits + ancilla_register.size)
+                )
                 index_layout += ancilla_layout
                 dest_circuit.add_register(ancilla_register)
             # If more than enough idle qubits are available, we pick only the necessary number

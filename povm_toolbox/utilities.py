@@ -54,12 +54,14 @@ def double_ket_to_matrix(op_ket: np.ndarray) -> np.ndarray:
 
 # Gram-Schmidt
 def gs(X):
+    """TODO."""
     Q, _ = np.linalg.qr(X)
     return Q
 
 
 # Unit vector on n-sphere
 def n_sphere(param: np.ndarray):
+    """TODO."""
     n = len(param)
     x = np.ones(n + 1)
     for i in range(n - 1):

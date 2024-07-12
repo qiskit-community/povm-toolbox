@@ -185,6 +185,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         povm_metadata: POVMMetadata,
         loc: int | tuple[int, ...] | None = None,
     ) -> list[tuple[int, ...]]:
+        """TODO."""
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")
 
@@ -212,7 +213,6 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         Returns:
             TODO.
         """
-
         return tuple(
             2 * int(bit_q) + int(bit_a)
             for bit_q, bit_a in zip(
@@ -222,7 +222,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         )
 
     def _from_param(self, param: np.ndarray):
-        """Initialize a POVM from the list of parameters"""
+        """Initialize a POVM from the list of parameters."""
         n_out = 4
         u = np.zeros((n_out, n_out), dtype=complex)
 
