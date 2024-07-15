@@ -1,3 +1,5 @@
+.. _randomization:
+
 =====================================
 Randomization of Quantum Measurements
 =====================================

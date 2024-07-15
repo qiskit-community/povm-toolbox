@@ -58,7 +58,7 @@ PM-simulable POVMs
 ------------------
 
 Digital quantum computers typically only give access to projective
-measurements **link to section** (PMs) in a specified computational basis. More general
+measurements (PMs) in a specified computational basis. More general
 POVMs can be implemented through additional quantum resources, e.g., by
 coupling to a higher-dimensional space in a Naimark
 dilation [#gelfand1943imbedding]_ with ancilla
@@ -71,20 +71,20 @@ experiments, their full-scale high-fidelity implementation remains a
 challenge for current quantum
 devices [#fischer_ancilla_free_2022]_. Of particular
 interest are thus POVMs that can be implemented without additional
-quantum resources, i.e., only through projective measurements in
-available measurement bases.
+quantum resources, i.e., only through :ref:`projective
+measurements in available measurement bases <projective-measurements>`.
 
 More complex POVMs can be built from available projective measurements
 through convex combinations of POVMs: For two :math:`n`-outcome POVMs
 :math:`\mathbf{M}_1` and :math:`\mathbf{M}_2` acting on the same space, their
 convex combination with elements :math:`M_k = p M_{1,k} + (1-p) M_{2,k}`
 for some :math:`p \in [0,1]` is also a valid POVM. This can be achieved
-in practice by a *randomization of measurements* procedure, which simply
+in practice by a :ref:`randomization of measurements procedure <randomization>`, which simply
 consists of the following two steps for each measurement shot. First,
 randomly pick :math:`\mathbf{M}_1` or :math:`\mathbf{M}_2` with probability
 :math:`p` or :math:`1-p`, respectively, then perform the measurement
 associated with the chosen POVM. We call POVMs that can be achieved by
-randomization of projective measurements **link to section** *PM-simulable*. On digital
+randomization of projective measurements *PM-simulable*. On digital
 quantum computers the easiest basis transformations are single-qubit
 transformations of the computational basis. POVMs that consist of
 single-qubit PM-simulable POVMs are thus the most readily accessible
@@ -96,7 +96,7 @@ overcomplete [#dariano_classical_2005]_. The
 decomposition of observables from
 Eq. :eq:`expectation_value_decomp` is
 thus not unique. In this toolbox, we leverage these additional degrees of
-freedom with frame theory. **link to section**
+freedom with :ref:`frame theory <frame-theory>`.
 
 
 .. rubric:: References

@@ -1,3 +1,5 @@
+.. _frame-theory:
+
 ===========================
 Frame theory and dual space
 ===========================

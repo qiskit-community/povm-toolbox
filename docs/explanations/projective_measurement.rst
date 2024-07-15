@@ -1,3 +1,5 @@
+.. _projective-measurements:
+
 =======================
 Projective measurements
 =======================
