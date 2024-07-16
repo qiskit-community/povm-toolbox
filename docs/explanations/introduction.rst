@@ -2,7 +2,11 @@
 Introduction
 ============
 
-This toolbox is based on the work [#fischer_dual_frame_2023]_ ...
+.. seealso::
+
+   This content is adapted from the work of L. E. Fischer, T. Dao, I. Tavernelli,
+   and F. Tacchino, `Dual-frame optimization for informationally complete
+   quantum measurements <https://journals.aps.org/pra/abstract/10.1103/PhysRevA.109.062415>`_, Phys. Rev. A 109 (2024).
 
 ------------------------
 Generalized measurements
@@ -101,9 +105,6 @@ freedom with :ref:`frame theory <frame-theory>`.
 
 .. rubric:: References
 
-.. [#fischer_dual_frame_2023] L. E. Fischer, T. Dao, I. Tavernelli,
-   and F. Tacchino, *Dual-frame optimization for informationally complete
-   quantum measurements*, Phys. Rev. A 109 (2024).
 .. [#d2004informationally] G. M. d'Ariano, P. Perinotti, M. Sacchi, Journal of
    Optics B: Quantum and Semiclassical Optics 6, S487 (2004).
 .. [#gelfand1943imbedding] I. Gelfand, M. Neumark, Matematicheskii Sbornik 12,

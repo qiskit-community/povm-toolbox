@@ -4,6 +4,12 @@
 Frame theory and dual space
 ===========================
 
+.. seealso::
+
+   This content is adapted from the work of L. E. Fischer, T. Dao, I. Tavernelli,
+   and F. Tacchino, `Dual-frame optimization for informationally complete
+   quantum measurements <https://journals.aps.org/pra/abstract/10.1103/PhysRevA.109.062415>`_, Phys. Rev. A 109 (2024).
+
 As a reminder, given an IC-POVM :math:`\mathbf{M} = \{M_k\}_{k \in \{1, \dots, n \}}` and an
 observable :math:`\mathcal{O}`, there exist :math:`\omega_k \in \mathbb{R}` such that
 

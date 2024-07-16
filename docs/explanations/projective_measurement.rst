@@ -4,6 +4,12 @@
 Projective measurements
 =======================
 
+.. seealso::
+
+   This content is adapted from the work of T. Dao, *Informationally
+   Complete Generalized Measurements for Estimating Quantum Expectation Values*
+   [Unpublished master's thesis], ETH Zürich (2023).
+
 ---------------------------------
 Measurement in an arbitrary basis
 ---------------------------------
@@ -22,7 +28,8 @@ The probability of obtaining the outcome :math:`k` is then given by
 .. math::
    :label: probability
 
-   p_k = \mathrm{Tr}[\ketbra{\psi_k}{\psi_k} \rho] = \mathrm{Tr}[U \ketbra{k}{k} U^\dagger \rho] = \mathrm{Tr}[\ketbra{k}{k} U^\dagger \rho U] \, ,
+   p_k = \mathrm{Tr}[\ketbra{\psi_k}{\psi_k} \rho] = \mathrm{Tr}[U \ketbra{k}{k}
+   U^\dagger \rho] = \mathrm{Tr}[\ketbra{k}{k} U^\dagger \rho U] \, ,
 
 where we used the invariance of the trace under cyclic permutations in
 the last equality. It becomes now clear that the two procedures
