@@ -208,7 +208,7 @@ class POVMPostProcessor:
         shots = sum(count.values())
         omegas = self.get_decomposition_weights(observable, set(count.keys()))
 
-        batch_size = shots//num_batches
+        batch_size = shots // num_batches
 
         sampled_weights = np.zeros(shots)
         idx = 0
@@ -218,11 +218,11 @@ class POVMPostProcessor:
 
         sampled_weights = rng.permutation(sampled_weights)
 
-        batches = sampled_weights[:num_batches*batch_size].reshape((batch_size, num_batches))
-        if shots%num_batches != 0:
+        batches = sampled_weights[: num_batches * batch_size].reshape((batch_size, num_batches))
+        if shots % num_batches != 0:
             last_samples = np.full((1, num_batches), np.nan)
-            last_samples[:,:shots%num_batches] = sampled_weights[num_batches*batch_size:]
-            batches = np.concatenate((batches,last_samples))
+            last_samples[:, : shots % num_batches] = sampled_weights[num_batches * batch_size :]
+            batches = np.concatenate((batches, last_samples))
         median_of_means: float = np.median(np.nanmean(batches, axis=0))
 
         return median_of_means
