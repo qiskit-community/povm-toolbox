@@ -21,13 +21,14 @@ The PostProcessor
 -----------------
 
 The main entry-point to the post-processing of POVM results is provided by the
-:class:`.POVMPostProcessor` class.
+:class:`.POVMPostProcessor` class and its sub-classes.
 
 .. autosummary::
    :toctree: ../stubs/
    :nosignatures:
 
    POVMPostProcessor
+   MedianOfMeans
 
 Various Dual Frames
 -------------------
@@ -48,10 +49,12 @@ reference state to be available, while :func:`.dual_from_empirical_frequencies` 
 from .dual_from_empirical_frequencies import dual_from_empirical_frequencies
 from .dual_from_marginal_probabilities import dual_from_marginal_probabilities
 from .dual_from_state import dual_from_state
+from .median_of_means import MedianOfMeans
 from .povm_post_processor import POVMPostProcessor
 
 __all__ = [
     "POVMPostProcessor",
+    "MedianOfMeans",
     "dual_from_state",
     "dual_from_marginal_probabilities",
     "dual_from_empirical_frequencies",
