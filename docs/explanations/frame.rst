@@ -69,10 +69,18 @@ where we have used the widespread vectorized
 'double-ket' notation. Thus, the frame
 superoperator can be used to transform between the POVM space and the
 dual space.
-For an overcomplete POVM, the canonical frame superoperator creates
-one of infinitely many possible dual frames. We will further explore
-this point in section **link to section**.
 
+For an overcomplete POVM, the canonical frame superoperator creates
+one of infinitely many possible dual frames. Other valid dual frames can
+be obtained through a parametrized frame superoperator as follows:
+
+   .. math::
+      :label: def_alpha_duals
+
+      \left| D_k \right\rangle\kern-3mu\rangle = \alpha_k \mathcal{F}^{-1}_{\alpha} \left| M_k \right\rangle\kern-3mu\rangle \, ,
+      \quad \quad \text{with } \mathcal{F}_{\alpha} = \sum_{k=1}^n \alpha_k \left| M_k \right\rangle\kern-3mu\rangle\kern-5mu\left\langle\kern-3mu\langle M_k \right|,
+
+for real parameters :math:`\{\alpha_k\}_k \subset \mathbb{R}` such that :math:`\mathcal{F}_{\alpha}` in invertible [#fischer_dual_frame_2023]_.
 
 .. rubric:: References
 
@@ -84,3 +92,6 @@ this point in section **link to section**.
 .. [#elben2022randomized] A. Elben, S. T. Flammia, H.-Y. Huang, R. Kueng,
    J. Preskill, B. Vermersch, and P. Zoller, Nature Reviews
    Physics 5, 9 (2022).
+.. [#fischer_dual_frame_2023] L. E. Fischer, T. Dao, I. Tavernelli,
+   and F. Tacchino, *Dual-frame optimization for informationally complete
+   quantum measurements*, Phys. Rev. A 109 (2024).
