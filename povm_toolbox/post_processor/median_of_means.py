@@ -63,7 +63,8 @@ class MedianOfMeans(POVMPostProcessor):
         self,
         povm_sample: POVMPubResult,
         dual: BaseDual | None = None,
-        num_batches: int = 1,
+        num_batches: int | None = None,
+        delta_confidence: float | None = None,
         seed: int | Generator | None = None,
     ) -> None:
         """Initialize the median-of-means post-processor.
@@ -76,6 +77,7 @@ class MedianOfMeans(POVMPostProcessor):
                 will be constructed from the POVM stored in the ``povm_sample``'s
                 :attr:`.POVMPubResult.metadata`.
             num_batches: TODO.
+            delta_confidence: TODO.
             seed: TODO.
 
         Raises:
@@ -85,7 +87,12 @@ class MedianOfMeans(POVMPostProcessor):
         """
         super().__init__(povm_sample=povm_sample, dual=dual)
 
-        self.num_batches = num_batches
+        if isinstance(delta_confidence, float) or num_batches is None:
+            delta_confidence = delta_confidence or 0.05
+            num_observables = 1
+            num_batches = int(np.ceil(2 * np.log(2 * num_observables / delta_confidence)))
+
+        self.num_batches: int = num_batches
 
         if seed is None:
             seed = default_rng()
@@ -95,6 +102,12 @@ class MedianOfMeans(POVMPostProcessor):
             raise TypeError(f"The type of `seed` ({type(seed)}) is not valid.")
 
         self.seed = seed
+
+    @property
+    def delta_confidence(self) -> float:
+        """TODO."""
+        num_observables = 1
+        return float(2 * num_observables * np.exp(-0.5 * self.num_batches))
 
     @override
     def _single_exp_value_and_std(
