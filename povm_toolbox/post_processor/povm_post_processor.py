@@ -176,7 +176,7 @@ class POVMPostProcessor:
     def median_of_means(
         self,
         observable: SparsePauliOp,
-        batch_size: int,
+        num_batches: int,
         loc: int | tuple[int, ...],
         rng: int | Generator | None = None,
     ) -> float:
@@ -184,7 +184,7 @@ class POVMPostProcessor:
 
         Args:
             observable: the observable whose expectation value is queried.
-            batch_size: TODO.
+            num_batches: TODO.
             loc: index of the results to use. The index corresponds to the set
                 of parameter values that was supplied to the sampler through a
                 :class:`.POVMSamplerPub`. If the circuit was not parametrized,
@@ -208,13 +208,21 @@ class POVMPostProcessor:
         shots = sum(count.values())
         omegas = self.get_decomposition_weights(observable, set(count.keys()))
 
+        batch_size = shots//num_batches
+
         sampled_weights = np.zeros(shots)
         idx = 0
         for outcome in count:
             sampled_weights[idx : idx + count[outcome]] = omegas[outcome]
             idx += count[outcome]
 
-        batches = (rng.permutation(sampled_weights)).reshape((batch_size, -1))
-        median_of_means: float = np.median(batches.mean(axis=0))
+        sampled_weights = rng.permutation(sampled_weights)
+
+        batches = sampled_weights[:num_batches*batch_size].reshape((batch_size, num_batches))
+        if shots%num_batches != 0:
+            last_samples = np.full((1, num_batches), np.nan)
+            last_samples[:,:shots%num_batches] = sampled_weights[num_batches*batch_size:]
+            batches = np.concatenate((batches,last_samples))
+        median_of_means: float = np.median(np.nanmean(batches, axis=0))
 
         return median_of_means
