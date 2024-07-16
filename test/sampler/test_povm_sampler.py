@@ -23,8 +23,7 @@ from qiskit_aer.primitives import SamplerV2 as AerSampler
 class TestPOVMSampler(TestCase):
     """Tests for the ``POVMSampler`` class."""
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    def setUp(self) -> None:
         self.sampler = AerSampler()
 
     def test_initialization(self):

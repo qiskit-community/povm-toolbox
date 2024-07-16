@@ -19,7 +19,7 @@ import time
 if sys.version_info < (3, 12):
     from typing_extensions import override
 else:
-    from typing import override
+    from typing import override  # pragma: no cover
 
 import numpy as np
 from numpy.random import Generator, default_rng
@@ -78,7 +78,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
         shot_repetitions: int = 1,
-        seed_rng: int | Generator | None = None,
+        seed: int | Generator | None = None,
     ) -> None:
         # NOTE: If we extend this interface to support different number of effects for each qubit in
         # the future, we may need to move away from np.ndarray input types to sequences of sequences.
@@ -113,7 +113,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 times we repeat the measurement for each sampled PVM (default is 1). Therefore, the
                 effective total number of measurement shots is ``shots`` multiplied by
                 ``shot_repetitions``.
-            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
+            seed: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The PVMs are sampled according to the probability distribution(s) specified by
                 ``bias``. The user can also directly provide a random generator. If ``None``, a
                 random seed will be used.
@@ -125,7 +125,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 by ``bias``.
             ValueError: If the probability distribution(s) specified by ``bias`` don't sum up to 1.
             ValueError: If the shape of ``angles`` is not compatible with ``num_qubits``.
-            TypeError: If the type of ``seed_rng`` is not valid.
+            TypeError: If the type of ``seed`` is not valid.
         """
         super().__init__(num_qubits, measurement_layout=measurement_layout)
 
@@ -180,14 +180,14 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         """
 
         self._rng: Generator
-        if seed_rng is None:
+        if seed is None:
             self._rng = default_rng()
-        elif isinstance(seed_rng, int):
-            self._rng = default_rng(seed_rng)
-        elif isinstance(seed_rng, Generator):
-            self._rng = seed_rng
+        elif isinstance(seed, int):
+            self._rng = default_rng(seed)
+        elif isinstance(seed, Generator):
+            self._rng = seed
         else:
-            raise TypeError(f"The type of `seed_rng` ({type(seed_rng)}) is not valid.")
+            raise TypeError(f"The type of `seed` ({type(seed)}) is not valid.")
 
     def __repr__(self) -> str:
         """Return the string representation of a RandomizedProjectiveMeasurements instance."""
@@ -217,8 +217,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
 
-        self._qc_theta = ParameterVector("theta", length=self.num_qubits)
-        self._qc_phi = ParameterVector("phi", length=self.num_qubits)
+        self._qc_theta = ParameterVector("theta_measurement", length=self.num_qubits)
+        self._qc_phi = ParameterVector("phi_measurement", length=self.num_qubits)
 
         qr = QuantumRegister(self.num_qubits, name="povm_qr")
         cr = ClassicalRegister(self.num_qubits, name=self.classical_register_name)
@@ -307,40 +307,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             binding_data[circuit_param] = np.tile(circuit_val[..., np.newaxis, :], (shots, 1))
 
         # We create the array that will store the qubit-wise indices of all the sampled PVMs.
-        pvm_idx = np.zeros((*circuit_binding.shape, shots, self.num_qubits), dtype=int)
-        # We loop over the different qubits :
-        for i in range(self.num_qubits):
-            # For each qubit, we sample PVMs according to the local bias defined on
-            # this particular qubit. We draw a PVM for each "shot" and for
-            # each set of circuit parameter values supplied by the user through the
-            # :method:``POVMSampler.run`` method.
-            pvm_idx[..., i] = self._rng.choice(
-                self._num_PVMs,
-                size=circuit_binding.size * shots,
-                replace=True,
-                p=self.bias[i],
-            ).reshape(  # Reshape to match the shape of ``pvm_idx``.
-                (*circuit_binding.shape, shots)
-            )
-            # If the twirling option is turned on we double the number of PVMs
-            # because each PVM can be twirled. The encoding works as follows :
-            #   `pvm_idx % self._num_PVMs` is the index of the PVM used and
-            #   `pvm_idx // self._num_PVMs` indicates if the PVM has been twirled.
-            # For the example of :class:`ClassicalShadows`, we have:
-            #   num_PVMs = 3
-            #   pvm_idx == 0 -> untwirled Z-measurement: {|0><0|, |1><1|}
-            #   pvm_idx == 1 -> untwirled X-measurement: {|+><+|, |-><-|}
-            #   pvm_idx == 2 -> untwirled Y-measurement: {|+i><+i|, |-i><-i|}
-            #   pvm_idx == 3 -> twirled Z-measurement: {|1><1|, |0><0|}
-            #   pvm_idx == 4 -> twirled X-measurement: {|-><-|, |+><+|}
-            #   pvm_idx == 5 -> twirled Y-measurement: {|-i><-i|, |+i><+i|}
-            if self.measurement_twirl:
-                pvm_idx[..., i] += self._num_PVMs * self._rng.integers(
-                    2,
-                    size=circuit_binding.size * shots,
-                ).reshape(  # Reshape to match the shape of ``pvm_idx``.
-                    (*circuit_binding.shape, shots)
-                )
+        pvm_idx = self._sample_pvm_idxs(circuit_binding, shots)
 
         # Transform the PVM indices into actual measurement parameters that are
         # then coerced into a :class:``BindingsArray`` object.
@@ -420,8 +387,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         try:
             pvm_keys = povm_metadata.pvm_keys if loc is None else povm_metadata.pvm_keys[loc]
-        except KeyError as exc:
-            raise KeyError(
+        except AttributeError as exc:
+            raise AttributeError(
                 "The metadata of povm sampler result associated with a "
                 "RandomizedPMs POVM should specify a list of pvm keys, "
                 "but none were found."
@@ -450,6 +417,54 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         return povm_outcomes
 
+    def _sample_pvm_idxs(self, circuit_binding: BindingsArray, shots: int) -> np.ndarray:
+        """Sample the qubit-wise indices of PVMs to use for all shots.
+
+        Args:
+            circuit_binding: A bindings array.
+            shots: A specific number of shots to run with.
+
+        Returns:
+            The sampled PVM indices.
+        """
+        # We create the array that will store the qubit-wise indices of all the sampled PVMs.
+        pvm_idx = np.zeros((*circuit_binding.shape, shots, self.num_qubits), dtype=int)
+        # We loop over the different qubits :
+        for i in range(self.num_qubits):
+            # For each qubit, we sample PVMs according to the local bias defined on
+            # this particular qubit. We draw a PVM for each "shot" and for
+            # each set of circuit parameter values supplied by the user through the
+            # :method:``POVMSampler.run`` method.
+            pvm_idx[..., i] = self._rng.choice(
+                self._num_PVMs,
+                size=circuit_binding.size * shots,
+                replace=True,
+                p=self.bias[i],
+            ).reshape(  # Reshape to match the shape of ``pvm_idx``.
+                (*circuit_binding.shape, shots)
+            )
+            # If the twirling option is turned on we double the number of PVMs
+            # because each PVM can be twirled. The encoding works as follows :
+            #   `pvm_idx % self._num_PVMs` is the index of the PVM used and
+            #   `pvm_idx // self._num_PVMs` indicates if the PVM has been twirled.
+            # For the example of :class:`ClassicalShadows`, we have:
+            #   num_PVMs = 3
+            #   pvm_idx == 0 -> untwirled Z-measurement: {|0><0|, |1><1|}
+            #   pvm_idx == 1 -> untwirled X-measurement: {|+><+|, |-><-|}
+            #   pvm_idx == 2 -> untwirled Y-measurement: {|+i><+i|, |-i><-i|}
+            #   pvm_idx == 3 -> twirled Z-measurement: {|1><1|, |0><0|}
+            #   pvm_idx == 4 -> twirled X-measurement: {|-><-|, |+><+|}
+            #   pvm_idx == 5 -> twirled Y-measurement: {|-i><-i|, |+i><+i|}
+            if self.measurement_twirl:
+                pvm_idx[..., i] += self._num_PVMs * self._rng.integers(
+                    2,
+                    size=circuit_binding.size * shots,
+                ).reshape(  # Reshape to match the shape of ``pvm_idx``.
+                    (*circuit_binding.shape, shots)
+                )
+
+        return pvm_idx
+
     def _get_pvm_bindings_array(self, pvm_idx: np.ndarray) -> BindingsArray:
         """Return the concrete parameter values associated to a PVM label.
 
@@ -464,7 +479,10 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
 
         # shape is assumed to be (*pv, povm_sampler_pub.shots, num_qubits)
         if pvm_idx.shape[-1] != self.num_qubits:
-            raise ValueError
+            raise ValueError(
+                "The shape ``pvm_idx`` is expected to be ``(..., num_qubits="
+                f"{self.num_qubits})``, but got {pvm_idx.shape}."
+            )
         theta: np.ndarray = np.empty(pvm_idx.shape)
         phi: np.ndarray = np.empty(pvm_idx.shape)
         for multi_index in np.ndindex(pvm_idx.shape):

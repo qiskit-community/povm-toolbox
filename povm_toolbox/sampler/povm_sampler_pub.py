@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""TODO."""
+"""POVMSamplerPub."""
 
 from __future__ import annotations
 
@@ -35,10 +35,11 @@ POVMSamplerPubLike = Union[
         QuantumCircuit, BindingsArrayLike, Union[Integral, None], Union[POVMImplementation, None]
     ],
 ]
+"""The type defining the Pub (Primitive Unified Bloc) structure for :meth:`.POVMSampler.run`."""
 
 
 class POVMSamplerPub(ShapedMixin):
-    """Pub (Primitive Unified Bloc) for the :class:`.POVMSampler`.
+    """The Pub (Primitive Unified Bloc) input structure for :meth:`.POVMSampler.run`.
 
     Pub is composed of tuple (circuit, parameter_values, shots, povm_implementation).
     """
@@ -55,13 +56,13 @@ class POVMSamplerPub(ShapedMixin):
         """Initialize a sampler pub.
 
         Args:
-            circuit: A quantum circuit.
-            parameter_values: A bindings array.
-            shots: A specific number of shots to run with. This value takes
-                precedence over any value owed by or supplied to a sampler.
-            povm: A specific povm to run with. This povm takes precedence
-                over any povm supplied to a sampler.
-            validate: If ``True``, the input data is validated during initialization.
+            circuit: the quantum circuit to sample from.
+            parameter_values: an optional bindings array for the parameters in the ``circuit``.
+            shots: the specific number of shots to run with. This value takes precedence over any
+                value supplied to a sampler.
+            povm: the specific POVM to run with. This value takes precedence over any POVM supplied
+                to a sampler.
+            validate: whether to validate the input data.
         """
         super().__init__()
         self._circuit = circuit
@@ -74,22 +75,22 @@ class POVMSamplerPub(ShapedMixin):
 
     @property
     def circuit(self) -> QuantumCircuit:
-        """A quantum circuit."""
+        """The quantum circuit that is being sampled."""
         return self._circuit
 
     @property
     def parameter_values(self) -> BindingsArray:
-        """A bindings array."""
+        """The bindings array of circuit parameters."""
         return self._parameter_values
 
     @property
     def shots(self) -> int:
-        """An specific number of shots to run with."""
+        """The number of shots being sampled."""
         return self._shots
 
     @property
     def povm(self) -> POVMImplementation:
-        """An specific povm to run with."""
+        """The POVM with which to sample."""
         return self._povm
 
     @classmethod
@@ -100,23 +101,21 @@ class POVMSamplerPub(ShapedMixin):
         shots: int | None = None,
         povm: POVMImplementation | None = None,
     ) -> POVMSamplerPub:
-        """Coerce a ``POVMSamplerPubLike`` object into a ``POVMSamplerPub`` instance.
+        """Coerce a :class:`~povm_toolbox.sampler.POVMSamplerPubLike` object.
 
         Args:
             pub: An object to coerce.
-            shots: An optional default number of shots to use if not
-                already specified by the pub-like object.
-            povm: An optional default POVM to use if not already specified
-                by the pub-like object.
+            shots: An optional default number of shots to use if not already specified by the
+                pub-like object.
+            povm: An optional default POVM to use if not already specified by the pub-like object.
 
         Raises:
-            TypeError: If number of shots is specified but is not a positive integer.
-            ValueError: If the pub-like object does not specify a number of shots
-                and that no default number of shots is set or if the pub-like
-                object does not specify a povm and that no default povm is set.
-            ValueError: If a tuple is supplied but its length exceed 4.
-            NotImplementedError: If parameter values to be bound to a parametric
-                circuit is passed as an argument in the pub-like object.
+            TypeError: If a number of shots is specified but it is not a positive integer.
+            ValueError: If the pub-like object does not specify a number of shots and no default
+                number of shots is set or if the pub-like object does not specify a POVM and no
+                default POVM is set.
+            ValueError: If a tuple is supplied but its length exceeds 4, rendering the pub an
+                invalid :class:`~povm_toolbox.sampler.POVMSamplerPubLike`.
             TypeError: If the pub-like object does not have a valid type.
 
         Returns:
@@ -173,19 +172,17 @@ class POVMSamplerPub(ShapedMixin):
             validate=True,
         )
 
-    def validate(self):
+    def validate(self) -> None:
         """Validate the pub.
 
         Raises:
-            TypeError: If circuit is not a ``QuantumCircuit``.
-            ValueError: If the pub-like object does not specify a number of shots
-                and that no default number of shots is set.
-            TypeError: If number of shots is specified but is not an integer.
-            TypeError: If the specified number of shots is negative.
-            ValueError: If the number of parameters supplied does not correspond
-                to the number of parameters of the circuit.
-            ValueError: If the pub-like object does not specify a povm and that
-                no default povm is set.
+            TypeError: If :attr:`.circuit` is not a :class:`~qiskit.circuit.QuantumCircuit`.
+            ValueError: If the pub-like object does not specify a number of shots and that default
+                number of shots is set.
+            TypeError: If the number of shots is specified but is not a positive integer.
+            ValueError: If the number of parameters supplied does not correspond to the number of
+                parameters of the circuit.
+            ValueError: If the pub-like object does not specify a POVM and no default POVM is set.
         """
         if not isinstance(self.circuit, QuantumCircuit):
             raise TypeError("circuit must be QuantumCircuit.")
@@ -229,7 +226,20 @@ class POVMSamplerPub(ShapedMixin):
         self,
         pass_manager: StagedPassManager | None = None,
     ) -> tuple[SamplerPub, POVMMetadata]:
-        """TODO."""
+        """Convert this POVM sampler pub to a standard ``SamplerPub``.
+
+        This calls :meth:`~.POVMImplementation.to_sampler_pub` of :attr:`.povm`.
+
+        Args:
+            pass_manager: An optional transpilation pass manager. After the supplied circuit has
+                been composed with the measurement circuit, the pass manager will be used to
+                transpile the composed circuit.
+
+        Returns:
+            A tuple of a sampler pub and a dictionary of metadata which includes the
+            :class:`.POVMImplementation` object itself. The metadata should contain all the
+            information necessary to extract the POVM outcomes out of raw bitstrings.
+        """
         return self.povm.to_sampler_pub(
             circuit=self.circuit,
             circuit_binding=self.parameter_values,

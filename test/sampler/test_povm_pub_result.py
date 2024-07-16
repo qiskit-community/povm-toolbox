@@ -17,13 +17,14 @@ import numpy as np
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.sampler import POVMSampler
 from qiskit import QuantumCircuit, qpy
+from qiskit.circuit import Parameter
 from qiskit.primitives import StatevectorSampler as Sampler
 
 
 class TestPostProcessor(TestCase):
     """Test the methods and attributes of the :class:`.POVMPostProcessor class`."""
 
-    RNG_SEED = 42
+    SEED = 42
 
     def setUp(self) -> None:
         super().setUp()
@@ -35,24 +36,19 @@ class TestPostProcessor(TestCase):
         with open("test/sampler/random_circuits.qpy", "rb") as file:
             qc = qpy.load(file)[0]
 
-        povm_sampler = POVMSampler(sampler=Sampler(seed=self.RNG_SEED))
-        self.measurement = ClassicalShadows(num_qubits=2, seed_rng=self.RNG_SEED)
+        param = Parameter("a")
+        qc.ry(param, 0)
 
-        job = povm_sampler.run([qc], shots=10, povm=self.measurement)
+        povm_sampler = POVMSampler(sampler=Sampler(seed=self.SEED))
+        self.measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
+
+        job = povm_sampler.run([(qc, [0.0, np.pi])], shots=10, povm=self.measurement)
         result = job.result()
         self.pub_result = result[0]
 
         self.samples_check = [
-            (4, 3),
-            (2, 5),
-            (4, 3),
-            (4, 5),
-            (0, 3),
-            (4, 1),
-            (4, 3),
-            (4, 1),
-            (1, 5),
-            (2, 3),
+            [(4, 5), (2, 3), (4, 5), (4, 5), (1, 5), (4, 1), (4, 3), (4, 1), (1, 1), (2, 5)],
+            [(3, 5), (4, 5), (2, 1), (4, 3), (2, 3), (0, 1), (2, 1), (1, 3), (4, 1), (3, 5)],
         ]
 
     def test_metadata(self):
@@ -68,16 +64,30 @@ class TestPostProcessor(TestCase):
                     metadata.pvm_keys
                     == np.array(
                         [
-                            [2, 1],
-                            [1, 2],
-                            [2, 1],
-                            [2, 2],
-                            [0, 1],
-                            [2, 0],
-                            [2, 1],
-                            [2, 0],
-                            [0, 2],
-                            [1, 1],
+                            [
+                                [2, 2],
+                                [1, 1],
+                                [2, 2],
+                                [2, 2],
+                                [0, 2],
+                                [2, 0],
+                                [2, 1],
+                                [2, 0],
+                                [0, 0],
+                                [1, 2],
+                            ],
+                            [
+                                [1, 2],
+                                [2, 2],
+                                [1, 0],
+                                [2, 1],
+                                [1, 1],
+                                [0, 0],
+                                [1, 0],
+                                [0, 1],
+                                [2, 0],
+                                [1, 2],
+                            ],
                         ]
                     )
                 )
@@ -85,10 +95,22 @@ class TestPostProcessor(TestCase):
 
     def test_get_counts(self):
         """Test that the ``get_counts`` method works correctly."""
-        counts = self.pub_result.get_counts()
-        self.assertEqual(counts, Counter(self.samples_check))
+        with self.subTest("No loc"):
+            counts = self.pub_result.get_counts()
+            self.assertEqual(counts[0], Counter(self.samples_check[0]))
+            self.assertEqual(counts[1], Counter(self.samples_check[1]))
+
+        with self.subTest("With loc"):
+            counts = self.pub_result.get_counts(loc=1)
+            self.assertEqual(counts, Counter(self.samples_check[1]))
 
     def test_get_samples(self):
         """Test that the ``get_samples`` method works correctly."""
-        samples = self.pub_result.get_samples()
-        self.assertSequenceEqual(samples, self.samples_check)
+        with self.subTest("No loc"):
+            samples = self.pub_result.get_samples()
+            self.assertSequenceEqual(samples[0], self.samples_check[0])
+            self.assertSequenceEqual(samples[1], self.samples_check[1])
+
+        with self.subTest("With loc"):
+            samples = self.pub_result.get_samples(loc=1)
+            self.assertSequenceEqual(samples, self.samples_check[1])

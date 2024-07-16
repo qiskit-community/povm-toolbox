@@ -24,7 +24,7 @@ from qiskit.quantum_info import Operator, SparsePauliOp, Statevector
 
 
 class TestMutuallyUnbiasedBasesMeasurements(TestCase):
-    RNG_SEED = 17863
+    SEED = 17863
 
     def test_init(self):
         """Test the implementation of mutually-unbiased-bases POVMs."""
@@ -38,9 +38,9 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
                 num_qubits,
                 bias=np.ones(3) / 3,
                 angles=np.array([0.75, -np.pi / 3, 0.2]),
-                seed_rng=self.RNG_SEED,
+                seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.RNG_SEED)
+            sampler = StatevectorSampler(seed=self.SEED)
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=128, povm=measurement)
@@ -62,9 +62,9 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
                 num_qubits,
                 bias=np.ones(3) / 3,
                 angles=np.array([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
-                seed_rng=self.RNG_SEED,
+                seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.RNG_SEED)
+            sampler = StatevectorSampler(seed=self.SEED)
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=128, povm=measurement)

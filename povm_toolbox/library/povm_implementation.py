@@ -25,12 +25,12 @@ from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
-from qiskit.transpiler import StagedPassManager, TranspileLayout
+from qiskit.transpiler import StagedPassManager
 
 from povm_toolbox.quantum_info.base import BasePOVM
 
 if TYPE_CHECKING:
-    from .metadata import POVMMetadata
+    from .metadata import POVMMetadata  # pragma: no cover
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,7 +87,11 @@ class POVMImplementation(ABC, Generic[MetadataT]):
 
     def __repr__(self) -> str:
         """Return the string representation of a POVMImplementation instance."""
-        return f"{self.__class__.__name__}(num_qubits={self.num_qubits})"
+        # NOTE: this is not covered by tests because it is a fallback intended to give a meaningful
+        # representation for actual implementations of this interface which do not overwrite this
+        # function. However, all actual implementation in this library do overwrite this and, thus,
+        # this fallback is not executed during the test coverage.
+        return f"{self.__class__.__name__}(num_qubits={self.num_qubits})"  # pragma: no cover
 
     @abstractmethod
     def definition(self) -> BasePOVM:
@@ -152,12 +156,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             if dest_circuit.layout is None:
                 # Basic one-to-one layout
                 index_layout = list(range(dest_circuit.num_qubits))
-
-            elif isinstance(dest_circuit.layout, TranspileLayout):
+            else:
                 # Extract the final layout of the transpiled circuit (ancillas are filtered).
                 index_layout = dest_circuit.layout.final_index_layout(filter_ancillas=True)
-            else:
-                raise NotImplementedError
         else:
             index_layout = self.measurement_layout
 

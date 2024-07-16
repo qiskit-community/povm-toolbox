@@ -58,7 +58,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
         shot_repetitions: int = 1,
-        seed_rng: int | Generator | None = None,
+        seed: int | Generator | None = None,
     ) -> None:
         """Initialize a mutually-unbiased-bases (MUB) POVM.
 
@@ -91,7 +91,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
                 times we repeat the measurement for each sampled PVM (default is 1). Therefore, the
                 effective total number of measurement shots is ``shots`` multiplied by
                 ``shot_repetitions``.
-            seed_rng: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
+            seed: optional seed to fix the :class:`numpy.random.Generator` used to sample PVMs.
                 The MUB measurements are sampled according to the probability distribution(s)
                 specified by ``bias``. The user can also directly provide a random generator. If
                 ``None``, a random seed will be used.
@@ -130,7 +130,7 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
             measurement_twirl=measurement_twirl,
             measurement_layout=measurement_layout,
             shot_repetitions=shot_repetitions,
-            seed_rng=seed_rng,
+            seed=seed,
         )
 
     def __repr__(self) -> str:

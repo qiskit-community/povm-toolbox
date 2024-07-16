@@ -31,5 +31,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox coverage
       - name: Run coverage
+        env:
+          QISKIT_IBM_URL: ${{ secrets.QISKIT_IBM_URL }}
+          QISKIT_IBM_TOKEN: ${{ secrets.QISKIT_IBM_TOKEN }}
+          QISKIT_IBM_INSTANCE: ${{ secrets.QISKIT_IBM_INSTANCE }}
         run: |
           tox -e coverage
