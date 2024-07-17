@@ -6,9 +6,9 @@ Projective measurements
 
 .. seealso::
 
-   This content is adapted from the work of T. Dao, *Informationally
-   Complete Generalized Measurements for Estimating Quantum Expectation Values*
-   [Unpublished master's thesis], ETH Zürich (2023).
+   This content is adapted from the work of Timothée Dao; "*Informationally
+   Complete Generalized Measurements for Estimating Quantum Expectation Values*"
+   [Unpublished master's thesis]; ETH Zürich (2023).
 
 ---------------------------------
 Measurement in an arbitrary basis
@@ -75,12 +75,14 @@ one can emulate other projective measurements.
    basis. Indeed, we have :math:`\ket{+} = H \ket{0}` and
    :math:`\ket{-} = H \ket{1}`.
 
+.. _pm-simulable:
+
 -------------------------
 PM-simulable measurements
 -------------------------
 
 We can extend the Procedures 1A and 1B to PM-simulable POVMs, which can
-always be achieved by ra randomization technique. Suppose we want to perform the
+always be achieved by a :ref:`randomization technique <randomization>`. Suppose we want to perform the
 measurement associated with the POVM
 :math:`\mathbf{M} = \biguplus_i q_i \mathbf{P}_i = \{q_i \ketbra{\psi^{i}_k}{\psi^{i}_k} \}_{(i,k)}`,
 where :math:`\{q_i\}_i` is a probability distribution and

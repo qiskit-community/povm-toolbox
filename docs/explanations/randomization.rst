@@ -6,9 +6,9 @@ Randomization of Quantum Measurements
 
 .. seealso::
 
-   This content is adapted from the work of T. Dao, *Informationally
-   Complete Generalized Measurements for Estimating Quantum Expectation Values*
-   [Unpublished master's thesis], ETH Zürich (2023).
+   This content is adapted from the work of Timothée Dao; "*Informationally
+   Complete Generalized Measurements for Estimating Quantum Expectation Values*"
+   [Unpublished master's thesis]; ETH Zürich (2023).
 
 ---------
 Convexity

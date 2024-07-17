@@ -4,9 +4,11 @@ Introduction
 
 .. seealso::
 
-   This content is adapted from the work of L. E. Fischer, T. Dao, I. Tavernelli,
-   and F. Tacchino, `Dual-frame optimization for informationally complete
-   quantum measurements <https://journals.aps.org/pra/abstract/10.1103/PhysRevA.109.062415>`_, Phys. Rev. A 109 (2024).
+   This content is adapted from the work of 
+   Laurin E. Fischer, Timothée Dao, Ivano Tavernelli, and Francesco Tacchino;
+   "*Dual-frame optimization for informationally complete quantum measurements*";
+   Phys. Rev. A 109, 062415;
+   DOI: https://doi.org/10.1103/PhysRevA.109.062415
 
 ------------------------
 Generalized measurements

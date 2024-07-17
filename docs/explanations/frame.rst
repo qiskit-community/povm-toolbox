@@ -6,10 +6,11 @@ Frame theory and dual space
 
 .. seealso::
 
-   This content is adapted from the work of L. E. Fischer, T. Dao, I. Tavernelli,
-   and F. Tacchino, `Dual-frame optimization for informationally complete
-   quantum measurements <https://journals.aps.org/pra/abstract/10.1103/PhysRevA.109.062415>`_, Phys. Rev. A 109 (2024).
-
+   This content is adapted from the work of 
+   Laurin E. Fischer, Timothée Dao, Ivano Tavernelli, and Francesco Tacchino;
+   "*Dual-frame optimization for informationally complete quantum measurements*";
+   Phys. Rev. A 109, 062415;
+   DOI: https://doi.org/10.1103/PhysRevA.109.062415
 ---------------
 POVMs as frames
 ---------------
@@ -58,7 +59,7 @@ coefficients :math:`\omega_k` can simply be obtained from the duals
 
 Notably, dual operators generalize the concept of
 classical shadows of a quantum
-state [#huang_predicting_2020]_ (see below for details), thus providing a direct
+state [#huang_predicting_2020]_ (see :ref:`section <classical-shadows>` below for details), thus providing a direct
 connection to the popular randomized measurement
 toolbox [#elben2022randomized]_.
 
@@ -98,11 +99,55 @@ be obtained through a parametrized frame superoperator as follows:
 
 for real parameters :math:`\{\alpha_k\}_k \subset \mathbb{R}` such that :math:`\mathcal{F}_{\alpha}` in invertible [#fischer_dual_frame_2023]_.
 
+
+.. _classical-shadows:
+
 -----------------------------
 Relation to classical shadows
 -----------------------------
 
-TODO
+
+
+We now show the explicit connection to the technique of classical shadows 
+[#huang_predicting_2020]_. The technique consists of rotating the state :math:`\rho` by a
+unitary :math:`U_i`, sampled from a set :math:`\mathcal{U}`, and then
+performing a measurement in the computational basis. We show in the section :ref:`pm-simulable` that
+this protocol is equivalent to performing the PM-simulable POVM
+:math:`\mathbf{M} = \biguplus_i q_i \mathbf{P}_i = \{q_i P_{i,k}\}_{(i,k)}`,
+where :math:`P_{i,k} = U_i^\dagger \ketbra{k} U_i` and the outcomes are labeled by
+:math:`(i,k)`. It now appears that the measurement channel
+
+.. math::
+
+    \mathcal{M} : \rho \mapsto \mathbb{E}_{i \sim \{q_i\}} \sum_k \mathrm{Tr}[\rho P_{i,k}] P_{i,k}
+    = \sum_{i,k} \frac{\mathrm{Tr}[\rho M_{i,k}]}{\mathrm{Tr}[M_{i,k}]} M_{i,k}  \, ,
+    \qquad  M_{i,k} = q_i P_{i,k} \, , 
+
+is actually an :math:`\alpha`-frame superoperator :math:`\mathcal{F}_{\alpha}`
+associated with the POVM :math:`\mathbf{M}`, where the coefficients are
+given by :math:`\alpha_{i,k} = 1/\mathrm{Tr}[M_{i,k}] = 1/q_i` for all
+:math:`i,k`. Most importantly, the elements of the dual frame given by
+this :math:`\alpha`-parametrization are the classical shadows:
+
+.. math::
+
+   \hat{\rho}_{i,k} = \mathcal{M}^{-1}(P_{i,k}) = \frac{1}{q_i} \mathcal{M}^{-1}(M_{i,k}) = \alpha_{i,k} \mathcal{F}_{\alpha}^{-1}(M_{i,k}) = D_{i,k}  \, . 
+
+In other words, the classical shadows technique
+consists of performing a PM-simulable POVM and choosing a specific
+dual frame. However, nothing prevents us from choosing another dual
+frame. Any dual frame defines an unbiased estimator
+of the state. More precisely, for any dual frame :math:`\mathbf{D} = \{D_{i,k}\}` and any state
+:math:`\rho`, we have
+
+.. math::
+
+   \rho = \sum_{i,k} \mathrm{Tr}[ \rho M_{i,k}] D_{i,k} = \mathbb{E}_{i,k}[D_{i,k}] \, ,
+
+which follows from the reciprocity of duality. That is, if :math:`\mathbf{D}` is a dual frame
+to :math:`\mathbf{M}`, then :math:`\mathbf{M}` is a dual frame to :math:`\mathbf{D}` 
+[#casazza2013finite_frame]_.
+
 
 .. rubric:: References
 
@@ -117,3 +162,5 @@ TODO
 .. [#fischer_dual_frame_2023] L. E. Fischer, T. Dao, I. Tavernelli,
    and F. Tacchino, *Dual-frame optimization for informationally complete
    quantum measurements*, Phys. Rev. A 109 (2024).
+.. [#casazza2013finite_frame] P. G. Casazza, G Kutyniok and F Philipp, 
+   *Finite frames: theory and applications*, Birkhäuser, Boston, (2013).
