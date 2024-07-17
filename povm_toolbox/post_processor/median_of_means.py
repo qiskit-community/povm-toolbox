@@ -63,11 +63,26 @@ class MedianOfMeans(POVMPostProcessor):
         self,
         povm_sample: POVMPubResult,
         dual: BaseDual | None = None,
+        *,
         num_batches: int | None = None,
         delta_confidence: float | None = None,
         seed: int | Generator | None = None,
     ) -> None:
-        """Initialize the median-of-means post-processor.
+        r"""Initialize the median-of-means post-processor.
+
+        Given ``num_shots=num_batches*batch_size`` samples, we partition the
+        samples into ``num_batches`` batches. We compute the mean of each batch,
+        :math:`\hat{o}_j`, and then output the median of the means, :math:`\hat{o}
+        =\mathrm{median}\{\hat{o}_1, ..., \hat{o}_{\mathrm{num\_batches}}\}`.
+        It can be shown that
+
+        .. math::
+            \lvert \mathrm{Tr}[\mathcal{O} \rho] - \hat{o} \rvert \leq \epsilon
+            \quad \textrm{with probability at least } 1-\delta \, ,
+
+        where :math:`\delta = 2 \exp{(-\mathrm{num\_batches}/2)}` and :math:`\epsilon
+        = \sqrt{\frac{34}{\mathrm{batch\_size}} } \lVert \mathcal{O} - \frac{\mathrm{Tr}
+        [\mathcal{O}]}{2^N} \mathbb{I} \rVert_\textrm{shadow}`.
 
         Args:
             povm_sample: a result from a POVM sampler run.
@@ -76,14 +91,20 @@ class MedianOfMeans(POVMPostProcessor):
                 :meth:`get_decomposition_weights`. When this is ``None``, the canonical Dual frame
                 will be constructed from the POVM stored in the ``povm_sample``'s
                 :attr:`.POVMPubResult.metadata`.
-            num_batches: TODO.
-            delta_confidence: TODO.
-            seed: TODO.
+            num_batches: number of batches, i.e. number of samples means, used in the median-of-means
+                estimator. This value will be overridden if a ``delta_confidence`` argument is supplied.
+            delta_confidence: the confidence parameter :math:`\delta`. It is used to determine the
+                necessary number of batches as :math:`\mathrm{num\_batches} = \lceil 2 \log{(2/\delta)}
+                \rceil`. It will override any ``num_batches`` supplied argument. If both ``num_batches``
+                and ``delta_confidence`` are ``None``, ``delta_confidence`` is set to 0.05.
+            seed: optional seed to fix the :class:`numpy.random.Generator` used to generate the
+                batches. The user can also directly provide a random generator. If ``None``, a
+                random seed will be used.
 
         Raises:
             ValueError: If the provided ``dual`` is not a dual frame to the POVM stored in the
                 ``povm_samples``'s :attr:`.POVMPubResult.metadata`.
-            TypeError: TODO.
+            TypeError: If the type of ``seed`` is not valid.
         """
         super().__init__(povm_sample=povm_sample, dual=dual)
 
@@ -93,6 +114,7 @@ class MedianOfMeans(POVMPostProcessor):
             num_batches = int(np.ceil(2 * np.log(2 * num_observables / delta_confidence)))
 
         self.num_batches: int = num_batches
+        """Number of batches, i.e. number of samples means, used in the median-of-means estimator."""
 
         if seed is None:
             seed = default_rng()
@@ -105,7 +127,7 @@ class MedianOfMeans(POVMPostProcessor):
 
     @property
     def delta_confidence(self) -> float:
-        """TODO."""
+        r"""The confidence parameter :math:`\delta=2 \exp(-` ``num_batches`` :math:`/2)`."""
         num_observables = 1
         return float(2 * num_observables * np.exp(-0.5 * self.num_batches))
 
@@ -117,25 +139,31 @@ class MedianOfMeans(POVMPostProcessor):
         shots = sum(count.values())
         omegas = self.get_decomposition_weights(observable, set(count.keys()))
 
-        batch_size = shots // self.num_batches
-
+        # get the samples and randomize their order
         sampled_weights = np.zeros(shots)
         idx = 0
         for outcome in count:
             sampled_weights[idx : idx + count[outcome]] = omegas[outcome]
             idx += count[outcome]
-
         sampled_weights = self.seed.permutation(sampled_weights)
 
+        # compute the batch size
+        batch_size = shots // self.num_batches
         batches = sampled_weights[: self.num_batches * batch_size].reshape(
             (batch_size, self.num_batches)
         )
+
+        # if the numbers of shots is not a multiple of number of batches, some batches
+        # will have ``batch_size`` samples and some will have ``batch_size+1`` samples
+        # such that all samples are used.
         if shots % self.num_batches != 0:
             last_samples = np.full((1, self.num_batches), np.nan)
             last_samples[:, : shots % self.num_batches] = sampled_weights[
                 self.num_batches * batch_size :
             ]
             batches = np.concatenate((batches, last_samples))
+
+        # compute the median of means estimate
         median_of_means = float(np.median(np.nanmean(batches, axis=0)))
 
         epsilon = 0.0  # TODO
