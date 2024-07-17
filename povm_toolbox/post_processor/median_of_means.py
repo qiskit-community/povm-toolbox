@@ -52,7 +52,7 @@ class MedianOfMeans(POVMPostProcessor):
     >>> result = job.result()
     >>> post_processor = MedianOfMeans(result[0], num_batches=4, seed=42)
     >>> post_processor.get_expectation_value(SparsePauliOp("ZI"))  # doctest: +FLOAT_CMP
-    (-0.75, 0.0)
+    (-0.75, 2.9154759474226504)
 
     Additionally, this post-processor also supports the customization of the Dual frame in which the
     decomposition weights of the provided observable are obtained. Check out
@@ -168,7 +168,7 @@ class MedianOfMeans(POVMPostProcessor):
 
         # compute the coefficient in front of the shadow norm in the formula to compute
         # the confidence parameter ``delta``.
-        coefficient_epsilon = np.sqrt(34 / batch_size)
+        coefficient_epsilon = float(np.sqrt(34 / batch_size))
 
         return median_of_means, coefficient_epsilon
 
