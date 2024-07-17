@@ -2,7 +2,22 @@
 POVM Toolbox
 ############
 
-A toolbox for the implementation of positive operator-valued measures (POVMs).
+.. image:: _static/read-me-figure.jpg
+
+This is a toolbox for working with positive operator-valued measures (POVMs).
+It enables users to use POVMs for sampling the state of quantum circuits (see
+also :mod:`povm_toolbox.sampler`) and compute expectation values of any
+observable of interest (see also :mod:`povm_toolbox.post_processor`).
+The toolbox includes a library of pre-defined POVMs (see
+:mod:`povm_toolbox.library`) but also allows users to define their own POVMs
+(see :mod:`povm_toolbox.quantum_info`).
+
+In this documentation you can find a number of resources including:
+
+- `explanations <explanations/index.html>`_ to learn more about POVMs
+- how to get started with coding using one of the `tutorials <tutorials/index.html>`_
+- dive into more specific features with the `how-to guides <how_tos/index.html>`_
+- and, of course, look up specific details of the `API <apidocs/povm_toolbox.html>`_
 
 Installation
 ------------
@@ -17,12 +32,6 @@ You can install this code via pip:
 
 Make sure that you have the correct Python environment active, into which you
 want to install this code, before running the above.
-
-Getting started
----------------
-
-Be sure to check out our `tutorials <tutorials/index.html>`_ to get started with this
-toolbox.
 
 Citation
 --------
