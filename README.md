@@ -1,7 +1,7 @@
 # POVMs
 
 <p align="center">
-  <img src="/docs/_static/read-me-figure.jpg" width="350" height="350">
+  <img src="/docs/_static/read-me-figure.jpg" height="350">
 </p>
 
 This is a toolbox for working with positive operator-valued measures (POVMs).
