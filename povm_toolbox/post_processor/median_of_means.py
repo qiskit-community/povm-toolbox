@@ -166,6 +166,8 @@ class MedianOfMeans(POVMPostProcessor):
         # compute the median of means estimate
         median_of_means = float(np.median(np.nanmean(batches, axis=0)))
 
-        epsilon = 0.0  # TODO
+        # compute the coefficient in front of the shadow norm in the formula to compute
+        # the confidence parameter ``delta``.
+        coefficient_epsilon = np.sqrt(34 / batch_size)
 
-        return median_of_means, epsilon
+        return median_of_means, coefficient_epsilon
