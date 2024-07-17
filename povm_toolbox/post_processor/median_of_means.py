@@ -171,3 +171,26 @@ class MedianOfMeans(POVMPostProcessor):
         coefficient_epsilon = np.sqrt(34 / batch_size)
 
         return median_of_means, coefficient_epsilon
+
+    def get_expectation_value(
+        self,
+        observable: SparsePauliOp,
+        loc: int | tuple[int, ...] | None = None,
+    ) -> tuple[np.ndarray, np.ndarray] | tuple[float, float]:
+        r"""Return the expectation value and confidence parameter of the given ``observable``.
+
+        Args:
+            observable: the observable whose expectation value is queried.
+            loc: this argument is relevant if multiple sets of parameter values were supplied to the
+                sampler in the same :class:`.POVMSamplerPub`. The index ``loc`` then corresponds to
+                the set of parameter values that was supplied to the sampler through the Pub. If
+                ``None``, the expectation value (and standard deviation) for each set of circuit
+                parameters is returned.
+
+        Returns:
+            A tuple of (estimated) expectation value(s) and pre-coefficient(s) for the confidence
+            parameter :math:`\epsilon`, that is, :math:`\sqrt{34 / \mathrm{batch\_size} }`.
+            If a single value was queried (via ``loc``), both of these will be a ``float``.
+            Otherwise, they will be instances of :class:`numpy.ndarray`.
+        """
+        return super().get_expectation_value(observable, loc)
