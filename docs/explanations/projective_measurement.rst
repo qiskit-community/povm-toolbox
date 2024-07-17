@@ -1,6 +1,14 @@
+.. _projective-measurements:
+
 =======================
 Projective measurements
 =======================
+
+.. seealso::
+
+   This content is adapted from the work of Timothée Dao; "*Informationally
+   Complete Generalized Measurements for Estimating Quantum Expectation Values*"
+   [Unpublished master's thesis]; ETH Zürich (2023).
 
 ---------------------------------
 Measurement in an arbitrary basis
@@ -20,7 +28,8 @@ The probability of obtaining the outcome :math:`k` is then given by
 .. math::
    :label: probability
 
-   p_k = \mathrm{Tr}[\ketbra{\psi_k}{\psi_k} \rho] = \mathrm{Tr}[U \ketbra{k}{k} U^\dagger \rho] = \mathrm{Tr}[\ketbra{k}{k} U^\dagger \rho U] \, ,
+   p_k = \mathrm{Tr}[\ketbra{\psi_k}{\psi_k} \rho] = \mathrm{Tr}[U \ketbra{k}{k}
+   U^\dagger \rho] = \mathrm{Tr}[\ketbra{k}{k} U^\dagger \rho U] \, ,
 
 where we used the invariance of the trace under cyclic permutations in
 the last equality. It becomes now clear that the two procedures
@@ -66,12 +75,14 @@ one can emulate other projective measurements.
    basis. Indeed, we have :math:`\ket{+} = H \ket{0}` and
    :math:`\ket{-} = H \ket{1}`.
 
+.. _pm-simulable:
+
 -------------------------
 PM-simulable measurements
 -------------------------
 
 We can extend the Procedures 1A and 1B to PM-simulable POVMs, which can
-always be achieved by ra randomization technique. Suppose we want to perform the
+always be achieved by a :ref:`randomization technique <randomization>`. Suppose we want to perform the
 measurement associated with the POVM
 :math:`\mathbf{M} = \biguplus_i q_i \mathbf{P}_i = \{q_i \ketbra{\psi^{i}_k}{\psi^{i}_k} \}_{(i,k)}`,
 where :math:`\{q_i\}_i` is a probability distribution and
@@ -107,6 +118,6 @@ like to perform, we usually first define the set of achievable unitary
 operations :math:`\mathcal{U}=\{U_i\}_i`. We then determine the
 corresponding set of achievable PVMs :math:`\mathcal{S}=\{\mathbf{P}_i\}_i`,
 where
-:math:`\mathbf{P}_i = \{U_i \ket{k} \bra{k} U_i^\dagger\}_k \in \mathcal{P}(d,n)`.
-Finally, we choose the POVM to be performed from the set
-:math:`\mathcal{S}^\mathrm{sim}`.
+:math:`\mathbf{P}_i = \{U_i \ket{k} \bra{k} U_i^\dagger\}_k, \forall i`.
+Finally, we choose the POVM to be performed from the convex hull
+:math:`\mathcal{S}^\mathrm{conv}`.
