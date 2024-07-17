@@ -1,6 +1,15 @@
 # POVMs
 
-A toolbox for the implementation of positive operator-valued measures (POVMs).
+<p align="center">
+  <img src="/docs/_static/read-me-figure.jpg" width="350" height="350">
+</p>
+
+This is a toolbox for working with positive operator-valued measures (POVMs).
+It enables users to use POVMs for sampling the state of quantum circuits (see
+also `povm_toolbox.sampler`) and compute expectation values of any observable of
+interest (see also `povm_toolbox.post_processor`).
+The toolbox includes a library of pre-defined POVMs (see `povm_toolbox.library`)
+but also allows users to define their own POVMs (see `povm_toolbox.quantum_info`).
 
 ## Installation
 
