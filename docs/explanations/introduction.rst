@@ -2,6 +2,14 @@
 Introduction
 ============
 
+.. seealso::
+
+   This content is adapted from the work of 
+   Laurin E. Fischer, Timothée Dao, Ivano Tavernelli, and Francesco Tacchino;
+   "*Dual-frame optimization for informationally complete quantum measurements*";
+   Phys. Rev. A 109, 062415;
+   DOI: https://doi.org/10.1103/PhysRevA.109.062415
+
 ------------------------
 Generalized measurements
 ------------------------
@@ -10,7 +18,7 @@ The most general class of measurements in quantum mechanics are
 described by the POVM formalism. An :math:`n`-outcome POVM is a set of
 :math:`n` positive semi-definite Hermitian operators
 :math:`\mathbf{M} = \{M_k\}_{k \in \{1, \dots, n \}}` that sum to the
-identity. Mathematically, this means the set of operators satisfies the following proeperties:
+identity. Mathematically, this means the set of operators satisfies the following properties:
 
    #. :math:`M_k^\dagger = M_k` for all :math:`k \in \{1,2 \dots, n\}`,
    #. :math:`\langle \psi | M_k | \psi \rangle \geq 0` for all :math:`k \in \{1,2 \dots, n\}` and all states :math:`|\psi \rangle`,
@@ -69,20 +77,20 @@ experiments, their full-scale high-fidelity implementation remains a
 challenge for current quantum
 devices [#fischer_ancilla_free_2022]_. Of particular
 interest are thus POVMs that can be implemented without additional
-quantum resources, i.e., only through projective measurements in
-available measurement bases.
+quantum resources, i.e., only through :ref:`projective
+measurements in available measurement bases <projective-measurements>`.
 
 More complex POVMs can be built from available projective measurements
 through convex combinations of POVMs: For two :math:`n`-outcome POVMs
 :math:`\mathbf{M}_1` and :math:`\mathbf{M}_2` acting on the same space, their
 convex combination with elements :math:`M_k = p M_{1,k} + (1-p) M_{2,k}`
 for some :math:`p \in [0,1]` is also a valid POVM. This can be achieved
-in practice by a *randomization of measurements* procedure, which simply
+in practice by a :ref:`randomization of measurements procedure <randomization>`, which simply
 consists of the following two steps for each measurement shot. First,
 randomly pick :math:`\mathbf{M}_1` or :math:`\mathbf{M}_2` with probability
 :math:`p` or :math:`1-p`, respectively, then perform the measurement
 associated with the chosen POVM. We call POVMs that can be achieved by
-randomizations of projective measurements *PM-simulable*. On digital
+randomization of projective measurements *PM-simulable*. On digital
 quantum computers the easiest basis transformations are single-qubit
 transformations of the computational basis. POVMs that consist of
 single-qubit PM-simulable POVMs are thus the most readily accessible
@@ -93,22 +101,8 @@ Importantly, PM-simulable informationally-complete POVMs are
 overcomplete [#dariano_classical_2005]_. The
 decomposition of observables from
 Eq. :eq:`expectation_value_decomp` is
-thus not unique. In this work, we leverage these additional degrees of
-freedom to build better observable estimators, see :numref:`overview`.
-
-.. _overview:
-.. figure:: ../_static/overview_schematic.*
-   :width: 50.0%
-
-   Schematic of dual frame optimization. Generalized measurements are
-   performed on the quantum system. Upon obtaining outcome :math:`k`,
-   the corresponding canonical dual operator :math:`D_k` – also known as
-   *classical shadow* – can be efficiently computed and stored on a
-   classical computer. The expectation value of any observable :math:`\mathcal{O}`
-   can be estimated from a sample of dual operators. Leveraging
-   additional degrees of freedom, we can optimize these dual operators
-   through classical post-processing, effectively reducing the
-   estimation variance.
+thus not unique. In this toolbox, we leverage these additional degrees of
+freedom with :ref:`frame theory <frame-theory>`.
 
 
 .. rubric:: References
