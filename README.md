@@ -9,7 +9,10 @@ It enables users to use POVMs for sampling the state of quantum circuits (see
 also `povm_toolbox.sampler`) and compute expectation values of any observable of
 interest (see also `povm_toolbox.post_processor`).
 The toolbox includes a library of pre-defined POVMs (see `povm_toolbox.library`)
-but also allows users to define their own POVMs (see `povm_toolbox.quantum_info`).
+which provide ready-to-go POVM circuit definitions. You can also implement your
+own POVM circuits by following the provided interface.
+Additionally, you can work with POVMs on a quantum-informational theoretical
+footing (see `povm_toolbox.quantum_info`).
 
 ## Installation
 
