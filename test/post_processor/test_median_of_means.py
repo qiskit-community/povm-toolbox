@@ -12,6 +12,7 @@
 
 from unittest import TestCase
 
+from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import MedianOfMeans
 from povm_toolbox.sampler import POVMSampler
@@ -43,7 +44,9 @@ class TestMedianOfMeans(TestCase):
         """Test that the ``__init__`` method raises errors correctly."""
         # sanity check
         with self.subTest("Valid initialization."):
-            post_processor = MedianOfMeans(self.pub_result, num_batches=5)
+            post_processor = MedianOfMeans(
+                self.pub_result, num_batches=5, seed=default_rng(self.SEED)
+            )
             self.assertEqual(post_processor.num_batches, 5)
             self.assertEqual(post_processor.delta_confidence, 0.1641699972477976)
         with self.subTest("Invalid type for ``seed``.") and self.assertRaises(TypeError):

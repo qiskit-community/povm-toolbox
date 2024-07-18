@@ -48,9 +48,9 @@ class MedianOfMeans(POVMPostProcessor):
     the work of H.-Y. Huang, R. Kueng, and J. Preskill, "*Predicting Many Properties
     of a Quantum System from Very Few Measurements*", Nature Physics 16, 1050 (2020).
 
-    This post-processor implementation provides a straight-forward interface for computing the
-    expectation values (and standard deviations) of any Pauli-based observable. It is initialized
-    with a :class:`.POVMPubResult` as shown below:
+    The interface of this post-processor is essentially identical to the one of its
+    baseclass (see :class:`.POVMPostProcessor` for more details). For completeness,
+    here is an example how to use it:
 
     >>> from povm_toolbox.library import ClassicalShadows
     >>> from povm_toolbox.sampler import POVMSampler
@@ -69,10 +69,6 @@ class MedianOfMeans(POVMPostProcessor):
     >>> post_processor = MedianOfMeans(result[0], num_batches=4, seed=42)
     >>> post_processor.get_expectation_value(SparsePauliOp("ZI"))  # doctest: +FLOAT_CMP
     (-0.75, 2.9154759474226504)
-
-    Additionally, this post-processor also supports the customization of the Dual frame in which the
-    decomposition weights of the provided observable are obtained. Check out
-    `this how-to guide <../how_tos/dual_optimizer.ipynb>`_ for more details on how to do this.
     """
 
     def __init__(
@@ -112,12 +108,13 @@ class MedianOfMeans(POVMPostProcessor):
         """
         super().__init__(povm_sample=povm_sample, dual=dual)
 
-        if isinstance(upper_delta_confidence, float) or num_batches is None:
-            upper_delta_confidence = upper_delta_confidence or 0.05
-            num_batches = int(np.ceil(2 * np.log(2 / upper_delta_confidence)))
-
-        self.num_batches: int = num_batches
+        self.num_batches: int
         """Number of batches, i.e. number of samples means, used in the median-of-means estimator."""
+
+        if isinstance(upper_delta_confidence, float) or num_batches is None:
+            self.delta_confidence = upper_delta_confidence or 0.05
+        else:
+            self.num_batches = num_batches
 
         if seed is None:
             seed = default_rng()
@@ -134,7 +131,7 @@ class MedianOfMeans(POVMPostProcessor):
         return float(2 * np.exp(-0.5 * self.num_batches))
 
     @delta_confidence.setter
-    def delta_confidence(self, new_upper_delta_confidence: float):
+    def delta_confidence(self, delta: float) -> None:
         r"""Set the upper bound for the confidence parameter :math:`\delta`.
 
         It is used to determine the necessary number of batches as :math:`\mathrm{
@@ -142,7 +139,7 @@ class MedianOfMeans(POVMPostProcessor):
         of the :math:`\delta`-parameter is given by :math:`\delta=2 \exp(-\mathrm{
         num\_batches}/2)`.
         """
-        self.num_batches = int(np.ceil(2 * np.log(2 / new_upper_delta_confidence)))
+        self.num_batches = int(np.ceil(2 * np.log(2 / delta)))
 
     @override
     def _single_exp_value_and_std(
