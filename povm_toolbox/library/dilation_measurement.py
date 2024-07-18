@@ -74,10 +74,18 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
     ) -> None:
         """Initialize a dilation POVM.
 
+        We use the same parametrization of the dilation POVM as the one presented in the
+        work of G. García-Pérez, M. A. Rossi, B. Sokolov, F. Tacchino, P. K. Barkoutsos,
+        G. Mazzola, I. Tavernelli, and S. Maniscalco, “*Learning to measure: adaptive
+        informationally complete generalized measurements for quantum algorithms*”, PRX
+        Quantum 2, Publisher: American Physical Society, 040342 (2021). Refer to this work
+        for a detailed explanation of the parametrization.
+
         Args:
             num_qubits: the number of qubits.
             parameters: can be either 1D or 2D. If 1D, it should be of length 8 and contain float
-                values to indicate TODO. If 2D, it will have a new set of parameters for each qubit.
+                values that specify the parametrization of the dilation POVM. If 2D, it will have
+                a new set of parameters for each qubit.
             measurement_layout: optional list of indices specifying on which qubits the POVM acts.
                 See :attr:`.measurement_layout` for more details.
 
@@ -117,7 +125,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         LOGGER.info("Building POVM definition")
         sq_povms = []
         for i in range(self.num_qubits):
-            unitary = self._from_param(self._parameters[i])
+            unitary = self._unitary_from_parameters(self._parameters[i])
             # TODO: explain the switch of second and third columns/rows
             unitary[:, [1, 2]] = unitary[:, [2, 1]]
             unitary[[1, 2]] = unitary[[2, 1]]
@@ -137,7 +145,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         is required for each qubit that we want to measure.
 
         Returns:
-            Quantum circuit that implements the dilation POVM defined by :attr:`_parameters`.
+            Quantum circuit that implements the dilation POVM defined by :attr:`._parameters`.
         """
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
@@ -146,7 +154,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         cr = ClassicalRegister(2 * self.num_qubits, name=self.classical_register_name)
         qc = QuantumCircuit(qr, cr, name="measurement_circuit")
         for i in range(self.num_qubits):
-            qc.unitary(self._from_param(self._parameters[i]), [i, i + self.num_qubits])
+            qc.unitary(self._unitary_from_parameters(self._parameters[i]), [i, i + self.num_qubits])
 
         qc.measure(qr, cr)
 
@@ -165,11 +173,15 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
     ) -> tuple[SamplerPub, POVMMetadata]:
         """Append the measurement circuit(s) to the supplied circuit.
 
-        This method takes a supplied circuit and appends the measurement circuit(s) to it.
-        TODO: explain how we deal with ancilla qubits.
+        This method takes a supplied circuit and appends the measurement circuit to it.
+        An ancilla qubit is required for each qubit that we want to measure (specified by
+        :attr:`.measurement_layout`). If the input circuit has one or more idling qubit(s),
+        they will be used as measurement ancilla qubits. If more ancilla qubits are needed,
+        those will be added to the input circuit (therefore increasing its size).
 
         .. warning::
-           TODO: number of qubits in the circuit may be increased due to the ancilla qubits.
+           The number of qubits in the input circuit may be increased due to the ancilla
+           qubits qubits required for dilatation measurements.
 
         Args:
             circuit: A quantum circuit.
@@ -209,13 +221,13 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
     def reshape_data_bin(self, data: DataBin) -> DataBin:
         return data
 
+    @override
     def _povm_outcomes(
         self,
         bit_array: BitArray,
         povm_metadata: POVMMetadata,
         loc: int | tuple[int, ...] | None = None,
     ) -> list[tuple[int, ...]]:
-        """TODO."""
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")
 
@@ -238,10 +250,15 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         """Transform a bitstring outcome to a POVM outcome.
 
         Args:
-            bitstring_outcome: TODO.
+            bitstring_outcome: the raw outcome of the measurement. The order of
+            qubit is assumed to be reversed. More specifically, the first
+            :attr:`.num_qubits` bits will correspond to the ancilla qubit (in
+            reverse order) and the last :attr:`.num_qubits` bits will correspond
+            to the qubit to measure (in reverse order).
 
         Returns:
-            TODO.
+            A tuple of indices indicating the POVM outcomes on each qubit. For each qubit,
+            the index goes from :math:``0`` to :math:``3``.
         """
         return tuple(
             2 * int(bit_q) + int(bit_a)
@@ -251,22 +268,28 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
             )
         )
 
-    def _from_param(self, param: np.ndarray):
-        """TODO."""
-        n_out = 4
-        u = np.zeros((n_out, n_out), dtype=complex)
+    def _unitary_from_parameters(self, param: np.ndarray):
+        """Construct the unitary defining the dilation POVM from parameters.
 
+        We use the same parametrization of the dilation POVM as the one presented in the
+        work of G. García-Pérez, M. A. Rossi, B. Sokolov, F. Tacchino, P. K. Barkoutsos,
+        G. Mazzola, I. Tavernelli, and S. Maniscalco, “*Learning to measure: adaptive
+        informationally complete generalized measurements for quantum algorithms*”, PRX
+        Quantum 2, Publisher: American Physical Society, 040342 (2021). Refer to this work
+        for a detailed explanation of the parametrization.
+        """
+        num_outcomes = 4
+        u = np.zeros((num_outcomes, num_outcomes), dtype=complex)
+
+        # construct the first column of the unitary
         u[:, 0] = n_sphere(param[:3])
         u_gs = gs(u)  # Gram-Schmidt
 
         x = n_sphere(param[3:])
-        # construct k'th vector of u
+        # construct the second column of the unitary
         for i in range(len(x) // 2):
             u[:, 1] += (x[2 * i] + x[2 * i + 1] * 1j) * u_gs[:, 1 + i]
         u_gs = gs(u)
-
-        # for i in range(4) :
-        #     u_gs[:,i] *= np.sign(u[0,i])*np.sign(u_gs[0,i])
 
         unitary = u_gs
 
