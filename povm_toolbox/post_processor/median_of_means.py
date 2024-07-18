@@ -17,7 +17,7 @@ import sys
 if sys.version_info < (3, 12):
     from typing_extensions import override
 else:
-    from typing import override
+    from typing import override  # pragma: no cover
 
 
 import numpy as np
