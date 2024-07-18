@@ -184,6 +184,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             idle_index = [idx for idx in idle_index if idx not in index_layout]
             # TODO: why would someone want to measure an idle qubit ? Should we raise a warning ?
 
+            idle_index.sort()
+
             # If exactly enough idle qubits available, we use all of them
             if self.num_qubits + len(idle_index) == self.measurement_circuit.num_qubits:
                 index_layout += idle_index
@@ -200,7 +202,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 index_layout += ancilla_layout
                 dest_circuit.add_register(ancilla_register)
             # If more than enough idle qubits are available, we pick only the necessary number
-            elif self.num_qubits + len(idle_index) > self.measurement_circuit.num_qubits:
+            else:
                 index_layout += idle_index[: self.measurement_circuit.num_qubits - self.num_qubits]
 
         try:

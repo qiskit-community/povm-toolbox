@@ -19,6 +19,7 @@ from povm_toolbox.library import (
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMSampler
 from qiskit.circuit import QuantumCircuit
+from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
@@ -161,5 +162,76 @@ class TestDilationMeasurements(TestCase):
             self.assertTrue(np.allclose(povm.get_bloch_vectors(), bloch_vectors_check))
 
     def test_compose_circuit(self):
-        # TODO
-        return
+        """Test that the ``compose_circuit`` method works correctly."""
+        sampler = StatevectorSampler(seed=self.SEED)
+        povm_sampler = POVMSampler(sampler)
+        measurement = DilationMeasurements(
+            num_qubits=2,
+            parameters=np.array(
+                [
+                    0.75,
+                    0.30408673,
+                    0.375,
+                    0.40678524,
+                    0.32509973,
+                    0.25000035,
+                    0.49999321,
+                    0.83333313,
+                ]
+            ),
+        )
+        with self.subTest("No idle qubits in input circuit."):
+            qc = QuantumCircuit(2)
+            qc.h(0)
+            qc.cx(0, 1)
+            job = povm_sampler.run([qc], shots=32, povm=measurement)
+            pub_result = job.result()[0]
+            self.assertEqual(pub_result.metadata.composed_circuit.num_qubits, 4)
+            self.assertEqual(pub_result.metadata.composed_circuit.num_ancillas, 2)
+            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
+            post_processor = POVMPostProcessor(pub_result)
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertEqual(exp_value, 2.0517605907028327)
+            self.assertEqual(std, 1.1158789520748584)
+        with self.subTest("Not enough idle qubits in input circuit."):
+            qc = QuantumCircuit(3)
+            qc.h(0)
+            qc.cx(0, 1)
+            measurement.measurement_layout = [0, 1]
+            job = povm_sampler.run([qc], shots=32, povm=measurement)
+            pub_result = job.result()[0]
+            self.assertEqual(pub_result.metadata.composed_circuit.num_qubits, 4)
+            self.assertEqual(pub_result.metadata.composed_circuit.num_ancillas, 1)
+            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
+            post_processor = POVMPostProcessor(pub_result)
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertEqual(exp_value, 2.0517605907028327)
+            self.assertEqual(std, 1.1158789520748584)
+        with self.subTest("Exactly enough idle qubits in input circuit."):
+            qc = QuantumCircuit(4)
+            qc.h(0)
+            qc.cx(0, 1)
+            measurement.measurement_layout = [0, 1]
+            job = povm_sampler.run([qc], shots=32, povm=measurement)
+            pub_result = job.result()[0]
+            self.assertEqual(pub_result.metadata.composed_circuit.num_qubits, 4)
+            self.assertEqual(pub_result.metadata.composed_circuit.num_ancillas, 0)
+            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
+            post_processor = POVMPostProcessor(pub_result)
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertEqual(exp_value, 2.0517605907028327)
+            self.assertEqual(std, 1.1158789520748584)
+        with self.subTest("Too many idle qubits in input circuit."):
+            qc = QuantumCircuit(5)
+            qc.h(0)
+            qc.cx(0, 1)
+            measurement.measurement_layout = [0, 1]
+            job = povm_sampler.run([qc], shots=32, povm=measurement)
+            pub_result = job.result()[0]
+            self.assertEqual(pub_result.metadata.composed_circuit.num_qubits, 5)
+            self.assertEqual(pub_result.metadata.composed_circuit.num_ancillas, 0)
+            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
+            post_processor = POVMPostProcessor(pub_result)
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertEqual(exp_value, 2.0517605907028327)
+            self.assertEqual(std, 1.1158789520748584)
