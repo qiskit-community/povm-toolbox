@@ -71,23 +71,38 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         parameters: np.ndarray,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
-        measurement_twirl: bool = False,
     ) -> None:
+        """Initialize a dilation POVM.
+
+        Args:
+            num_qubits: the number of qubits.
+            parameters: can be either 1D or 2D. If 1D, it should be of length 8 and contain float
+                values to indicate TODO. If 2D, it will have a new set of parameters for each qubit.
+            measurement_layout: optional list of indices specifying on which qubits the POVM acts.
+                See :attr:`.measurement_layout` for more details.
+
+        Raises:
+            ValueError: if the last dimension of ``parameters`` is not of length 8.
+            ValueError: if the shape of ``parameters`` is not valid.
+        """
         super().__init__(num_qubits, measurement_layout=measurement_layout)
 
         if parameters.shape[-1] != 8:
-            raise ValueError()
+            raise ValueError(
+                "The last dimension of ``parameters`` is expected to be of length 8, but has"
+                f" length {parameters.shape[-1]} instead."
+            )
 
         if parameters.ndim == 1:
             parameters = np.tile(parameters, (self.num_qubits, 1))
         elif (
             parameters.ndim == 2 and parameters.shape[0] != self.num_qubits
-        ) or parameters.ndim > 2:
-            raise ValueError()
+        ) or parameters.ndim != 2:
+            raise ValueError(
+                "``parameters`` is expected to have shape (8,) or (``num_qubits``, 8)"
+                f" but has shape {parameters.shape} instead."
+            )
         self._parameters = parameters
-
-        self.measurement_twirl = measurement_twirl
-        """Whether twirling of the PVMs is enabled."""
 
         # NOTE: this public attribute inherits its docstring from the base class
         self.measurement_circuit = self._build_qc()
@@ -103,6 +118,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         sq_povms = []
         for i in range(self.num_qubits):
             unitary = self._from_param(self._parameters[i])
+            # TODO: explain the switch of second and third columns/rows
             unitary[:, [1, 2]] = unitary[:, [2, 1]]
             unitary[[1, 2]] = unitary[[2, 1]]
             sq_povms.append(SingleQubitPOVM.from_vectors(unitary[:, 0::2].conj()))
@@ -116,20 +132,12 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
     def _build_qc(self) -> QuantumCircuit:
         """Build the quantum circuit that implements the measurement.
 
-        In the case of randomized projective measurements (PMs), we choose for each shot a PM at
-        random to perform the measurement. Any PM on single qubits can be described by two
-        orthogonal projectors :math:``M_0 = |pi><pi|`` and :math:``M_1 = |pi_orth><pi_orth|``. The
-        vector :math:``|pi> = U(theta, phi, 0) |0>`` can be defined by the first two usual Euler
-        angles. The third Euler angles defines the global phase, which is irrelevant here. We then
-        have :math:``|pi_orth> = U(theta, phi, 0) |1>`` up to another irrelevant global phase. To
-        implement this measurement, we use the fact that :math:``p_i = Tr[rho M_i] = Tr[rho
-        U|i><i|U_dag] = Tr[U_dag rho U |i><i|]``. In other words, we can first let the state evolve
-        under :math:``U_dag`` and then perform a computational basis measurement. Note that we have
-        :math:``U(theta, phi, lambda)_dag = U(-theta, -lambda, -phi)``.
+        In the case of dilation measurements, the circuit is fixed (not parametrized as
+        for randomized measurements for instance). However, an additional ancilla qubit
+        is required for each qubit that we want to measure.
 
         Returns:
-            Parametrized quantum circuit that can implement any product of single-qubit projective
-            measurements.
+            Quantum circuit that implements the dilation POVM defined by :attr:`_parameters`.
         """
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
@@ -157,13 +165,11 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
     ) -> tuple[SamplerPub, POVMMetadata]:
         """Append the measurement circuit(s) to the supplied circuit.
 
-        This method takes a supplied circuit and appends the measurement circuit(s) to it. If the
-        measurement circuit is parametrized, its parameters values should be concatenated with the
-        parameter values associated with the supplied quantum circuit.
+        This method takes a supplied circuit and appends the measurement circuit(s) to it.
+        TODO: explain how we deal with ancilla qubits.
 
         .. warning::
-           The actual number of measurements executed will depend not only on the provided ``shots``
-           value but also on the value of :attr:`.shot_repetitions`.
+           TODO: number of qubits in the circuit may be increased due to the ancilla qubits.
 
         Args:
             circuit: A quantum circuit.
@@ -246,7 +252,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         )
 
     def _from_param(self, param: np.ndarray):
-        """Initialize a POVM from the list of parameters."""
+        """TODO."""
         n_out = 4
         u = np.zeros((n_out, n_out), dtype=complex)
 
