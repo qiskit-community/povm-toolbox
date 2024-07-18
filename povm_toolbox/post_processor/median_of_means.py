@@ -44,7 +44,9 @@ class MedianOfMeans(POVMPostProcessor):
 
     where :math:`\delta = 2 \exp{(-\mathrm{num\_batches}/2)}` and :math:`\epsilon
     = \sqrt{\frac{34}{\mathrm{batch\_size}} } \lVert \mathcal{O} - \frac{\mathrm{Tr}
-    [\mathcal{O}]}{2^N} \mathbb{I} \rVert_\textrm{shadow}`.
+    [\mathcal{O}]}{2^N} \mathbb{I} \rVert_\textrm{shadow}`. For more details, see
+    the work of H.-Y. Huang, R. Kueng, and J. Preskill, "*Predicting Many Properties
+    of a Quantum System from Very Few Measurements*", Nature Physics 16, 1050 (2020).
 
     This post-processor implementation provides a straight-forward interface for computing the
     expectation values (and standard deviations) of any Pauli-based observable. It is initialized
