@@ -30,7 +30,7 @@ from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.transpiler import StagedPassManager
 
 from povm_toolbox.quantum_info import ProductPOVM, SingleQubitPOVM
-from povm_toolbox.utilities import gs, n_sphere
+from povm_toolbox.utilities import gram_schmidt, n_sphere
 
 from .metadata import POVMMetadata
 from .povm_implementation import POVMImplementation
@@ -283,13 +283,13 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
 
         # construct the first column of the unitary
         u[:, 0] = n_sphere(param[:3])
-        u_gs = gs(u)  # Gram-Schmidt
+        u_gs = gram_schmidt(u)
 
         x = n_sphere(param[3:])
         # construct the second column of the unitary
         for i in range(len(x) // 2):
             u[:, 1] += (x[2 * i] + x[2 * i + 1] * 1j) * u_gs[:, 1 + i]
-        u_gs = gs(u)
+        u_gs = gram_schmidt(u)
 
         unitary = u_gs
 
