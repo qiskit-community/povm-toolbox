@@ -12,7 +12,6 @@
 
 from unittest import TestCase
 
-from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import MedianOfMeans
 from povm_toolbox.sampler import POVMSampler
@@ -24,7 +23,7 @@ from qiskit.quantum_info import SparsePauliOp
 class TestMedianOfMeans(TestCase):
     """Test the methods and attributes of the :class:`.MedianOfMeans class`."""
 
-    SEED = default_rng(3433)
+    SEED = 3433
 
     def setUp(self) -> None:
         super().setUp()
@@ -58,16 +57,18 @@ class TestMedianOfMeans(TestCase):
             exp_val, epsilon_coef = post_processor.get_expectation_value(observable)
             self.assertEqual(post_processor.num_batches, 8)
             self.assertEqual(post_processor.delta_confidence, 0.03663127777746836)
-            self.assertAlmostEqual(exp_val, -4.440892098500626e-16)
+            self.assertAlmostEqual(exp_val, 1.125)
             self.assertAlmostEqual(epsilon_coef, 2.9154759474226504)
 
         with self.subTest("Test with specified ``delta_confidence`` argument."):
-            post_processor = MedianOfMeans(self.pub_result, delta_confidence=0.1, seed=self.SEED)
+            post_processor = MedianOfMeans(
+                self.pub_result, upper_delta_confidence=0.1, seed=self.SEED
+            )
             observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
             exp_val, epsilon_coef = post_processor.get_expectation_value(observable)
             self.assertEqual(post_processor.num_batches, 6)
             self.assertEqual(post_processor.delta_confidence, 0.09957413673572789)
-            self.assertAlmostEqual(exp_val, -1.500000000000001)
+            self.assertAlmostEqual(exp_val, -0.7500000000000003)
             self.assertAlmostEqual(epsilon_coef, 2.6076809620810595)
 
         with self.subTest("Test with specified ``num_batches`` argument."):
@@ -76,7 +77,7 @@ class TestMedianOfMeans(TestCase):
             exp_val, epsilon_coef = post_processor.get_expectation_value(observable)
             self.assertEqual(post_processor.num_batches, 4)
             self.assertEqual(post_processor.delta_confidence, 0.2706705664732254)
-            self.assertAlmostEqual(exp_val, -1.6875000000000009)
+            self.assertAlmostEqual(exp_val, -4.440892098500626e-16)
             self.assertAlmostEqual(epsilon_coef, 2.0615528128088303)
 
         with self.subTest("Test with random ``seed`` argument."):
@@ -86,3 +87,12 @@ class TestMedianOfMeans(TestCase):
             observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
             _, epsilon_coef = post_processor.get_expectation_value(observable)
             self.assertAlmostEqual(epsilon_coef, 2.9154759474226504)
+
+    def test_delta_confidence(self):
+        """Test that the ``delta_confidence`` property and setter work correctly."""
+        post_processor = MedianOfMeans(self.pub_result, num_batches=5)
+        self.assertEqual(post_processor.num_batches, 5)
+        self.assertEqual(post_processor.delta_confidence, 0.1641699972477976)
+        post_processor.delta_confidence = 0.098
+        self.assertEqual(post_processor.num_batches, 7)
+        self.assertEqual(post_processor.delta_confidence, 0.060394766844637)

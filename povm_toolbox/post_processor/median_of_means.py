@@ -30,7 +30,21 @@ from povm_toolbox.sampler import POVMPubResult
 
 
 class MedianOfMeans(POVMPostProcessor):
-    """A POVM result post-processor which uses a 'median of means' estimator.
+    r"""A POVM result post-processor which uses a 'median of means' estimator.
+
+    Given ``num_shots=num_batches*batch_size`` samples, we partition the
+    samples into ``num_batches`` batches. We compute the mean of each batch,
+    :math:`\hat{o}_j`, and then output the median of the means, :math:`\hat{o}
+    =\mathrm{median}\{\hat{o}_1, ..., \hat{o}_{\mathrm{num\_batches}}\}`.
+    It can be shown that
+
+    .. math::
+        \lvert \mathrm{Tr}[\mathcal{O} \rho] - \hat{o} \rvert \leq \epsilon
+        \quad \textrm{with probability at least } 1-\delta \, ,
+
+    where :math:`\delta = 2 \exp{(-\mathrm{num\_batches}/2)}` and :math:`\epsilon
+    = \sqrt{\frac{34}{\mathrm{batch\_size}} } \lVert \mathcal{O} - \frac{\mathrm{Tr}
+    [\mathcal{O}]}{2^N} \mathbb{I} \rVert_\textrm{shadow}`.
 
     This post-processor implementation provides a straight-forward interface for computing the
     expectation values (and standard deviations) of any Pauli-based observable. It is initialized
@@ -65,24 +79,10 @@ class MedianOfMeans(POVMPostProcessor):
         dual: BaseDual | None = None,
         *,
         num_batches: int | None = None,
-        delta_confidence: float | None = None,
+        upper_delta_confidence: float | None = None,
         seed: int | Generator | None = None,
     ) -> None:
         r"""Initialize the median-of-means post-processor.
-
-        Given ``num_shots=num_batches*batch_size`` samples, we partition the
-        samples into ``num_batches`` batches. We compute the mean of each batch,
-        :math:`\hat{o}_j`, and then output the median of the means, :math:`\hat{o}
-        =\mathrm{median}\{\hat{o}_1, ..., \hat{o}_{\mathrm{num\_batches}}\}`.
-        It can be shown that
-
-        .. math::
-            \lvert \mathrm{Tr}[\mathcal{O} \rho] - \hat{o} \rvert \leq \epsilon
-            \quad \textrm{with probability at least } 1-\delta \, ,
-
-        where :math:`\delta = 2 \exp{(-\mathrm{num\_batches}/2)}` and :math:`\epsilon
-        = \sqrt{\frac{34}{\mathrm{batch\_size}} } \lVert \mathcal{O} - \frac{\mathrm{Tr}
-        [\mathcal{O}]}{2^N} \mathbb{I} \rVert_\textrm{shadow}`.
 
         Args:
             povm_sample: a result from a POVM sampler run.
@@ -93,10 +93,12 @@ class MedianOfMeans(POVMPostProcessor):
                 :attr:`.POVMPubResult.metadata`.
             num_batches: number of batches, i.e. number of samples means, used in the median-of-means
                 estimator. This value will be overridden if a ``delta_confidence`` argument is supplied.
-            delta_confidence: the confidence parameter :math:`\delta`. It is used to determine the
-                necessary number of batches as :math:`\mathrm{num\_batches} = \lceil 2 \log{(2/\delta)}
-                \rceil`. It will override any ``num_batches`` supplied argument. If both ``num_batches``
-                and ``delta_confidence`` are ``None``, ``delta_confidence`` is set to 0.05.
+            upper_delta_confidence: an upper bound for the confidence parameter :math:`\delta` used to
+                determine the necessary number of batches as :math:`\mathrm{num\_batches} = \lceil 2
+                \log{(2/\delta)} \rceil`. It will override any ``num_batches`` supplied argument. If
+                both ``num_batches`` and ``delta_confidence`` are ``None``, ``delta_confidence`` is
+                set to 0.05. Note that this argument is actually an upper bound for the true
+                :math:`\delta`-parameter which is given by :math:`\delta=2 \exp(-\mathrm{num\_batches}/2)`.
             seed: optional seed to fix the :class:`numpy.random.Generator` used to generate the
                 batches. The user can also directly provide a random generator. If ``None``, a
                 random seed will be used.
@@ -108,10 +110,9 @@ class MedianOfMeans(POVMPostProcessor):
         """
         super().__init__(povm_sample=povm_sample, dual=dual)
 
-        if isinstance(delta_confidence, float) or num_batches is None:
-            delta_confidence = delta_confidence or 0.05
-            num_observables = 1
-            num_batches = int(np.ceil(2 * np.log(2 * num_observables / delta_confidence)))
+        if isinstance(upper_delta_confidence, float) or num_batches is None:
+            upper_delta_confidence = upper_delta_confidence or 0.05
+            num_batches = int(np.ceil(2 * np.log(2 / upper_delta_confidence)))
 
         self.num_batches: int = num_batches
         """Number of batches, i.e. number of samples means, used in the median-of-means estimator."""
@@ -128,8 +129,18 @@ class MedianOfMeans(POVMPostProcessor):
     @property
     def delta_confidence(self) -> float:
         r"""The confidence parameter :math:`\delta=2 \exp(-` ``num_batches`` :math:`/2)`."""
-        num_observables = 1
-        return float(2 * num_observables * np.exp(-0.5 * self.num_batches))
+        return float(2 * np.exp(-0.5 * self.num_batches))
+
+    @delta_confidence.setter
+    def delta_confidence(self, new_upper_delta_confidence: float):
+        r"""Set the upper bound for the confidence parameter :math:`\delta`.
+
+        It is used to determine the necessary number of batches as :math:`\mathrm{
+        num\_batches} = \lceil 2 \log{(2/\delta)} \rceil`. Then, the actual value
+        of the :math:`\delta`-parameter is given by :math:`\delta=2 \exp(-\mathrm{
+        num\_batches}/2)`.
+        """
+        self.num_batches = int(np.ceil(2 * np.log(2 / new_upper_delta_confidence)))
 
     @override
     def _single_exp_value_and_std(
@@ -171,26 +182,3 @@ class MedianOfMeans(POVMPostProcessor):
         coefficient_epsilon = float(np.sqrt(34 / batch_size))
 
         return median_of_means, coefficient_epsilon
-
-    def get_expectation_value(
-        self,
-        observable: SparsePauliOp,
-        loc: int | tuple[int, ...] | None = None,
-    ) -> tuple[np.ndarray, np.ndarray] | tuple[float, float]:
-        r"""Return the expectation value and confidence parameter of the given ``observable``.
-
-        Args:
-            observable: the observable whose expectation value is queried.
-            loc: this argument is relevant if multiple sets of parameter values were supplied to the
-                sampler in the same :class:`.POVMSamplerPub`. The index ``loc`` then corresponds to
-                the set of parameter values that was supplied to the sampler through the Pub. If
-                ``None``, the expectation value (and standard deviation) for each set of circuit
-                parameters is returned.
-
-        Returns:
-            A tuple of (estimated) expectation value(s) and pre-coefficient(s) for the confidence
-            parameter :math:`\epsilon`, that is, :math:`\sqrt{34 / \mathrm{batch\_size} }`.
-            If a single value was queried (via ``loc``), both of these will be a ``float``.
-            Otherwise, they will be instances of :class:`numpy.ndarray`.
-        """
-        return super().get_expectation_value(observable, loc)
