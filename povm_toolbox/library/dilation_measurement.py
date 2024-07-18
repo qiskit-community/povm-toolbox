@@ -39,7 +39,31 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DilationMeasurements(POVMImplementation[POVMMetadata]):
-    """TODO."""
+    """A measurement leveraging Naimark's dilation theorem.
+
+    .. note::
+        An additional ancilla qubit is required for each qubit in the system to be measured.
+
+    The example below shows how you construct a dilation POVM. It plots a visual representation of the
+    POVM's definition to exemplify the different effects' directions.
+
+    .. plot::
+       :include-source:
+
+       >>> import numpy as np
+       >>> from povm_toolbox.library import DilationMeasurements
+       >>> povm = DilationMeasurements(
+       ...     1,
+       ...     parameters=np.array(
+       ...         [0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]
+       ...     ),
+       ... )
+       >>> print(povm)
+       DilationMeasurements(num_qubits=1, parameters=array([[0.75      , 0.30408673, 0.375     , 0.40678524, 0.32509973,
+               0.25000035, 0.49999321, 0.83333313]]))
+       >>> povm.definition().draw_bloch()
+       <Figure size 500x500 with 1 Axes>
+    """
 
     def __init__(
         self,

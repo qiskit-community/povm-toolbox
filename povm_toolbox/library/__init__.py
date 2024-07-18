@@ -29,6 +29,7 @@ Below you find an overview of the implemented POVMs.
    LocallyBiasedClassicalShadows
    MutuallyUnbiasedBasesMeasurements
    RandomizedProjectiveMeasurements
+   DilationMeasurements
 
 Submodules
 ----------
@@ -41,6 +42,7 @@ Submodules
 """
 
 from .classical_shadows import ClassicalShadows
+from .dilation_measurement import DilationMeasurements
 from .locally_biased_classical_shadows import LocallyBiasedClassicalShadows
 from .mutually_unbiased_bases_measurements import MutuallyUnbiasedBasesMeasurements
 from .povm_implementation import POVMImplementation
@@ -52,4 +54,5 @@ __all__ = [
     "MutuallyUnbiasedBasesMeasurements",
     "LocallyBiasedClassicalShadows",
     "ClassicalShadows",
+    "DilationMeasurements",
 ]
