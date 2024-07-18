@@ -12,6 +12,7 @@
 
 import os
 import sys
+from importlib.metadata import version as metadata_version
 
 # The following line is required for autodoc to be able to find and import the code whose API should
 # be documented.
@@ -21,7 +22,7 @@ project = "POVM Toolbox"
 project_copyright = "2024, IBM Quantum Zurich"
 author = "IBM Quantum Zurich"
 language = "en"
-release = "0.0.0"
+release = metadata_version("povm_toolbox")
 
 html_theme = "qiskit-ecosystem"
 
@@ -49,6 +50,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "matplotlib.sphinxext.plot_directive",
     "sphinx_copybutton",
+    "reno.sphinxext",
     "nbsphinx",
     "qiskit_sphinx_theme",
     "pytest_doctestplus.sphinx.doctestplus",

@@ -48,6 +48,8 @@ This will run the following tools:
 - [`mypy`](https://mypy.readthedocs.io/en/stable/): to check our type hints
 - [`pylint`](https://pylint.readthedocs.io/en/stable/): for additional linting
   rules
+- [`typos`](https://github.com/crate-ci/typos): to avoid simple typos
+- [`reno`](https://docs.openstack.org/reno/latest/): will lint all release notes
 
 Note, that `tox` will stop as soon as the first linter fails. So after fixing
 one, be sure to re-run the linting check to see if the other tools will pass.
@@ -79,6 +81,15 @@ for example, for selecting a subset of tests to run, like so:
 tox -e py311 -- <path/to/test_file.py>
 ```
 
+### Doctest
+
+Some docstrings contain executable code examples. These can be tested via
+[`doctest`](https://docs.python.org/3/library/doctest.html), for which we also
+have a simple job script:
+```
+tox -e doctest
+```
+
 #### Coverage
 
 We strive towards complete coverage of our unittest suite. This means, we want
@@ -98,3 +109,30 @@ We also test the execution of our Jupyter notebooks using
 ```
 tox -e notebook
 ```
+
+### Documentation
+
+If you are working on the documentation, you should also check that Sphinx is
+able to build it and that all the formatting renders properly. To do so, simply
+run this:
+```
+tox -e docs
+```
+
+If you want to start from a fresh build of the documentation, simply run:
+```
+tox -e docs-clean
+```
+And then rebuild the docs.
+
+### Release Notes
+
+When contributing to the code of this repository, you should create a release
+note which documents and explains your changes. To do so, we use the
+[`reno`](https://docs.openstack.org/reno/latest/) tool.
+Simply put, you create a new release note file via:
+```
+reno new <some-descriptive-filename>
+```
+This will output the path to a release note template file which you can then
+edit and commit.

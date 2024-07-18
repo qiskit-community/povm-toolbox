@@ -2,9 +2,6 @@
 Sampler
 =======
 
-.. warning::
-   This API reference is still `under construction`.
-
 .. _povm_toolbox-sampler:
 
 .. automodule:: povm_toolbox.sampler
