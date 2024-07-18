@@ -13,7 +13,16 @@
 from unittest import TestCase
 
 import numpy as np
-from povm_toolbox.library import DilationMeasurements
+from povm_toolbox.library import (
+    DilationMeasurements,
+)
+from povm_toolbox.post_processor import POVMPostProcessor
+from povm_toolbox.sampler import POVMSampler
+from qiskit.circuit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 
 class TestDilationMeasurements(TestCase):
@@ -50,12 +59,106 @@ class TestDilationMeasurements(TestCase):
         self.assertEqual(povm.__repr__(), mub_str)
 
     def test_to_sampler_pub(self):
-        # TODO
-        return
+        """Test that the ``to_sampler_pub`` method works correctly."""
+        num_qubits = 2
+        qc = QuantumCircuit(2)
+        qc.h(0)
+
+        backend = FakeManilaV2()
+        backend.set_options(seed_simulator=self.SEED)
+        povm_sampler = POVMSampler(sampler=RuntimeSampler(mode=backend))
+
+        pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
+
+        measurement = DilationMeasurements(
+            num_qubits,
+            parameters=np.array(
+                [
+                    0.75,
+                    0.30408673,
+                    0.375,
+                    0.40678524,
+                    0.32509973,
+                    0.25000035,
+                    0.49999321,
+                    0.83333313,
+                ]
+            ),
+        )
+
+        job = povm_sampler.run([qc], shots=128, povm=measurement, pass_manager=pm)
+        pub_result = job.result()[0]
+
+        post_processor = POVMPostProcessor(pub_result)
+
+        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        exp_value, std = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, 0.718750673359952)
+        self.assertAlmostEqual(std, 0.17570770565434934)
+        observable = SparsePauliOp(["IZ"], coeffs=[1.0])
+        exp_value, std = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, 0.06250168079222992)
+        self.assertAlmostEqual(std, 0.15676579098034857)
+        observable = SparsePauliOp(["XI"], coeffs=[1.0])
+        exp_value, std = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, 0.2872616087396276)
+        self.assertAlmostEqual(std, 0.14321895257914147)
 
     def test_definition(self):
-        # TODO
-        return
+        """Test that the ``definition`` method works correctly."""
+        num_qubits = 1
+
+        # parameters defining a SIC-POVM
+        sic_parameters = np.array(
+            [[0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]]
+        )
+        # define measurement and the quantum-informational POVM
+        measurement = DilationMeasurements(num_qubits, parameters=sic_parameters)
+        povm = measurement.definition()[(0,)]
+
+        with self.subTest("Test effects"):
+            effects = np.empty((4, 2, 2), dtype=complex)
+            effects[0] = np.array(
+                [
+                    [5.00000000e-01 + 0.00000000e00j, 3.25620884e-09 - 4.42295492e-06j],
+                    [3.25620884e-09 + 4.42295492e-06j, 3.91250817e-11 - 2.67501659e-30j],
+                ]
+            )
+            effects[1] = np.array(
+                [
+                    [0.16666667 + 0.00000000e00j, 0.23570227 + 4.41719108e-06j],
+                    [0.23570227 - 4.41719108e-06j, 0.33333335 - 9.43454930e-23j],
+                ]
+            )
+            effects[2] = np.array(
+                [
+                    [0.16666666 + 0.00000000e00j, -0.11785114 - 2.04124135e-01j],
+                    [-0.11785114 + 2.04124135e-01j, 0.33333334 - 8.73465760e-18j],
+                ]
+            )
+            effects[3] = np.array(
+                [
+                    [0.16666667 + 0.00000000e00j, -0.11785113 + 2.04124140e-01j],
+                    [-0.11785113 - 2.04124140e-01j, 0.33333331 - 6.84480542e-18j],
+                ]
+            )
+            for effect, povm_operator in zip(effects, povm.operators):
+                self.assertTrue(np.allclose(povm_operator.data, effect))
+
+        with self.subTest("Test bloch vectors"):
+            bloch_vectors_check = np.array(
+                [
+                    [
+                        0.0,
+                        0.0,
+                        0.5,
+                    ],
+                    [0.47140454, 0.0, -0.16666668],
+                    [-0.23570228, 0.40824827, -0.16666668],
+                    [-0.23570226, -0.40824828, -0.16666664],
+                ]
+            )
+            self.assertTrue(np.allclose(povm.get_bloch_vectors(), bloch_vectors_check))
 
     def test_compose_circuit(self):
         # TODO
