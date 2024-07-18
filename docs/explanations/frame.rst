@@ -11,6 +11,7 @@ Frame theory and dual space
    "*Dual-frame optimization for informationally complete quantum measurements*";
    Phys. Rev. A 109, 062415;
    DOI: https://doi.org/10.1103/PhysRevA.109.062415
+
 ---------------
 POVMs as frames
 ---------------
