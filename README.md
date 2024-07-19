@@ -1,10 +1,18 @@
 # POVMs
 
-A toolbox for the implementation of positive operator-valued measures (POVMs).
+<p align="center">
+  <img src="/docs/_static/read-me-figure.jpg" height="350">
+</p>
 
-> [!WARNING]
-> This toolbox is still in development! Breaking changes to the API may be
-> introduced at any time without prior warning.
+This is a toolbox for working with positive operator-valued measures (POVMs).
+It enables users to use POVMs for sampling the state of quantum circuits (see
+also `povm_toolbox.sampler`) and compute expectation values of any observable of
+interest (see also `povm_toolbox.post_processor`).
+The toolbox includes a library of pre-defined POVMs (see `povm_toolbox.library`)
+which provide ready-to-go POVM circuit definitions. You can also implement your
+own POVM circuits by following the provided interface.
+Additionally, you can work with POVMs on a quantum-informational theoretical
+footing (see `povm_toolbox.quantum_info`).
 
 ## Installation
 
@@ -25,11 +33,6 @@ If you intend to develop on this code, you should consider reading the
 
 You can find the documentation hosted
 [here](https://qiskit-community.github.io/povm-toolbox/).
-
-> [!WARNING]
-> Since this toolbox is still in development, so is its documentation! You may
-> encounter missing information as well as sudden changes from one day to
-> another.
 
 ## Citation
 

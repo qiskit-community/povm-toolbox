@@ -8,4 +8,8 @@ This page will summarize additional explanatory content.
    :maxdepth: 1
    :glob:
 
-   *
+   introduction
+   projective_measurement
+   randomization
+   frame
+
