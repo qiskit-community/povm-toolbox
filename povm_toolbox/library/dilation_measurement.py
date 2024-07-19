@@ -39,20 +39,28 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DilationMeasurements(POVMImplementation[POVMMetadata]):
-    """A measurement leveraging Naimark's dilation theorem.
+    r"""A measurement leveraging Naimark's dilation theorem.
 
-    We use the same parametrization of the dilation POVM as the one presented in the
-    work of G. García-Pérez, M. A. Rossi, B. Sokolov, F. Tacchino, P. K. Barkoutsos,
-    G. Mazzola, I. Tavernelli, and S. Maniscalco, “*Learning to measure: adaptive
-    informationally complete generalized measurements for quantum algorithms*”, PRX
-    Quantum 2, Publisher: American Physical Society, 040342 (2021). Refer to this work
-    for a detailed explanation of the parametrization.
+    IC dilation measurements are defined on a space spanning (at least) four states: :math:`\{|0
+    \rangle,|1\rangle,|2\rangle,|3\rangle\}`. To achieve such a measurement using qubits, every
+    qubit gets paired with an ancilla qubit. Then, the dilation measurement can be constructed via
+    some two-qubit unitary followed by measurements in the computational basis. The binary outcomes
+    :math:`\{|00\rangle,|01\rangle,|10\rangle,|11\rangle\}` can then be mapped to the four states
+    above.
+
+    There are 8 degrees of freedom in the two-qubit unitary specifying the dilation measurement (for
+    each qubit). Different parametrizations of the unitaries are possible. Here, we use the same
+    parametrization of the dilation POVM as the one presented in the work of G. García-Pérez, M. A.
+    Rossi, B. Sokolov, F. Tacchino, P. K. Barkoutsos, G. Mazzola, I. Tavernelli, and S. Maniscalco,
+    “*Learning to measure: adaptive informationally complete generalized measurements for quantum
+    algorithms*”, PRX Quantum 2, Publisher: American Physical Society, 040342 (2021). Refer to this
+    work for a detailed explanation of the parametrization.
 
     .. note::
         An additional ancilla qubit is required for each qubit in the system to be measured.
 
-    The example below shows how you construct a dilation POVM. It plots a visual representation of the
-    POVM's definition to exemplify the different effects' directions.
+    The example below shows how you construct a dilation POVM. It plots a visual representation of
+    the POVM's definition to exemplify the different effects' directions.
 
     .. plot::
        :include-source:
@@ -86,7 +94,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
             num_qubits: the number of qubits.
             parameters: can be either 1D or 2D. If 1D, it should be of length 8 and contain float
                 values that specify the parametrization of the dilation POVM. If 2D, it will have
-                a new set of parameters for each qubit.
+                a new set of parameters for each qubit. The 8 values fix all the degrees of freedom.
             measurement_layout: optional list of indices specifying on which qubits the POVM acts.
                 See :attr:`.measurement_layout` for more details.
             insert_barriers: whether to insert a barrier between the composed circuits. This is not
