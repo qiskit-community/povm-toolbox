@@ -116,7 +116,7 @@ class TestPostProcessor(TestCase):
             self.assertAlmostEqual(std, 2.3563572213988917)
         with self.subTest("Test with specified ``loc`` argument."):
             observable = SparsePauliOp(["IZ", "XX", "ZY"], coeffs=[-0.5, 1, -2])
-            exp_val, std = post_processor.get_expectation_value(observable, 0)
+            exp_val, std = post_processor.get_expectation_value(observable, loc=0)
             self.assertAlmostEqual(exp_val, -1.6406249999999998)
             self.assertAlmostEqual(std, 1.3442744428582185)
         with self.subTest("Test with default ``loc`` for parametrized circuit."):
@@ -163,6 +163,6 @@ class TestPostProcessor(TestCase):
         """Test that the ``_single_exp_value_and_std`` method works correctly."""
         observable = SparsePauliOp(["ZX", "XZ", "YY"], coeffs=[1.2, 2, -3])
         post_processor = POVMPostProcessor(self.pub_result)
-        exp_val, std = post_processor._single_exp_value_and_std(observable, 0)
+        exp_val, std = post_processor._single_exp_value_and_std(observable, loc=0)
         self.assertAlmostEqual(exp_val, 6.862499999999998)
         self.assertAlmostEqual(std, 1.9438371907630394)
