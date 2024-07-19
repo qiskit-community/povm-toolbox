@@ -41,8 +41,8 @@ LOGGER = logging.getLogger(__name__)
 class DilationMeasurements(POVMImplementation[POVMMetadata]):
     r"""A measurement leveraging Naimark's dilation theorem.
 
-    IC dilation measurements are defined on a space spanning (at least) four states: :math:`\{|0
-    \rangle,|1\rangle,|2\rangle,|3\rangle\}`. To achieve such a measurement using qubits, every
+    IC dilation measurements are defined on a space spanning (at least) four states: e.g. :math:`\{
+    |0\rangle,|1\rangle,|2\rangle,|3\rangle\}`. To achieve such a measurement using qubits, every
     qubit gets paired with an ancilla qubit. Then, the dilation measurement can be constructed via
     some two-qubit unitary followed by measurements in the computational basis. The binary outcomes
     :math:`\{|00\rangle,|01\rangle,|10\rangle,|11\rangle\}` can then be mapped to the four states
