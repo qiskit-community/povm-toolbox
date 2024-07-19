@@ -376,6 +376,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         self,
         bit_array: BitArray,
         povm_metadata: RPMMetadata,
+        *,
         loc: int | tuple[int, ...] | None = None,
     ) -> list[tuple[int, ...]]:
         t1 = time.time()

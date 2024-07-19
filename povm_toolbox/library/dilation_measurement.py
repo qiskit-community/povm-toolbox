@@ -41,6 +41,13 @@ LOGGER = logging.getLogger(__name__)
 class DilationMeasurements(POVMImplementation[POVMMetadata]):
     """A measurement leveraging Naimark's dilation theorem.
 
+    We use the same parametrization of the dilation POVM as the one presented in the
+    work of G. García-Pérez, M. A. Rossi, B. Sokolov, F. Tacchino, P. K. Barkoutsos,
+    G. Mazzola, I. Tavernelli, and S. Maniscalco, “*Learning to measure: adaptive
+    informationally complete generalized measurements for quantum algorithms*”, PRX
+    Quantum 2, Publisher: American Physical Society, 040342 (2021). Refer to this work
+    for a detailed explanation of the parametrization.
+
     .. note::
         An additional ancilla qubit is required for each qubit in the system to be measured.
 
@@ -73,13 +80,6 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
     ) -> None:
         """Initialize a dilation POVM.
-
-        We use the same parametrization of the dilation POVM as the one presented in the
-        work of G. García-Pérez, M. A. Rossi, B. Sokolov, F. Tacchino, P. K. Barkoutsos,
-        G. Mazzola, I. Tavernelli, and S. Maniscalco, “*Learning to measure: adaptive
-        informationally complete generalized measurements for quantum algorithms*”, PRX
-        Quantum 2, Publisher: American Physical Society, 040342 (2021). Refer to this work
-        for a detailed explanation of the parametrization.
 
         Args:
             num_qubits: the number of qubits.
@@ -116,7 +116,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         self.measurement_circuit = self._build_qc()
 
     def __repr__(self) -> str:
-        """Return the string representation of a RandomizedProjectiveMeasurements instance."""
+        """Return the string representation of a DilationMeasurements instance."""
         return f"{self.__class__.__name__}(num_qubits={self.num_qubits}, parameters={self._parameters!r})"
 
     @override
@@ -128,7 +128,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
             unitary = self._unitary_from_parameters(self._parameters[i])
             # In qiskit the order of qubits is reversed. Here we re-order it such that the
             # unitary is defined on the Hilbert space `H_q \otimes H_a`` (where "q" stands
-            # for the system qubit and "a" for th ancilla qubit). In this way we can extract
+            # for the system qubit and "a" for the ancilla qubit). In this way we can extract
             # the correct POVM effects.
             unitary[:, [1, 2]] = unitary[:, [2, 1]]
             unitary[[1, 2]] = unitary[[2, 1]]
@@ -184,7 +184,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
 
         .. warning::
            The number of qubits in the input circuit may be increased due to the ancilla
-           qubits qubits required for dilatation measurements.
+           qubits required for dilatation measurements.
 
         Args:
             circuit: A quantum circuit.
@@ -229,6 +229,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         self,
         bit_array: BitArray,
         povm_metadata: POVMMetadata,
+        *,
         loc: int | tuple[int, ...] | None = None,
     ) -> list[tuple[int, ...]]:
         t1 = time.time()
@@ -254,10 +255,10 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
 
         Args:
             bitstring_outcome: the raw outcome of the measurement. The order of
-            qubit is assumed to be reversed. More specifically, the first
-            :attr:`.num_qubits` bits will correspond to the ancilla qubit (in
-            reverse order) and the last :attr:`.num_qubits` bits will correspond
-            to the qubit to measure (in reverse order).
+                qubit is assumed to be reversed. More specifically, the first
+                :attr:`.num_qubits` bits will correspond to the ancilla qubit
+                (in reverse order) and the last :attr:`.num_qubits` bits will
+                correspond to the qubit to measure (in reverse order).
 
         Returns:
             A tuple of indices indicating the POVM outcomes on each qubit. For each qubit,
@@ -271,24 +272,24 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
             )
         )
 
-    def _unitary_from_parameters(self, param: np.ndarray):
+    def _unitary_from_parameters(self, parameters: np.ndarray) -> np.ndarray:
         """Construct the unitary defining the dilation POVM from parameters.
 
-        We use the same parametrization of the dilation POVM as the one presented in the
-        work of G. García-Pérez, M. A. Rossi, B. Sokolov, F. Tacchino, P. K. Barkoutsos,
-        G. Mazzola, I. Tavernelli, and S. Maniscalco, “*Learning to measure: adaptive
-        informationally complete generalized measurements for quantum algorithms*”, PRX
-        Quantum 2, Publisher: American Physical Society, 040342 (2021). Refer to this work
-        for a detailed explanation of the parametrization.
+        Args:
+            parameters: 1D array of length 8. It should contains float values
+                that specify the parametrization of the unitary.
+
+        Returns:
+            The resulting untiary.
         """
         num_outcomes = 4
         u = np.zeros((num_outcomes, num_outcomes), dtype=complex)
 
         # construct the first column of the unitary
-        u[:, 0] = n_sphere(param[:3])
+        u[:, 0] = n_sphere(parameters[:3])
         u_gs = gram_schmidt(u)
 
-        x = n_sphere(param[3:])
+        x = n_sphere(parameters[3:])
         # construct the second column of the unitary
         for i in range(len(x) // 2):
             u[:, 1] += (x[2 * i] + x[2 * i + 1] * 1j) * u_gs[:, 1 + i]
