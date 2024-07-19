@@ -135,11 +135,15 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         # TODO: is it the right place to coerce the ``SamplerPub`` ? Or should
         # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
 
-    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
+    def compose_circuits(
+        self, circuit: QuantumCircuit, *, insert_barriers: bool = False
+    ) -> QuantumCircuit:
         """Compose the circuit to sample from, with the measurement circuit.
 
         Args:
             circuit: The quantum circuit to be sampled from.
+            insert_barriers: Whether to insert a barrier between the composed circuits. This is not
+                done by default but can prove useful when visualizing the composed circuit.
 
         Returns:
             The composition of the supplied quantum circuit with the :attr:`.measurement_circuit` of
@@ -182,6 +186,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 " change the name of the register of the supplied circuit or of the"
                 " POVM implementation."
             ) from exc
+
+        if insert_barriers:
+            dest_circuit.barrier()
 
         # Compose the two circuits with the correct routing.
         ret = dest_circuit.compose(

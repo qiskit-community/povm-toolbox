@@ -19,7 +19,7 @@ from qiskit.converters import circuit_to_dag
 from qiskit.primitives import StatevectorSampler
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.transpiler import PassManager
-from qiskit.transpiler.passes import ApplyLayout, SetLayout
+from qiskit.transpiler.passes import ApplyLayout, RemoveBarriers, SetLayout
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 
@@ -178,3 +178,13 @@ class TestPOVMImplementation(TestCase):
             # validate outcome
             expected = {"10": 43, "11": 85}
             self.assertEqual(result.get_counts(), expected)
+
+        with self.subTest("Test the insert_barriers optin"):
+            pvm = ClassicalShadows(3, seed=self.SEED)
+
+            composed_circuit = pvm.compose_circuits(self.circuit)
+            composed_circuit_with_barrier = pvm.compose_circuits(self.circuit, insert_barriers=True)
+
+            pm = PassManager([RemoveBarriers()])
+
+            self.assertEqual(composed_circuit, pm.run(composed_circuit_with_barrier))
