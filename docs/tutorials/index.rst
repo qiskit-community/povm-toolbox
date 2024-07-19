@@ -11,5 +11,4 @@ This page will summarize the available tutorials.
    povm_sampler_pub
    parametrized_circuit
    randomized_measurements
-   dilation_measurements
 

@@ -8,4 +8,9 @@ This page will summarize the available how-to guides.
    :maxdepth: 1
    :glob:
 
-   *
+   visualization
+   layout
+   job_recovery
+   dual_optimizer
+   dilation_measurements
+
