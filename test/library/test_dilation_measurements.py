@@ -64,12 +64,15 @@ class TestDilationMeasurements(TestCase):
         num_qubits = 2
         qc = QuantumCircuit(2)
         qc.h(0)
+        qc.h(1)
 
         backend = FakeManilaV2()
         backend.set_options(seed_simulator=self.SEED)
         povm_sampler = POVMSampler(sampler=RuntimeSampler(mode=backend))
 
-        pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
+        pm = generate_preset_pass_manager(
+            optimization_level=2, backend=backend, seed_transpiler=self.SEED
+        )
 
         measurement = DilationMeasurements(
             num_qubits,
@@ -94,16 +97,16 @@ class TestDilationMeasurements(TestCase):
 
         observable = SparsePauliOp(["ZI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.718750673359952)
-        self.assertAlmostEqual(std, 0.17570770565434934)
+        self.assertAlmostEqual(exp_value, 0.09375100309506113)
+        self.assertAlmostEqual(std, 0.15820620317705336)
         observable = SparsePauliOp(["IZ"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.06250168079222992)
-        self.assertAlmostEqual(std, 0.15676579098034857)
+        self.assertAlmostEqual(exp_value, 0.06250168079223002)
+        self.assertAlmostEqual(std, 0.15676579098034854)
         observable = SparsePauliOp(["XI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.2872616087396276)
-        self.assertAlmostEqual(std, 0.14321895257914147)
+        self.assertAlmostEqual(exp_value, 1.0275137444747091)
+        self.assertAlmostEqual(std, 0.1612840231061351)
 
     def test_definition(self):
         """Test that the ``definition`` method works correctly."""
@@ -235,3 +238,9 @@ class TestDilationMeasurements(TestCase):
             exp_value, std = post_processor.get_expectation_value(observable)
             self.assertAlmostEqual(exp_value, 2.0517605907028327)
             self.assertAlmostEqual(std, 1.1158789520748584)
+        with self.subTest("Error when measuring idling qubits.") and self.assertRaises(ValueError):
+            qc = QuantumCircuit(3)
+            qc.h(0)
+            qc.cx(0, 1)
+            measurement.measurement_layout = [0, 2]
+            _ = povm_sampler.run([qc], shots=32, povm=measurement)

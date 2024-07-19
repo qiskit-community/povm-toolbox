@@ -56,7 +56,6 @@ class TestUtilities(TestCase):
         """Test the ``n_sphere`` utility function."""
         angles = np.array([0.3, 0.9, 0.1])
         unit_vector = n_sphere(angles)
-        print(unit_vector)
         self.assertTrue(
             np.allclose(unit_vector, np.array([0.58778525, -0.76942088, 0.20225425, 0.14694631]))
         )
