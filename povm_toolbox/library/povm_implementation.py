@@ -143,7 +143,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         # TODO: is it the right place to coerce the ``SamplerPub`` ? Or should
         # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
 
-    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
+    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:  # noqa: PLR0912
         """Compose the circuit to sample from, with the measurement circuit.
 
         If the measurement circuit requires some ancilla qubits, this method will inspect the input

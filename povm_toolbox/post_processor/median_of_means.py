@@ -143,7 +143,7 @@ class MedianOfMeans(POVMPostProcessor):
 
     @override
     def _single_exp_value_and_std(
-        self, observable: SparsePauliOp, loc: int | tuple[int, ...]
+        self, observable: SparsePauliOp, *, loc: int | tuple[int, ...]
     ) -> tuple[float, float]:
         count = self.counts[loc]
         shots = sum(count.values())
