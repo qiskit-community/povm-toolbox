@@ -16,11 +16,13 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections import Counter
+from copy import copy
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
-from qiskit.circuit import QuantumCircuit
+from qiskit.circuit import AncillaRegister, QuantumCircuit
 from qiskit.circuit.exceptions import CircuitError
+from qiskit.converters import circuit_to_dag
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
@@ -144,8 +146,20 @@ class POVMImplementation(ABC, Generic[MetadataT]):
     def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
         """Compose the circuit to sample from, with the measurement circuit.
 
+        If the measurement circuit requires some ancilla qubits, this method will inspect the input
+        circuit. If the input circuit has some idling qubits available, they will be used as ancilla
+        measurement qubits. If not enough idling qubits are available, this method will add the
+        necessary number of qubits to the input circuit before composing it with the measurement
+        circuit.
+
         Args:
             circuit: The quantum circuit to be sampled from.
+
+        Raises:
+            ValueError: if the number of qubits specified by `self.measurement_layout` does not
+                match the number of qubits on which this POVM implementation acts.
+            CircuitError: if an error has occurred when adding the classic register, used to save
+                POVM results, to the input circuit.
 
         Returns:
             The composition of the supplied quantum circuit with the :attr:`.measurement_circuit` of
@@ -172,10 +186,39 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         # applicable) matches the number of qubits of the POVM implementation.
         if self.num_qubits != len(index_layout):
             raise ValueError(
-                f"The supplied circuit (acting on {len(index_layout)} qubits)"
-                " does not match this POVM implementation which acts on"
-                f" {self.num_qubits} qubits."
+                f"The supplied measurement layout (specifying {len(index_layout)} qubits) does not"
+                f" match this POVM implementation which acts on {self.num_qubits} qubits."
             )
+
+        # Check if the measurement circuit requires some ancilla qubits
+        if self.measurement_circuit.num_qubits > self.num_qubits:
+            index_layout = copy(index_layout)
+            # Get idle qubits in supplied circuit (to be used as ancilla for measurement circuit)
+            idle_qubits = list(circuit_to_dag(dest_circuit).idle_wires())
+            # Get the indices of the idle qubits
+            idle_index = [dest_circuit.qubits.index(qubit) for qubit in idle_qubits]
+            # Remove the idle qubits that will be measured (as specified by index_layout)
+            idle_index = [idx for idx in idle_index if idx not in index_layout]
+            idle_index.sort()
+
+            # If exactly enough idle qubits available, we use all of them
+            if self.num_qubits + len(idle_index) == self.measurement_circuit.num_qubits:
+                index_layout += idle_index
+            # If not enough idle qubits are available, we add some ancilla qubits
+            elif self.num_qubits + len(idle_index) < self.measurement_circuit.num_qubits:
+                index_layout += idle_index
+                ancilla_register = AncillaRegister(
+                    self.measurement_circuit.num_qubits - len(index_layout),
+                    name="measurement_ancilla",
+                )
+                ancilla_layout = list(
+                    range(dest_circuit.num_qubits, dest_circuit.num_qubits + ancilla_register.size)
+                )
+                index_layout += ancilla_layout
+                dest_circuit.add_register(ancilla_register)
+            # If more than enough idle qubits are available, we pick only the necessary number
+            else:
+                index_layout += idle_index[: self.measurement_circuit.num_qubits - self.num_qubits]
 
         try:
             dest_circuit.add_register(*self.measurement_circuit.cregs)
@@ -235,6 +278,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         self,
         bit_array: BitArray,
         povm_metadata: MetadataT,
+        *,
         loc: int | tuple[int, ...] | None = None,
     ) -> list[tuple[int, ...]]:
         """Convert the raw bitstrings into POVM outcomes based on the associated metadata.
@@ -268,7 +312,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array = self._get_bitarray(data)
 
         if loc is not None:
-            return Counter(self._povm_outcomes(bit_array, povm_metadata, loc))
+            return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
 
         if bit_array.ndim == 0:
             return np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object)
@@ -276,7 +320,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         shape = bit_array.shape
         outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
         for idx in np.ndindex(shape):
-            outcomes_array[idx] = Counter(self._povm_outcomes(bit_array, povm_metadata, idx))
+            outcomes_array[idx] = Counter(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
         return outcomes_array
 
     def get_povm_outcomes_from_raw(
@@ -299,10 +343,10 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array = self._get_bitarray(data)
 
         if loc is not None or bit_array.ndim == 0:
-            return self._povm_outcomes(bit_array, povm_metadata, loc)
+            return self._povm_outcomes(bit_array, povm_metadata, loc=loc)
 
         shape = bit_array.shape
         outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
         for idx in np.ndindex(shape):
-            outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, idx)
+            outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, loc=idx)
         return outcomes_array

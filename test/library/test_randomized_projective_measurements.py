@@ -336,7 +336,7 @@ class TestRandomizedPMs(TestCase):
             measurement._get_pvm_bindings_array(pvm_idx=np.zeros(10))
 
     def test_definition(self):
-        """Test that errors in ``_get_pvm_bindings_array`` methods are raised correctly."""
+        """Test that the ``definition`` method works correctly."""
         rng = default_rng()
         num_qubits = 1
         num_pvms = 5

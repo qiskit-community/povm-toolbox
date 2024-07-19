@@ -142,6 +142,7 @@ class POVMPostProcessor:
     def get_expectation_value(
         self,
         observable: SparsePauliOp,
+        *,
         loc: int | tuple[int, ...] | None = None,
     ) -> tuple[np.ndarray, np.ndarray] | tuple[float, float]:
         """Return the expectation value and standard deviation of the given ``observable``.
@@ -160,19 +161,20 @@ class POVMPostProcessor:
             instances of :class:`numpy.ndarray`.
         """
         if loc is not None:
-            return self._single_exp_value_and_std(observable, loc)
+            return self._single_exp_value_and_std(observable, loc=loc)
         if self.counts.shape == (1,):
-            return self._single_exp_value_and_std(observable, 0)
+            return self._single_exp_value_and_std(observable, loc=0)
 
         exp_val = np.zeros(shape=self.counts.shape, dtype=float)
         std = np.zeros(shape=self.counts.shape, dtype=float)
         for idx in np.ndindex(self.counts.shape):
-            exp_val[idx], std[idx] = self._single_exp_value_and_std(observable, idx)
+            exp_val[idx], std[idx] = self._single_exp_value_and_std(observable, loc=idx)
         return exp_val, std
 
     def _single_exp_value_and_std(
         self,
         observable: SparsePauliOp,
+        *,
         loc: int | tuple[int, ...],
     ) -> tuple[float, float]:
         """Return the expectation value and standard deviation of the given ``observable``.

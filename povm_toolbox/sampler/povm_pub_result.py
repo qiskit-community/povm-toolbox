@@ -50,7 +50,7 @@ class POVMPubResult(PubResult):
         """
         return self._metadata  # type:ignore
 
-    def get_counts(self, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
+    def get_counts(self, *, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
         """Get the histogram data of the result.
 
         This method will leverage :meth:`~.POVMImplementation.get_povm_counts_from_raw` from the
@@ -74,7 +74,7 @@ class POVMPubResult(PubResult):
         )
 
     def get_samples(
-        self, loc: int | tuple[int, ...] | None = None
+        self, *, loc: int | tuple[int, ...] | None = None
     ) -> np.ndarray | list[tuple[int, ...]]:
         """Get the individual POVM outcomes of the result.
 

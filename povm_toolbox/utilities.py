@@ -50,3 +50,40 @@ def double_ket_to_matrix(op_ket: np.ndarray) -> np.ndarray:
     """
     dim = int(np.sqrt(len(op_ket)))
     return op_ket.reshape((dim, dim), order="F")
+
+
+# Gram-Schmidt
+def gram_schmidt(vectors: np.ndarray) -> np.ndarray:
+    """Transform ``vectors`` into an orthonormal basis (ONB) through the Gram-Schmidt process.
+
+    Args:
+        vectors: set of vectors to transform into an ONB.
+
+    Returns:
+        The resulting orthonormal basis.
+    """
+    Q, _ = np.linalg.qr(vectors)
+    return Q
+
+
+# Unit vector on n-sphere
+def n_sphere(angles: np.ndarray) -> np.ndarray:
+    """Return a unit vector on the :math:`n`-sphere.
+
+    Args:
+        angles: set of normalized angles defining the unit vector.
+
+    Returns:
+        The resulting unit vector.
+    """
+    # dimension of the sphere
+    n = len(angles)
+    # initialize the unit vector
+    unit_vector = np.ones(n + 1)
+    for i in range(n - 1):
+        unit_vector[i] *= np.cos(np.pi * angles[i])
+        unit_vector[i + 1 :] *= np.sin(np.pi * angles[i])
+    unit_vector[-2] *= np.cos(2 * np.pi * angles[-1])
+    unit_vector[-1] *= np.sin(2 * np.pi * angles[-1])
+
+    return unit_vector
