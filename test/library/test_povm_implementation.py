@@ -181,9 +181,12 @@ class TestPOVMImplementation(TestCase):
 
         with self.subTest("Test the insert_barriers option"):
             pvm = ClassicalShadows(3, seed=self.SEED)
-
             composed_circuit = pvm.compose_circuits(self.circuit)
-            composed_circuit_with_barrier = pvm.compose_circuits(self.circuit, insert_barriers=True)
+            composed_circuit.assign_parameters([0, 0, 0, 0, 0, 0], inplace=True)
+
+            pvm_barriers = ClassicalShadows(3, seed=self.SEED, insert_barriers=True)
+            composed_circuit_with_barrier = pvm_barriers.compose_circuits(self.circuit)
+            composed_circuit_with_barrier.assign_parameters([0, 0, 0, 0, 0, 0], inplace=True)
 
             pm = PassManager([RemoveBarriers()])
 
