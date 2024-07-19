@@ -179,7 +179,7 @@ class TestPOVMImplementation(TestCase):
             expected = {"10": 43, "11": 85}
             self.assertEqual(result.get_counts(), expected)
 
-        with self.subTest("Test the insert_barriers optin"):
+        with self.subTest("Test the insert_barriers option"):
             pvm = ClassicalShadows(3, seed=self.SEED)
 
             composed_circuit = pvm.compose_circuits(self.circuit)
