@@ -58,6 +58,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         num_qubits: int,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
+        insert_barriers: bool = False,
     ) -> None:
         """Initialize the POVMImplementation.
 
@@ -65,9 +66,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             num_qubits: number of logical qubits in the system.
             measurement_layout: optional list of indices specifying on which qubits the POVM acts.
                 See :attr:`.measurement_layout` for more details.
+            insert_barriers: whether to insert a barrier between the composed circuits. This is not
+                done by default but can prove useful when visualizing the composed circuit.
         """
-        super().__init__()
-
         self.num_qubits: int = num_qubits
         """The number of logical qubits in the system."""
 
@@ -79,6 +80,11 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         1. if a circuit supplied to the :meth:`.compose_circuits` has been transpiled, its final
            transpile layout will be used as default value,
         2. otherwise, a simple one-to-one layout ``list(range(num_qubits))`` is used.
+        """
+
+        self.insert_barriers: bool = insert_barriers
+        """Whether to insert a barrier between the original circuit and the measurement circuit
+        produced by this POVM implementation.
         """
 
         self.measurement_circuit: QuantumCircuit
@@ -135,15 +141,11 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         # TODO: is it the right place to coerce the ``SamplerPub`` ? Or should
         # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
 
-    def compose_circuits(
-        self, circuit: QuantumCircuit, *, insert_barriers: bool = False
-    ) -> QuantumCircuit:
+    def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
         """Compose the circuit to sample from, with the measurement circuit.
 
         Args:
             circuit: The quantum circuit to be sampled from.
-            insert_barriers: Whether to insert a barrier between the composed circuits. This is not
-                done by default but can prove useful when visualizing the composed circuit.
 
         Returns:
             The composition of the supplied quantum circuit with the :attr:`.measurement_circuit` of
@@ -187,7 +189,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 " POVM implementation."
             ) from exc
 
-        if insert_barriers:
+        if self.insert_barriers:
             dest_circuit.barrier()
 
         # Compose the two circuits with the correct routing.
