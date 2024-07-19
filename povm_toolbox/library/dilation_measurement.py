@@ -126,7 +126,10 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         sq_povms = []
         for i in range(self.num_qubits):
             unitary = self._unitary_from_parameters(self._parameters[i])
-            # TODO: explain the switch of second and third columns/rows
+            # In qiskit the order of qubits is reversed. Here we re-order it such that the
+            # unitary is defined on the Hilbert space `H_q \otimes H_a`` (where "q" stands
+            # for the system qubit and "a" for th ancilla qubit). In this way we can extract
+            # the correct POVM effects.
             unitary[:, [1, 2]] = unitary[:, [2, 1]]
             unitary[[1, 2]] = unitary[[2, 1]]
             sq_povms.append(SingleQubitPOVM.from_vectors(unitary[:, 0::2].conj()))
