@@ -238,9 +238,3 @@ class TestDilationMeasurements(TestCase):
             exp_value, std = post_processor.get_expectation_value(observable)
             self.assertAlmostEqual(exp_value, 2.0517605907028327)
             self.assertAlmostEqual(std, 1.1158789520748584)
-        with self.subTest("Error when measuring idling qubits.") and self.assertRaises(ValueError):
-            qc = QuantumCircuit(3)
-            qc.h(0)
-            qc.cx(0, 1)
-            measurement.measurement_layout = [0, 2]
-            _ = povm_sampler.run([qc], shots=32, povm=measurement)

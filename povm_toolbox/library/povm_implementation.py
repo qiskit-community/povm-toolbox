@@ -156,8 +156,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             circuit: The quantum circuit to be sampled from.
 
         Raises:
-            ValueError: if one of the qubits specified by ``self.measurement_layout`` is an idling
-                qubit.
+            ValueError: if the number of qubits specified by `self.measurement_layout` does not
+                match the number of qubits on which this POVM implementation acts.
             CircuitError: if an error has occurred when adding the classic register, used to save
                 POVM results, to the input circuit.
 
@@ -186,9 +186,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         # applicable) matches the number of qubits of the POVM implementation.
         if self.num_qubits != len(index_layout):
             raise ValueError(
-                f"The supplied circuit (acting on {len(index_layout)} qubits)"
-                " does not match this POVM implementation which acts on"
-                f" {self.num_qubits} qubits."
+                f"The supplied measurement layout (specifying {len(index_layout)} qubits) does not"
+                f" match this POVM implementation which acts on {self.num_qubits} qubits."
             )
 
         # Check if the measurement circuit requires some ancilla qubits
@@ -198,14 +197,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             idle_qubits = list(circuit_to_dag(dest_circuit).idle_wires())
             # Get the indices of the idle qubits
             idle_index = [dest_circuit.qubits.index(qubit) for qubit in idle_qubits]
-
-            # Raise an error if some idle qubits are to be measured (as specified by index_layout)
-            if any(idx in index_layout for idx in idle_index):
-                raise ValueError(
-                    "At least one of the qubits specified by ``self.measurement_layout`` is an"
-                    " idling qubit."
-                )
-
+            # Remove the idle qubits that will be measured (as specified by index_layout)
+            idle_index = [idx for idx in idle_index if idx not in index_layout]
             idle_index.sort()
 
             # If exactly enough idle qubits available, we use all of them
