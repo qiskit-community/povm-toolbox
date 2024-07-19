@@ -58,6 +58,8 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
 
     .. note::
         An additional ancilla qubit is required for each qubit in the system to be measured.
+        Depending on the qubit connectivity the coupling of the measured qubit with its ancilla can
+        introduce a significant overhead of SWAP gates.
 
     The example below shows how you construct a dilation POVM. It plots a visual representation of
     the POVM's definition to exemplify the different effects' directions.
