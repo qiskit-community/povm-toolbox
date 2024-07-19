@@ -71,6 +71,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         parameters: np.ndarray,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
+        insert_barriers: bool = False,
     ) -> None:
         """Initialize a dilation POVM.
 
@@ -88,12 +89,16 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
                 a new set of parameters for each qubit.
             measurement_layout: optional list of indices specifying on which qubits the POVM acts.
                 See :attr:`.measurement_layout` for more details.
+            insert_barriers: whether to insert a barrier between the composed circuits. This is not
+                done by default but can prove useful when visualizing the composed circuit.
 
         Raises:
             ValueError: if the last dimension of ``parameters`` is not of length 8.
             ValueError: if the shape of ``parameters`` is not valid.
         """
-        super().__init__(num_qubits, measurement_layout=measurement_layout)
+        super().__init__(
+            num_qubits, measurement_layout=measurement_layout, insert_barriers=insert_barriers
+        )
 
         if parameters.shape[-1] != 8:
             raise ValueError(
