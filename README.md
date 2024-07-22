@@ -1,8 +1,6 @@
 # POVMs
 
-<p align="center">
-  <img src="/docs/_static/read-me-figure.jpg" height="350">
-</p>
+![overview](https://raw.githubusercontent.com/qiskit-community/povm-toolbox/main/docs/_static/read-me-figure.jpg)
 
 This is a toolbox for working with positive operator-valued measures (POVMs).
 It enables users to use POVMs for sampling the state of quantum circuits (see
