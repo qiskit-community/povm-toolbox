@@ -25,16 +25,28 @@ In this documentation you can find a number of resources including:
 Installation
 ------------
 
+Make sure that you have the correct Python environment active, into which you
+want to install this code, before running the below.
+
 You can install this code via pip:
+
+.. code-block:: bash
+
+   pip install povm-toolbox
+
+Alternatively, you can install it from source:
 
 .. code-block:: bash
 
    git clone git@github.com:qiskit-community/povm-toolbox.git
    cd povm-toolbox
-   pip install .
+   pip install -e .
 
-Make sure that you have the correct Python environment active, into which you
-want to install this code, before running the above.
+This performs an editable install to simplify code development.
+
+If you intend to develop on this code, you should consider reading the
+`contributing guide <https://github.com/qiskit-community/povm-toolbox/blob/main/CONTRIBUTING.md>`_.
+
 
 Citation
 --------
