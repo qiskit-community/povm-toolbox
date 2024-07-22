@@ -39,11 +39,29 @@ class TestProductPOVM(TestCase):
         self.Y0 = np.outer(basis_plus_i, basis_plus_i.conj())
         self.Y1 = np.outer(basis_minus_i, basis_minus_i.conj())
 
-    # TODO
-    def test_random_operators(self):
-        """Test"""
-        if True:
-            self.assertTrue(True)
+    def test_invalid_operators(self):
+        """Test that errors are correctly raised if invalid operators are supplied."""
+        # create two valid POVMs
+        mq_povm1 = MultiQubitPOVM([Operator(np.eye(2))])
+        mq_povm2 = MultiQubitPOVM([Operator(np.eye(2))])
+        with self.subTest("Non Hermitian operators") and self.assertRaises(ValueError):
+            ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
+            while np.abs(ops[0, 0, 0].imag) < 1e-6:
+                ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(
+                    -1, 1, (6, 2, 2)
+                )
+            # artificially make the 2nd povm invalid and bypass the private `check_validity` method
+            mq_povm2._operators = [Operator(op) for op in ops]
+            _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
+        with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
+            op = np.array([[-0.5, 0], [0, 0]])
+            # artificially make the 2nd povm invalid and bypass the private `check_validity` method
+            mq_povm2._operators = [Operator(op), Operator(np.eye(2) - op)]
+            _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
+        with self.subTest("Operators not summing up to identity") and self.assertRaises(ValueError):
+            # artificially make the 2nd povm invalid and bypass the private `check_validity` method
+            mq_povm2._operators = [0.9 * Operator.from_label("0"), Operator.from_label("1")]
+            _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
 
     def test_init(self):
         """Test the ``__init__`` method."""
