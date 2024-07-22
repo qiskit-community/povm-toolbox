@@ -79,6 +79,10 @@ docs = [
     "reno>=4.1",
     "pytest-doctestplus>=1.2.1",
 ]
+[project.urls]
+"Documentation" = "https://qiskit-community.github.io/povm-toolbox/"
+"Changelog" = "https://qiskit-community.github.io/povm-toolbox/release-notes.html"
+"Repository" = "https://github.com/qiskit-community/povm-toolbox"
 
 [tool.coverage.run]
 branch = true
