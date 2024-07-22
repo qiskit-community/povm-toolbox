@@ -137,11 +137,6 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             :class:`.POVMImplementation` object itself. The metadata should contain all the
             information necessary to extract the POVM outcomes out of raw bitstrings.
         """
-        # TODO: figure out if it would be better to pass these arguments as a
-        #    ``SamplerPubLike`` object or even as a ``SamplerPub`` object.
-
-        # TODO: is it the right place to coerce the ``SamplerPub`` ? Or should
-        # just return a ``SamplerPubLike`` object that the SamplerV2 will coerce?
 
     def compose_circuits(self, circuit: QuantumCircuit) -> QuantumCircuit:
         """Compose the circuit to sample from, with the measurement circuit.
