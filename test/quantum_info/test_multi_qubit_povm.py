@@ -34,7 +34,7 @@ class TestMultiQubitPOVM(TestCase):
         with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
             op = np.array([[-0.5, 0], [0, 0]])
             _ = MultiQubitPOVM(list_operators=[Operator(op), Operator(np.eye(2) - op)])
-        with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
+        with self.subTest("Operators not summing up to identity") and self.assertRaises(ValueError):
             _ = MultiQubitPOVM(
                 list_operators=[0.9 * Operator.from_label("0"), Operator.from_label("1")]
             )
