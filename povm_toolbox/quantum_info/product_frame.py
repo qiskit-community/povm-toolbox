@@ -325,13 +325,14 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     def _tensor_product(
         self, indices: list[tuple[int, ...]]
     ) -> tuple[tuple[int, ...], list[Operator]]:
-        """TODO.
+        """Explicitly construct the tensor product of some local frames.
 
         Args:
-            indices: TODO.
+            indices: list of tuples specifying the local frames whose operators are to be tensor-
+                multiplied.
 
         Returns:
-            TODO.
+            List of tensor product operators.
         """
         joint_ops = [op for op in self[indices[0]].operators]
         new_tuple = indices[0]
@@ -344,14 +345,18 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             new_tuple += system_idx
         return new_tuple, joint_ops
 
-    def _to_joint_form(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
-        """TODO.
+    def _group(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
+        """Group some local frames together into a single multi-qubit frame representation.
 
         Args:
-            partition: TODO.
+            partition: partition of product frame, where all local frames are grouped into different
+                subsets. Each such subset is specified as a list of integer tuples, each of which
+                specifies a local frame. All local frames in a given subset are grouped together and
+                then represented by a single multi-qubit frame (we lose track of the product
+                structure within the set).
 
         Returns:
-            TODO.
+            A new ``ProductFrame`` instance representing ``self`` as specified by ``partition``.
         """
         # TODO: check that ``partition`` is indeed a partition (exhaustive and mutually exclusive)
         frames = {}
