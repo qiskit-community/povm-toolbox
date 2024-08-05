@@ -321,3 +321,41 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         if isinstance(frame_op_idx, tuple):
             return self._trace_of_prod(hermitian_op, frame_op_idx)
         raise TypeError("Wrong type for ``frame_op_idx``.")
+
+    def _tensor_product(
+        self, indices: list[tuple[int, ...]]
+    ) -> tuple[tuple[int, ...], list[Operator]]:
+        """TODO.
+
+        Args:
+            indices: TODO.
+
+        Returns:
+            TODO.
+        """
+        joint_ops = [op for op in self[indices[0]].operators]
+        new_tuple = indices[0]
+        for system_idx in indices[1:]:
+            new_ops = []
+            for left_op in joint_ops:
+                for right_op in self[system_idx].operators:
+                    new_ops.append(left_op.tensor(right_op))
+            joint_ops = new_ops
+            new_tuple += system_idx
+        return new_tuple, joint_ops
+
+    def _to_joint_form(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
+        """TODO.
+
+        Args:
+            partition: TODO.
+
+        Returns:
+            TODO.
+        """
+        # TODO: check that ``partition`` is indeed a partition (exhaustive and mutually exclusive)
+        frames = {}
+        for set_indices in partition:
+            idx, joint_ops = self._tensor_product(set_indices)
+            frames[idx] = MultiQubitFrame(joint_ops)
+        return ProductFrame(frames=frames)
