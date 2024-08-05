@@ -22,7 +22,7 @@ else:
     from typing import override  # pragma: no cover
 
 import numpy as np
-from qiskit.circuit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit.circuit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.bit_array import BitArray
@@ -168,13 +168,15 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         t1 = time.time()
         LOGGER.info("Building POVM circuit")
 
-        qr = QuantumRegister(2 * self.num_qubits, name="povm_qr")
+        qr = QuantumRegister(self.num_qubits, name="povm_qr")
+        ar = AncillaRegister(self.num_qubits, name="povm_ancillas")
         cr = ClassicalRegister(2 * self.num_qubits, name=self.classical_register_name)
-        qc = QuantumCircuit(qr, cr, name="measurement_circuit")
+        qc = QuantumCircuit(qr, ar, cr, name="measurement_circuit")
         for i in range(self.num_qubits):
             qc.unitary(self._unitary_from_parameters(self._parameters[i]), [i, i + self.num_qubits])
 
-        qc.measure(qr, cr)
+        qc.measure(qr, cr[: self.num_qubits])
+        qc.measure(ar, cr[self.num_qubits :])
 
         t2 = time.time()
         LOGGER.info(f"Finished circuit construction. Took {t2 - t1:.6f}s")
