@@ -332,18 +332,18 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 multiplied.
 
         Returns:
-            List of tensor product operators.
+            The subsystem index and the list of tensor product operators which act upon it.
         """
-        joint_ops = [op for op in self[indices[0]].operators]
-        new_tuple = indices[0]
-        for system_idx in indices[1:]:
-            new_ops = []
-            for left_op in joint_ops:
-                for right_op in self[system_idx].operators:
-                    new_ops.append(left_op.tensor(right_op))
-            joint_ops = new_ops
-            new_tuple += system_idx
-        return new_tuple, joint_ops
+        joint_operators = [op for op in self[indices[0]].operators]
+        new_subsystem_idx = indices[0]
+        for subsystem_idx in indices[1:]:
+            new_operators = []
+            for left_operator in joint_operators:
+                for right_operator in self[subsystem_idx].operators:
+                    new_operators.append(left_operator.tensor(right_operator))
+            joint_operators = new_operators
+            new_subsystem_idx += subsystem_idx
+        return new_subsystem_idx, joint_operators
 
     def _group(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
         """Group some local frames together into a single multi-qubit frame representation.
@@ -357,10 +357,33 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         Returns:
             A new ``ProductFrame`` instance representing ``self`` as specified by ``partition``.
+
+        Raises:
+            ValueError: if a subset contains twice the same index.
+            ValueError: if an index is in two different subsets.
+            ValueError: if ``partition`` does not exactly cover all subsystems.
         """
-        # TODO: check that ``partition`` is indeed a partition (exhaustive and mutually exclusive)
+        # Check that ``partition`` is indeed a partition:
+        subsystem_indices = set()
+        for subset in partition:
+            if len(subset) != len(set(subset)):
+                raise ValueError(
+                    "A subsystem index must not be specified more than once in a subset. However,"
+                    f" the subset {subset} has duplicate elements."
+                )
+            if any(i in subsystem_indices for i in subset):
+                raise ValueError(
+                    "The subsets specifying the partition must be mutually exclusive. However, at"
+                    f" least one of the indices in '{subset}' was already encountered before."
+                )
+            subsystem_indices.update(set(subset))
+        if subsystem_indices != set(self._frames.keys()):
+            raise ValueError(
+                "The partition must cover exactly all the subsystems. However, this condition is"
+                f" not fulfilled by {partition}."
+            )
         frames = {}
         for set_indices in partition:
-            idx, joint_ops = self._tensor_product(set_indices)
-            frames[idx] = MultiQubitFrame(joint_ops)
+            idx, joint_operators = self._tensor_product(set_indices)
+            frames[idx] = MultiQubitFrame(joint_operators)
         return ProductFrame(frames=frames)
