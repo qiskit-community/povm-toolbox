@@ -345,7 +345,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             new_subsystem_idx += subsystem_idx
         return new_subsystem_idx, joint_operators
 
-    def _group(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
+    def group(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
         """Group some local frames together into a single multi-qubit frame representation.
 
         Args:
