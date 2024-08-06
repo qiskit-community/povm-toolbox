@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "povm_toolbox"
 version = "0.2.0"
 readme = "README.md"
+description = "A toolbox for the implementation of positive operator-valued measures (POVMs)."
 license = {file = "LICENSE.txt"}
 
 classifiers = [
