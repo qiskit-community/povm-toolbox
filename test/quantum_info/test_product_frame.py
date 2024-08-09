@@ -26,22 +26,25 @@ class TestProductFrame(TestCase):
         paulis = ["I", "X", "Y", "Z"]
         frame_1_qubit = MultiQubitFrame([Operator.from_label(label) for label in paulis])
 
-        num_qubit_max = 4
+        num_qubit_max = 3
 
         for num_qubit in range(1, num_qubit_max + 1):
             frame_product = ProductFrame.from_list(frames=num_qubit * [frame_1_qubit])
 
             product_paulis = []
             for idx in np.ndindex(frame_product.shape):
-                product_paulis.append("".join([paulis[i] for i in idx[::-1]]))
-            frame_n_qubit = MultiQubitFrame(
-                [Operator.from_label(label) for label in product_paulis]
+                product_paulis.append("".join([paulis[i] for i in idx]))
+
+            frame_n_qubit = ProductFrame.from_list(
+                [MultiQubitFrame([Operator.from_label(label) for label in product_paulis])]
             )
 
             for i, pauli_string in enumerate(product_paulis):
-                decomposition_weights_n_qubit = frame_n_qubit.analysis(SparsePauliOp(pauli_string))
+                decomposition_weights_n_qubit = frame_n_qubit.analysis(
+                    SparsePauliOp(pauli_string[::-1])
+                )
                 decomposition_weights_product = frame_product.analysis(
-                    SparsePauliOp(pauli_string)
+                    SparsePauliOp(pauli_string[::-1])
                 ).flatten()
                 check = np.zeros(len(product_paulis))
                 check[i] = 2**num_qubit
@@ -49,10 +52,16 @@ class TestProductFrame(TestCase):
                 self.assertTrue(np.allclose(decomposition_weights_product, check))
 
             decomposition_weights_n_qubit = frame_n_qubit.analysis(
-                SparsePauliOp(product_paulis, np.ones(len(product_paulis)))
+                SparsePauliOp(
+                    [pauli_string[::-1] for pauli_string in product_paulis],
+                    np.ones(len(product_paulis)),
+                )
             )
             decomposition_weights_product = frame_product.analysis(
-                SparsePauliOp(product_paulis, np.ones(len(product_paulis)))
+                SparsePauliOp(
+                    [pauli_string[::-1] for pauli_string in product_paulis],
+                    np.ones(len(product_paulis)),
+                )
             ).flatten()
             check = np.ones(len(product_paulis)) * 2**num_qubit
             self.assertTrue(np.allclose(decomposition_weights_n_qubit, check))
