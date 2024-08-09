@@ -48,10 +48,15 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
     @override
     @classmethod
     def build_dual_from_frame(
-        cls, frame: BaseFrame, alphas: tuple[tuple[float, ...] | None, ...] | None = None
+        cls,
+        frame: BaseFrame,
+        alphas: tuple[tuple[float, ...] | None, ...] | None = None,
+        indices_grouping: list[list[tuple[int, ...]]] | None = None,
     ) -> ProductDual:
         dual_operators = {}
         if isinstance(frame, ProductFrame):
+            if indices_grouping is not None:
+                frame = frame.group(partition=indices_grouping)
             if alphas is None:
                 alphas = len(frame.sub_systems) * (None,)
             elif len(alphas) != len(frame.sub_systems):
