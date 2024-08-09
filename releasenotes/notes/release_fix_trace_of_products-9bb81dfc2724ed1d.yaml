@@ -1,9 +1,6 @@
 ---
 fixes:
   - |
-    Fixing a bug in the ``ProductFrame._trace_of_prod`` method. 
-    This method computes the trace of the product of two operators.
-    It requires at some point the value of ``Tr[(P_N)^2]`` where ``P_N`` is an ``N``-qubit Pauli string. 
-    The correct value of this trace is ``2^N`` but was previously set to ``2*N``. 
-    This release fixes this issue.
-    Note that this issue was only impacting ``MultiQubitFrame`` for ``num_qubit>=3`` or product of such frames.
+    Fixes a bug in the :meth:`.ProductFrame.analysis` method occurring for :class:`.MultiQubitFrame` instances
+    with ``num_qubits>2``. This bug affected the outcome of other methods such as
+    :meth:`.BasePOVM.get_prob` and :meth:`.BaseDual.get_omegas`.
