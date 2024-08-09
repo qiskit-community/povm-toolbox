@@ -31,7 +31,7 @@ dependencies = [
     "qiskit>=1.0",
     "qiskit-ibm-runtime>=0.24",
     "qiskit-aer>=0.14",
-    "matplotlib",
+    "matplotlib!=3.9.1.post1",
 ]
 
 [project.optional-dependencies]

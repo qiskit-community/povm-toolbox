@@ -273,8 +273,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                     raise exc
                 else:
                     # If the label does exist, we multiply the coefficient into our summand.
-                    # The factor 2*N_qubit comes from Tr[(P_1...P_N)^2] = 2*N.
-                    summand *= coeff * 2 * povm.num_subsystems
+                    # The factor 2^N_qubit comes from Tr[(P_1...P_N)^2] = 2^N.
+                    summand *= coeff * 2**povm.num_subsystems
 
             # Once we have finished computing our summand, we add it into ``p_init``.
             p_idx += summand
