@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixes a bug in the :meth:`.ProductFrame.analysis` method occurring for :class:`.MultiQubitFrame` instances
+    with ``num_qubits>2``. This bug affected the outcome of other methods such as
+    :meth:`.BasePOVM.get_prob` and :meth:`.BaseDual.get_omegas`.
