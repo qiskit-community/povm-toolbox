@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "povm_toolbox"
 version = "0.2.0"
 readme = "README.md"
+description = "A toolbox for the implementation of positive operator-valued measures (POVMs)."
 license = {file = "LICENSE.txt"}
 
 classifiers = [
@@ -30,7 +31,7 @@ dependencies = [
     "qiskit>=1.0",
     "qiskit-ibm-runtime>=0.24",
     "qiskit-aer>=0.14",
-    "matplotlib",
+    "matplotlib!=3.9.1.post1",
 ]
 
 [project.optional-dependencies]
