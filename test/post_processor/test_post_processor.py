@@ -166,3 +166,24 @@ class TestPostProcessor(TestCase):
         exp_val, std = post_processor._single_exp_value_and_std(observable, loc=0)
         self.assertAlmostEqual(exp_val, 6.862499999999998)
         self.assertAlmostEqual(std, 1.9438371907630394)
+
+    def test_catch_zero_division(self):
+        """Test that the ``_single_exp_value_and_std`` method catches a zero division gracefully."""
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.cx(0, 1)
+
+        povm_sampler = POVMSampler(sampler=Sampler(seed=self.SEED))
+
+        # NOTE: the test case here is not really sensible because setting shots=1 would only be done
+        # if one has another set of circuit parameters, but for this simple test it suffices
+        job = povm_sampler.run([qc], shots=1, povm=self.measurement)
+        result = job.result()
+
+        observable = SparsePauliOp(["ZX", "XZ", "YY"], coeffs=[1.2, 2, -3])
+        post_processor = POVMPostProcessor(result[0])
+
+        exp_val, std = post_processor._single_exp_value_and_std(observable, loc=0)
+
+        self.assertAlmostEqual(exp_val, 0.0)
+        self.assertTrue(np.isnan(std))

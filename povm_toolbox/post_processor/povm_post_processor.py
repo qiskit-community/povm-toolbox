@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, cast
 
 import numpy as np
@@ -19,6 +20,8 @@ from qiskit.quantum_info import SparsePauliOp
 
 from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
 from povm_toolbox.sampler import POVMPubResult
+
+LOGGER = logging.getLogger(__name__)
 
 
 class POVMPostProcessor:
@@ -206,6 +209,13 @@ class POVMPostProcessor:
         exp_val /= shots
         std /= shots
 
-        std = float(np.sqrt((std - exp_val**2) / (shots - 1)))
+        try:
+            std = float(np.sqrt((std - exp_val**2) / (shots - 1)))
+        except ZeroDivisionError:
+            LOGGER.info(
+                "Encountered a division by zero, due to `shots` being 1. Cannot compute a standard "
+                "deviation in this case."
+            )
+            std = float("NaN")
 
         return exp_val, std
