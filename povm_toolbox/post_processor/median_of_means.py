@@ -86,9 +86,9 @@ class MedianOfMeans(POVMPostProcessor):
             povm_sample: a result from a POVM sampler run.
             dual: the Dual frame that will be used to obtain the decomposition weights of an
                 observable when computing its expectation value. For more details, refer to
-                :meth:`get_decomposition_weights`. When this is ``None``, the canonical Dual frame
-                will be constructed from the POVM stored in the ``povm_sample``'s
-                :attr:`.POVMPubResult.metadata`.
+                :meth:`get_decomposition_weights`. When this is ``None``, the default
+                "state-average" Dual frame will be constructed from the POVM stored in the
+                ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
             num_batches: number of batches, i.e. number of samples means, used in the median-of-means
                 estimator. This value will be overridden if a ``delta_confidence`` argument is supplied.
             upper_delta_confidence: an upper bound for the confidence parameter :math:`\delta` used to
