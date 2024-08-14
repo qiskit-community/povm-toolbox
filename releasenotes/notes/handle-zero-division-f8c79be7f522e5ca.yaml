@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    When ``shots=1``, the :meth:`.POVMPostProcessor.get_expectation_value` would
+    fail with a ``ZeroDivisionError``. This case is now handled gracefully by
+    returning ``float("NaN")`` for the standard deviation.
