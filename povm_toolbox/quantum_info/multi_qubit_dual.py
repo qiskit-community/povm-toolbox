@@ -21,6 +21,7 @@ else:
 
 import numpy as np
 from qiskit.quantum_info import Operator
+from scipy.linalg import orth
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
@@ -38,7 +39,17 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
     @override
     def is_dual_to(self, frame: BaseFrame) -> bool:
         if isinstance(frame, MultiQubitFrame):
-            return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
+            check_matrix = frame @ np.conj(self).T
+            # TODO: more efficient way of getting the rank (avoid doing SVD twice)
+            rank = np.linalg.matrix_rank(frame)
+            if not frame.informationally_complete:
+                # compute the projectors onto the support of the frame:
+                orthogonal_projectors = orth(frame)
+                check_matrix = (
+                    np.conj(orthogonal_projectors).T @ check_matrix @ orthogonal_projectors
+                )
+            # check if ``self`` is dual to ``frame`` on its support:
+            return np.allclose(check_matrix, np.eye(rank), atol=1e-6)
         raise NotImplementedError
 
     @override
@@ -64,8 +75,11 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
             # Compute the weighed frame super-operator.
             superop = frame @ diag_trace @ np.conj(frame).T
 
-            # Solve the linear system to find the dual operators.
-            dual_operators_array = np.linalg.solve(
+            # Solve the linear system to find the dual operators. If ``frame`` is IC, then
+            # ``superop`` will be full rank and invertible. If ``frame`` is not IC, then ``superop``
+            # will not be full rank and we use the Moore-Penrose inverse to determine the dual
+            # operators on the support of ``frame``.
+            dual_operators_array, _, _, _ = np.linalg.lstsq(
                 superop,
                 frame @ diag_trace,
             )
