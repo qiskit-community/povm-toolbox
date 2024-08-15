@@ -70,18 +70,27 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
                     " parameters were provided."
                 )
 
+            # TODO: explain
+            frame_array = np.array(frame)
+            dual_operators_array = np.zeros(frame_array.shape, dtype=complex)
+            mask = np.array(
+                [not np.allclose(np.zeros(len(frame_op)), frame_op) for frame_op in frame_array.T],
+                dtype=bool,
+            )
+            frame_array = frame_array[:, mask]
+
             # Set the weighting matrix according to the alpha-parameters
-            diag_trace = np.diag([1.0 / alpha for alpha in alphas])
+            diag_trace = np.diag(1.0 / (np.array(alphas)[mask]))
             # Compute the weighed frame super-operator.
-            superop = frame @ diag_trace @ np.conj(frame).T
+            superop = frame_array @ diag_trace @ np.conj(frame_array).T
 
             # Solve the linear system to find the dual operators. If ``frame`` is IC, then
             # ``superop`` will be full rank and invertible. If ``frame`` is not IC, then ``superop``
             # will not be full rank and we use the Moore-Penrose inverse to determine the dual
             # operators on the support of ``frame``.
-            dual_operators_array, _, _, _ = np.linalg.lstsq(
+            dual_operators_array[:, mask], _, _, _ = np.linalg.lstsq(
                 superop,
-                frame @ diag_trace,
+                frame_array @ diag_trace,
             )
             # Convert dual operators from double-ket to operator representation.
             dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
