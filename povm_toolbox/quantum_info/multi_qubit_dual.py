@@ -70,18 +70,24 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
                     " parameters were provided."
                 )
 
-            # TODO: explain
+            # Check if some of the primal frame operators are null. This could happen for instance
+            # for locally-biased classical shadows if someone is only interested to measure in the
+            # `Z` and `X` bases and therefore sets the `bias` of the `Y` basis to zero. We keep the
+            # null operators to preserve the indexing of the operators which might follow a
+            # convention, as it is the case for classical shadows. If a primal frame operator is
+            # null, its corresponding dual frame operator will also be null.
             frame_array = np.array(frame)
             dual_operators_array = np.zeros(frame_array.shape, dtype=complex)
             mask = np.array(
                 [not np.allclose(np.zeros(len(frame_op)), frame_op) for frame_op in frame_array.T],
                 dtype=bool,
             )
+            # Temporarily remove the null operators to determine the non-null dual frame operators.
             frame_array = frame_array[:, mask]
 
-            # Set the weighting matrix according to the alpha-parameters
+            # Set the weighting matrix according to the alpha-parameters.
             diag_trace = np.diag(1.0 / (np.array(alphas)[mask]))
-            # Compute the weighed frame super-operator.
+            # Compute the weighted frame super-operator.
             superop = frame_array @ diag_trace @ np.conj(frame_array).T
 
             # Solve the linear system to find the dual operators. If ``frame`` is IC, then
