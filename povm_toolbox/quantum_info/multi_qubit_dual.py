@@ -40,15 +40,15 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
     def is_dual_to(self, frame: BaseFrame) -> bool:
         if isinstance(frame, MultiQubitFrame):
             check_matrix = frame @ np.conj(self).T
-            if not frame.informationally_complete:
+            if frame.informationally_complete:
+                rank = frame.dimension**2
+            else:
                 # compute the projectors onto the support of the frame:
                 orthogonal_projectors = orth(frame)
                 rank = orthogonal_projectors.shape[1]
                 check_matrix = (
                     np.conj(orthogonal_projectors).T @ check_matrix @ orthogonal_projectors
                 )
-            else:
-                rank = frame.dimension**2
             # check if ``self`` is dual to ``frame`` on its support:
             return np.allclose(check_matrix, np.eye(rank), atol=1e-6)
         raise NotImplementedError
