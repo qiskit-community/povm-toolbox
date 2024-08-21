@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "povm_toolbox"
-version = "0.1.1"
+version = "0.1.2"
 readme = "README.md"
 description = "A toolbox for the implementation of positive operator-valued measures (POVMs)."
 license = {file = "LICENSE.txt"}
