@@ -15,15 +15,15 @@ from pathlib import Path
 from unittest import TestCase
 
 import pytest
+from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
 from qiskit import QuantumCircuit, qpy
-from qiskit.primitives import PrimitiveResult
+from qiskit.primitives import PrimitiveResult, StatevectorSampler
 from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_aer.primitives import SamplerV2 as AerSampler
 from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
 from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
@@ -36,7 +36,8 @@ class TestPOVMSamplerJob(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.sampler = AerSampler(seed=self.SEED)
+        rng = default_rng(self.SEED)
+        self.sampler = StatevectorSampler(seed=rng)
 
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
