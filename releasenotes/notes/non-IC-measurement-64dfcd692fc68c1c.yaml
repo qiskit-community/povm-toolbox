@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    The toolbox now allows the use of non-IC measurements. This is useful, for example, if the
+    observables to be estimated are known to consist solely of pauli X and Z (then no Y measurements
+    are needed).
+
+    By making this change, we now use the :func:`numpy.linalg.lstsq` method to determine
+    the dual frame (i.e. the reconstruction operators) as opposed to the :func:`numpy.linalg.solve`
+    method used previously, which only worked for IC measurements.

@@ -369,3 +369,42 @@ class TestRandomizedPMs(TestCase):
                 effect = bias[0, i_pvm] * np.outer(vec, vec.conj())
                 # check that the circuit implements the correct POVM effect
                 self.assertTrue(np.allclose(effect, povm[(0,)][2 * i_pvm + k].data))
+
+    def test_non_ic_measurement(self):
+        """Test the implementation of a RPM that is not IC."""
+
+        qc = QuantumCircuit(1)
+        qc.u(0.4, -0.1, 0.1, qubit=0)
+
+        measurement = RandomizedProjectiveMeasurements(
+            num_qubits=1,
+            angles=np.array([0.0, 0.0, np.pi / 2, np.pi / 2]),
+            bias=np.array([0.5, 0.5]),
+            seed=self.SEED,
+        )
+
+        with self.subTest("Test that the POVM is not IC."):
+            self.assertFalse(measurement.definition().informationally_complete)
+
+        sampler = StatevectorSampler(seed=self.SEED)
+        povm_sampler = POVMSampler(sampler=sampler)
+
+        job = povm_sampler.run([qc], shots=32, povm=measurement)
+        pub_result = job.result()[0]
+
+        post_processor = POVMPostProcessor(pub_result)
+
+        with self.subTest("Test the dual frame."):
+            self.assertTrue(post_processor.dual.is_dual_to(measurement.definition()))
+
+        with self.subTest("Test with compatible observable."):
+            observable = SparsePauliOp(["Z"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 1.4999999999999993)
+            self.assertAlmostEqual(std, 0.1555427542095637)
+
+        with self.subTest("Test with incompatible observable."):
+            observable = SparsePauliOp(["X"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 0.0)
+            self.assertAlmostEqual(std, 0.0)
