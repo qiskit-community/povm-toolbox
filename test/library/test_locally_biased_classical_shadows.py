@@ -13,6 +13,7 @@
 from unittest import TestCase
 
 import numpy as np
+from numpy.random import default_rng
 from povm_toolbox.library import LocallyBiasedClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
@@ -56,7 +57,7 @@ class TestRandomizedPMs(TestCase):
                 bias=np.array([0.2, 0.3, 0.5]),
                 seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.SEED)
+            sampler = StatevectorSampler(seed=default_rng(self.SEED))
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=32, povm=measurement)
@@ -79,7 +80,7 @@ class TestRandomizedPMs(TestCase):
                 bias=np.array([[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]]),
                 seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.SEED)
+            sampler = StatevectorSampler(seed=default_rng(self.SEED))
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=32, povm=measurement)
@@ -137,7 +138,7 @@ class TestRandomizedPMs(TestCase):
         with self.subTest("Test that the POVM is not IC."):
             self.assertFalse(measurement.definition().informationally_complete)
 
-        sampler = StatevectorSampler(seed=self.SEED)
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
         povm_sampler = POVMSampler(sampler=sampler)
 
         job = povm_sampler.run([qc], shots=32, povm=measurement)
@@ -151,7 +152,7 @@ class TestRandomizedPMs(TestCase):
         with self.subTest("Test with compatible observable."):
             observable = SparsePauliOp(["ZZ"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -0.6249999999999992)
+            self.assertAlmostEqual(exp_value, 0.6249999999999993)
             self.assertAlmostEqual(std, 0.4347552147751572)
 
         with self.subTest("Test with incompatible observable."):
