@@ -26,7 +26,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
-from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 
 class TestPOVMSamplerJob(TestCase):
@@ -92,7 +92,7 @@ class TestPOVMSamplerJob(TestCase):
         qc.h(0)
         qc.cx(0, 1)
 
-        backend = FakeSherbrooke()
+        backend = FakeManilaV2()
         backend.set_options(seed_simulator=self.SEED)
         pm = generate_preset_pass_manager(
             optimization_level=2, backend=backend, seed_transpiler=self.SEED
