@@ -33,7 +33,7 @@ from povm_toolbox.utilities import matrix_to_double_ket
 from .base import BaseFrame
 
 
-class MultiQubitFrame(BaseFrame[int]):
+class MultiQubitFrame(BaseFrame):
     """Class that collects all information that any frame of multiple qubits should specify.
 
     This is a representation of an operator-valued vector space frame. The effects are specified as
@@ -45,12 +45,15 @@ class MultiQubitFrame(BaseFrame[int]):
        for more general information.
     """
 
-    def __init__(self, list_operators: list[Operator]) -> None:
+    def __init__(
+        self, list_operators: list[Operator], shape: tuple[int, ...] | None = None
+    ) -> None:
         """Initialize from explicit operators.
 
         Args:
             list_operators: list that contains the explicit frame operators. The length of the list
                 is the number of operators of the frame.
+            shape: TODO.
 
 
         Raises:
@@ -63,6 +66,8 @@ class MultiQubitFrame(BaseFrame[int]):
         self._pauli_operators: list[dict[str, complex]] | None
         self._array: np.ndarray
         self._informationally_complete: bool
+
+        self._shape = shape
 
         self.operators = list_operators
 
