@@ -195,5 +195,6 @@ notice-rgx = """
 
 [tool.typos.default.extend-words]
 arange = "arange"
+aer = "aer"
 IY = "IY"
 ket = "ket"
