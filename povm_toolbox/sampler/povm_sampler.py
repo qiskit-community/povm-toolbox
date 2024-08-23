@@ -42,11 +42,12 @@ class POVMSampler:
     >>> from povm_toolbox.sampler import POVMSampler
     >>> from qiskit.circuit import QuantumCircuit
     >>> from qiskit.primitives import StatevectorSampler
+    >>> from numpy.random import default_rng
     >>> circ = QuantumCircuit(2)
     >>> _ = circ.h(0)
     >>> _ = circ.cx(0, 1)
     >>> povm = ClassicalShadows(2, seed=42)
-    >>> sampler = StatevectorSampler(seed=42)
+    >>> sampler = StatevectorSampler(seed=default_rng(42))
     >>> povm_sampler = POVMSampler(sampler)
     >>> job = povm_sampler.run([circ], povm=povm, shots=16)
     >>> result = job.result()

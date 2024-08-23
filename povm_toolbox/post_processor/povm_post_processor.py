@@ -37,17 +37,18 @@ class POVMPostProcessor:
     >>> from qiskit.circuit import QuantumCircuit
     >>> from qiskit.primitives import StatevectorSampler
     >>> from qiskit.quantum_info import SparsePauliOp
+    >>> from numpy.random import default_rng
     >>> circ = QuantumCircuit(2)
     >>> _ = circ.h(0)
     >>> _ = circ.cx(0, 1)
     >>> povm = ClassicalShadows(2, seed=42)
-    >>> sampler = StatevectorSampler(seed=42)
+    >>> sampler = StatevectorSampler(seed=default_rng(42))
     >>> povm_sampler = POVMSampler(sampler)
     >>> job = povm_sampler.run([circ], povm=povm, shots=16)
     >>> result = job.result()
     >>> post_processor = POVMPostProcessor(result[0])
     >>> post_processor.get_expectation_value(SparsePauliOp("ZI"))  # doctest: +FLOAT_CMP
-    (-0.75, 0.33541019662496846)
+    (-2.7755575615628914e-17, 0.3872983346207416)
 
     Additionally, this post-processor also supports the customization of the Dual frame in which the
     decomposition weights of the provided observable are obtained. Check out
