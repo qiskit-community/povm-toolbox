@@ -1,5 +1,0 @@
----
-other:
-  - |
-    We removed the use of `qiskit-aer` from our unittests and from "how-to" notebooks. As a result,
-    `qiskit-aer` has been removed from the list of `povm-toolbox` dependencies.
