@@ -22,7 +22,7 @@ from qiskit.visualization.utils import matplotlib_close_if_inline
 from .multi_qubit_povm import MultiQubitPOVM
 
 
-class SingleQubitPOVM(MultiQubitPOVM):
+class SingleQubitPOVM(MultiQubitPOVM[int]):
     """A convenience class to represent a single-qubit :class:`.MultiQubitPOVM` instance.
 
     Below is a simple example showing how you define a symmetric and informationally-complete POVM
@@ -100,13 +100,13 @@ class SingleQubitPOVM(MultiQubitPOVM):
             ValueError: if any effect of this POVM has a rank greater than 1.
         """
         r = np.empty((self.num_outcomes, 3))
-        for i, pauli_op in enumerate(self.pauli_operators):
+        for i, (key, pauli_op) in enumerate(self.pauli_operators.items()):
             # Check that the povm effect is rank-1:
-            if np.linalg.matrix_rank(self.operators[i]) > 1:
+            if np.linalg.matrix_rank(self.operators[key]) > 1:
                 raise ValueError(
                     "Bloch vector is only well-defined for single-qubit rank-1"
                     f" POVMs. However, the effect number {i} of this POVM has"
-                    f" rank {np.linalg.matrix_rank(self.operators[i])}."
+                    f" rank {np.linalg.matrix_rank(self.operators[key])}."
                 )
             r[i, 0] = 2 * np.real_if_close(pauli_op.get("X", 0))
             r[i, 1] = 2 * np.real_if_close(pauli_op.get("Y", 0))

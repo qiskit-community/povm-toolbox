@@ -42,7 +42,7 @@ class TestSingleQubitPovm(TestCase):
         sqpovm = SingleQubitPOVM.from_vectors(V)
 
         summed = defaultdict(complex)
-        for pauli_op in sqpovm.pauli_operators:
+        for pauli_op in sqpovm.pauli_operators.values():
             for pauli, coeff in pauli_op.items():
                 summed[pauli] += coeff
 

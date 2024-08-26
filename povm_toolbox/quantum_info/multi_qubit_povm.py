@@ -16,12 +16,12 @@ import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-from .base import BasePOVM
+from .base import BasePOVM, LabelT
 from .multi_qubit_dual import MultiQubitDual
 from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
+class MultiQubitPOVM(MultiQubitFrame[LabelT], BasePOVM):
     """Class that collects all information that any POVM over multiple qubits should specify.
 
     This is a representation of a positive operator-valued measure (POVM). The effects are
@@ -55,13 +55,13 @@ class MultiQubitPOVM(MultiQubitFrame, BasePOVM):
         """
         summed_op: np.ndarray = np.zeros((self.dimension, self.dimension), dtype=complex)
 
-        for k, op in enumerate(self.operators):
+        for key, op in self.operators.items():
             if not np.allclose(op, op.adjoint(), atol=1e-5):
-                raise ValueError(f"POVM operator {k} is not hermitian.")
+                raise ValueError(f'POVM operator "{key}" is not hermitian.')
 
             for eigval in np.linalg.eigvalsh(op.data):
                 if eigval.real < -1e-6 or np.abs(eigval.imag) > 1e-5:
-                    raise ValueError(f"Negative eigenvalue {eigval} in POVM operator {k}.")
+                    raise ValueError(f'Negative eigenvalue {eigval} in POVM operator "{key}".')
 
             summed_op += op.data
 

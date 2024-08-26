@@ -30,10 +30,10 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 from povm_toolbox.utilities import matrix_to_double_ket
 
-from .base import BaseFrame
+from .base import BaseFrame, LabelT
 
 
-class MultiQubitFrame(BaseFrame):
+class MultiQubitFrame(BaseFrame[LabelT]):
     """Class that collects all information that any frame of multiple qubits should specify.
 
     This is a representation of an operator-valued vector space frame. The effects are specified as
@@ -45,9 +45,7 @@ class MultiQubitFrame(BaseFrame):
        for more general information.
     """
 
-    def __init__(
-        self, list_operators: list[Operator], shape: tuple[int, ...] | None = None
-    ) -> None:
+    def __init__(self, list_operators: dict[LabelT, Operator] | list[Operator]) -> None:
         """Initialize from explicit operators.
 
         Args:
@@ -62,14 +60,22 @@ class MultiQubitFrame(BaseFrame):
         """
         self._num_operators: int
         self._dimension: int
-        self._operators: list[Operator]
-        self._pauli_operators: list[dict[str, complex]] | None
+        self._operators: dict[LabelT, Operator]
+        self._pauli_operators: dict[LabelT, dict[str, complex]] | None
         self._array: np.ndarray
         self._informationally_complete: bool
 
-        self._shape = shape
+        if isinstance(list_operators, list):
+            operators = {
+                key: op
+                for key, op in zip(
+                    range(len(list_operators)),
+                    list_operators,
+                )
+            }
+            list_operators = operators  # type: ignore
 
-        self.operators = list_operators
+        self.operators = list_operators  # type: ignore
 
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.MultiQubitFrame` instance."""
@@ -92,16 +98,17 @@ class MultiQubitFrame(BaseFrame):
         return self._num_operators
 
     @property
-    def operators(self) -> list[Operator]:
+    def operators(self) -> dict[LabelT, Operator]:
         """Return the list of frame operators."""
         return self._operators
 
     @operators.setter
-    def operators(self, new_operators: list[Operator]):
+    def operators(self, new_operators: dict[LabelT, Operator]):
         """Set the frame operators."""
+        new_operators = dict(sorted(new_operators.items()))
         self._num_operators = len(new_operators)
-        self._dimension = new_operators[0].dim[0]
-        for frame_op in new_operators:
+        self._dimension = next(iter(new_operators.values())).dim[0]
+        for frame_op in new_operators.values():
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
                 raise ValueError(
                     f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and "
@@ -113,7 +120,7 @@ class MultiQubitFrame(BaseFrame):
         self._pauli_operators = None
 
         self._array = np.ndarray((self.dimension**2, self.num_operators), dtype=complex)
-        for k, frame_op in enumerate(new_operators):
+        for k, frame_op in enumerate(new_operators.values()):
             self._array[:, k] = matrix_to_double_ket(frame_op.data)
 
         self._informationally_complete = bool(
@@ -123,7 +130,7 @@ class MultiQubitFrame(BaseFrame):
         self._check_validity()
 
     @property
-    def pauli_operators(self) -> list[dict[str, complex]]:
+    def pauli_operators(self) -> dict[LabelT, dict[str, complex]]:
         """Convert the internal frame operators to Pauli form.
 
         .. warning::
@@ -139,9 +146,10 @@ class MultiQubitFrame(BaseFrame):
         """
         if self._pauli_operators is None:
             try:
-                self._pauli_operators = [
-                    dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.operators
-                ]
+                self._pauli_operators = {
+                    key: dict(SparsePauliOp.from_operator(op).label_iter())
+                    for key, op in self.operators.items()
+                }
             except QiskitError as exc:
                 raise QiskitError(
                     f"Failed to convert frame operators to Pauli form: {exc.message}"
@@ -154,11 +162,11 @@ class MultiQubitFrame(BaseFrame):
         Raises:
             ValueError: if any one of the frame operators is not hermitian.
         """
-        for k, op in enumerate(self.operators):
+        for key, op in self.operators.items():
             if not np.allclose(op, op.adjoint(), atol=1e-5):
-                raise ValueError(f"The {k}-the frame operator is not hermitian.")
+                raise ValueError(f'The frame operator "{key}" is not hermitian.')
 
-    def __getitem__(self, index: slice) -> Operator | list[Operator]:
+    def __getitem__(self, index: LabelT) -> Operator:
         """Return a frame operator or a list of frame operators.
 
         Args:
@@ -184,24 +192,25 @@ class MultiQubitFrame(BaseFrame):
     def analysis(
         self,
         hermitian_op: SparsePauliOp | Operator,
-        frame_op_idx: int | set[int] | None = None,
-    ) -> float | dict[int, float] | np.ndarray:
+        frame_op_idx: LabelT | set[LabelT] | None = None,
+    ) -> float | dict[LabelT, float] | np.ndarray:
         if isinstance(hermitian_op, SparsePauliOp):
             hermitian_op = hermitian_op.to_operator()
-        op_vectorized = np.conj(matrix_to_double_ket(hermitian_op.data))
 
-        if isinstance(frame_op_idx, int):
-            return float(np.dot(op_vectorized, self._array[:, frame_op_idx]).real)
         if isinstance(frame_op_idx, set):
             return {
-                idx: float(np.dot(op_vectorized, self._array[:, idx]).real) for idx in frame_op_idx
+                idx: float((np.trace(hermitian_op @ self.operators[idx])).real)
+                for idx in frame_op_idx
             }
         if frame_op_idx is None:
+            op_vectorized = np.conj(matrix_to_double_ket(hermitian_op.data))
             return np.array(np.dot(op_vectorized, self._array).real)
-        raise TypeError(
-            "The optional `frame_op_idx` can either be a single or set of integers, not a "
-            f"{type(frame_op_idx)}."
-        )
+        try:
+            return float((np.trace(hermitian_op @ self.operators[frame_op_idx])).real)
+        except KeyError as err:
+            raise KeyError(
+                f"The type of the optional `frame_op_idx` ({type(frame_op_idx)}) is not valid."
+            ) from err
 
     @classmethod
     def from_vectors(cls, frame_vectors: np.ndarray) -> Self:
@@ -221,4 +230,4 @@ class MultiQubitFrame(BaseFrame):
         Returns:
             The frame corresponding to the vectors.
         """
-        return cls([Operator(np.outer(vec, vec.conj())) for vec in frame_vectors])
+        return cls({i: Operator(np.outer(vec, vec.conj())) for i, vec in enumerate(frame_vectors)})  # type: ignore

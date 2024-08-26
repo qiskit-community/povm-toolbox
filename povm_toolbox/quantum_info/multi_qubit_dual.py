@@ -25,11 +25,11 @@ from scipy.linalg import orth
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
-from .base import BaseDual, BaseFrame
+from .base import BaseDual, BaseFrame, LabelT
 from .multi_qubit_frame import MultiQubitFrame
 
 
-class MultiQubitDual(MultiQubitFrame, BaseDual):
+class MultiQubitDual(MultiQubitFrame[LabelT], BaseDual):
     """Class that collects all information that any Dual over multiple qubits should specify.
 
     This is a representation of a dual frame. Its elements are specified as a list of
@@ -61,7 +61,9 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
         if isinstance(frame, MultiQubitFrame):
             # Set default values for alphas if none is provided.
             if alphas is None:
-                alphas = tuple(np.real(np.trace(frame_op.data)) for frame_op in frame.operators)
+                alphas = tuple(
+                    np.real(np.trace(frame_op.data)) for frame_op in frame.operators.values()
+                )
             # Check that the number of alpha-parameters match the number of operators
             # forming the ``frame``.
             elif len(alphas) != frame.num_operators:
@@ -100,7 +102,10 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
                 frame_array @ diag_trace,
             )
             # Convert dual operators from double-ket to operator representation.
-            dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
+            dual_operators = {
+                key: Operator(double_ket_to_matrix(op))
+                for key, op in zip(frame.operators.keys(), dual_operators_array.T)
+            }
 
             return cls(dual_operators)
 

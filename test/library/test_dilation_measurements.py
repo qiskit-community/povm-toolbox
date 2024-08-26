@@ -146,7 +146,7 @@ class TestDilationMeasurements(TestCase):
                     [-0.11785113 - 2.04124140e-01j, 0.33333331 - 6.84480542e-18j],
                 ]
             )
-            for effect, povm_operator in zip(effects, povm.operators):
+            for effect, povm_operator in zip(effects, povm.operators.values()):
                 self.assertTrue(np.allclose(povm_operator.data, effect))
 
         with self.subTest("Test bloch vectors"):

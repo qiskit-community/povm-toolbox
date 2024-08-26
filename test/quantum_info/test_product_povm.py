@@ -51,16 +51,16 @@ class TestProductPOVM(TestCase):
                     -1, 1, (6, 2, 2)
                 )
             # artificially make the 2nd povm invalid and bypass the private `check_validity` method
-            mq_povm2._operators = [Operator(op) for op in ops]
+            mq_povm2._operators = {i: Operator(op) for i, op in enumerate(ops)}
             _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
         with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
             op = np.array([[-0.5, 0], [0, 0]])
             # artificially make the 2nd povm invalid and bypass the private `check_validity` method
-            mq_povm2._operators = [Operator(op), Operator(np.eye(2) - op)]
+            mq_povm2._operators = {0: Operator(op), 1: Operator(np.eye(2) - op)}
             _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
         with self.subTest("Operators not summing up to identity") and self.assertRaises(ValueError):
             # artificially make the 2nd povm invalid and bypass the private `check_validity` method
-            mq_povm2._operators = [0.9 * Operator.from_label("0"), Operator.from_label("1")]
+            mq_povm2._operators = {0: 0.9 * Operator.from_label("0"), 1: Operator.from_label("1")}
             _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
 
     def test_init(self):
@@ -328,11 +328,11 @@ class TestProductPOVM(TestCase):
             _ = prod_povm.analysis(observable, frame_op_idx=(0, 0))
         with self.subTest(
             "Test invalid ``frame_op_idx`` argument (out of range)."
-        ) and self.assertRaises(IndexError):
+        ) and self.assertRaises(KeyError):
             observable = Operator.from_label("ZZZ")
             _ = prod_povm.analysis(observable, frame_op_idx=(0, 0, 6))
         with self.subTest(
             "Test invalid ``frame_op_idx`` argument (negative out of range)."
-        ) and self.assertRaises(IndexError):
+        ) and self.assertRaises(KeyError):
             observable = Operator.from_label("ZZZ")
             _ = prod_povm.analysis(observable, frame_op_idx=(0, 0, -10))

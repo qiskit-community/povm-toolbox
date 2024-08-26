@@ -252,6 +252,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                     local_idx = frame_op_idx[j]
                     coeff = povm.pauli_operators[local_idx][sublabel]
                 except KeyError:
+                    try:
+                        _ = povm.pauli_operators[local_idx]
+                    except KeyError as err:
+                        raise err
                     # If it does not exist, the current summand becomes 0 because it would be
                     # multiplied by 0.
                     summand = 0.0
