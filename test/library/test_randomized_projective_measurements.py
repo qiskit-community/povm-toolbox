@@ -19,11 +19,11 @@ from povm_toolbox.library.metadata import POVMMetadata
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMSampler
 from qiskit.circuit import Parameter, QuantumCircuit
+from qiskit.primitives import BackendSamplerV2 as Sampler
 from qiskit.primitives import StatevectorSampler
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.quantum_info import Operator, SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 
@@ -111,15 +111,15 @@ class TestRandomizedPMs(TestCase):
             rng = default_rng(self.SEED)
             measurement = ClassicalShadows(num_qubits, seed=rng)
 
-            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
+            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
             job = povm_sampler.run([qc], shots=128, povm=measurement)
             pub_result = job.result()[0]
             post_processor = POVMPostProcessor(pub_result)
 
             observable = SparsePauliOp(["ZI"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.9843750000000002)
-            self.assertAlmostEqual(std, 0.12499231029496984)
+            self.assertAlmostEqual(exp_value, 0.09374999999999983)
+            self.assertAlmostEqual(std, 0.15226210145459726)
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
@@ -153,8 +153,9 @@ class TestRandomizedPMs(TestCase):
         qc.h(0)
 
         backend = FakeManilaV2()
-        backend.set_options(seed_simulator=self.SEED)
-        povm_sampler = POVMSampler(sampler=RuntimeSampler(mode=backend))
+        povm_sampler = POVMSampler(
+            sampler=Sampler(backend=backend, options={"seed_simulator": self.SEED})
+        )
 
         pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
 
@@ -176,12 +177,12 @@ class TestRandomizedPMs(TestCase):
         self.assertAlmostEqual(std, 0.17850275939936872)
         observable = SparsePauliOp(["IZ"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.2734374999999998)
-        self.assertAlmostEqual(std, 0.17806471515772768)
+        self.assertAlmostEqual(exp_value, 0.8203124999999986)
+        self.assertAlmostEqual(std, 0.16430837874418103)
         observable = SparsePauliOp(["XI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.2660390714463396)
-        self.assertAlmostEqual(std, 0.2783956923005193)
+        self.assertAlmostEqual(exp_value, 0.48385279322581587)
+        self.assertAlmostEqual(std, 0.27607615877584807)
 
     def test_binding_parameters(self):
         num_qubits = 2
@@ -240,7 +241,7 @@ class TestRandomizedPMs(TestCase):
         num_qubits = qc.num_qubits
         measurement = ClassicalShadows(num_qubits, seed=self.SEED, measurement_twirl=True)
 
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
 
         job = povm_sampler.run([qc], shots=128, povm=measurement)
         pub_result = job.result()[0]
@@ -253,11 +254,11 @@ class TestRandomizedPMs(TestCase):
         self.assertAlmostEqual(std, 0.1257341109337995)
         observable = SparsePauliOp(["IZ"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.32812500000000006)
-        self.assertAlmostEqual(std, 0.15333777198692233)
+        self.assertAlmostEqual(exp_value, 0.2343749999999999)
+        self.assertAlmostEqual(std, 0.15468582228868283)
         observable = SparsePauliOp(["ZY"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, -0.42187500000000006)
+        self.assertAlmostEqual(exp_value, 0.42187499999999994)
         self.assertAlmostEqual(std, 0.24164416287543897)
         observable = SparsePauliOp(["IX"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
@@ -272,7 +273,7 @@ class TestRandomizedPMs(TestCase):
         num_qubits = qc.num_qubits
         measurement = ClassicalShadows(num_qubits, seed=self.SEED, shot_repetitions=7)
 
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
 
         job = povm_sampler.run([qc], shots=128, povm=measurement)
         pub_result = job.result()[0]
@@ -297,7 +298,7 @@ class TestRandomizedPMs(TestCase):
         )
         qc = QuantumCircuit(2)
         qc.h(0)
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
         job = povm_sampler.run([qc], shots=10, povm=measurement)
         pub_result = job.result()[0]
 
@@ -308,7 +309,7 @@ class TestRandomizedPMs(TestCase):
             outcomes = measurement._povm_outcomes(bit_array, povm_metadata)
             self.assertSequenceEqual(
                 outcomes,
-                [(0, 2), (2, 2), (4, 0), (4, 4), (0, 2), (4, 2), (0, 2), (0, 0), (0, 4), (2, 2)],
+                [(0, 2), (2, 2), (5, 0), (5, 4), (0, 2), (4, 3), (0, 2), (0, 0), (0, 4), (2, 2)],
             )
 
         with self.subTest("``pvm_keys`` attribute missing``.") and self.assertRaises(
@@ -386,7 +387,7 @@ class TestRandomizedPMs(TestCase):
         with self.subTest("Test that the POVM is not IC."):
             self.assertFalse(measurement.definition().informationally_complete)
 
-        sampler = StatevectorSampler(seed=self.SEED)
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
         povm_sampler = POVMSampler(sampler=sampler)
 
         job = povm_sampler.run([qc], shots=32, povm=measurement)
