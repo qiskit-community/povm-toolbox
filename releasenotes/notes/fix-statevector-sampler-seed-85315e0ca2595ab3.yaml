@@ -1,4 +1,0 @@
----
-fixes:
-  - |
-    Fixes an issue with the `seed` of the :class:`StatevectorSampler` class.
