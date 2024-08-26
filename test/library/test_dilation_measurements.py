@@ -28,7 +28,7 @@ from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 
 class TestDilationMeasurements(TestCase):
-    SEED = 623147
+    SEED = 9128346
 
     def setUp(self) -> None:
         super().setUp()
@@ -98,16 +98,16 @@ class TestDilationMeasurements(TestCase):
 
         observable = SparsePauliOp(["ZI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 3.0370500235053083e-06)
-        self.assertAlmostEqual(std, 0.1536945003037847)
+        self.assertAlmostEqual(exp_value, -0.18749595202757485)
+        self.assertAlmostEqual(std, 0.1428020261876306)
         observable = SparsePauliOp(["IZ"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.18750100223886668)
-        self.assertAlmostEqual(std, 0.16216646862726303)
+        self.assertAlmostEqual(exp_value, -0.18749696469140917)
+        self.assertAlmostEqual(std, 0.14280207155875035)
         observable = SparsePauliOp(["XI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.7623472766457017)
-        self.assertAlmostEqual(std, 0.16593702716544984)
+        self.assertAlmostEqual(exp_value, 1.1269484774399672)
+        self.assertAlmostEqual(std, 0.16627566403440813)
 
     def test_definition(self):
         """Test that the ``definition`` method works correctly."""
@@ -195,8 +195,8 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 2.0669564894979042)
-            self.assertAlmostEqual(std, 0.9077783223540307)
+            self.assertAlmostEqual(exp_value, 2.051760590702834)
+            self.assertAlmostEqual(std, 1.115878952074859)
         with self.subTest("Not enough idle qubits in input circuit."):
             qc = QuantumCircuit(3)
             qc.h(0)
@@ -209,8 +209,8 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 1.9709441158515892)
-            self.assertAlmostEqual(std, 1.0577110559318557)
+            self.assertAlmostEqual(exp_value, 2.6629118614521414)
+            self.assertAlmostEqual(std, 0.8490992540168614)
         with self.subTest("Exactly enough idle qubits in input circuit."):
             qc = QuantumCircuit(4)
             qc.h(0)
@@ -223,8 +223,8 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.9558239442937293)
-            self.assertAlmostEqual(std, 1.0807110824221704)
+            self.assertAlmostEqual(exp_value, 1.1767743787146197)
+            self.assertAlmostEqual(std, 1.0595301460920068)
         with self.subTest("Too many idle qubits in input circuit."):
             qc = QuantumCircuit(5)
             qc.h(0)
@@ -237,5 +237,5 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 2.050486016756541)
-            self.assertAlmostEqual(std, 1.024599637374336)
+            self.assertAlmostEqual(exp_value, 0.7866208373769082)
+            self.assertAlmostEqual(std, 1.0328018649968345)
