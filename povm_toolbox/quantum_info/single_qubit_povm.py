@@ -180,6 +180,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
             figure = B.fig
             axes = B.axes
             figure.set_size_inches(figsize[0], figsize[1])
+            figure.dpi = 100.0
             matplotlib_close_if_inline(figure)
 
         if colorbar:

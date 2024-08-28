@@ -139,6 +139,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
                 colorbar=colorbar,
             )
         fig.suptitle(title, fontsize=title_font_size, y=1.0)
+        fig.dpi = 100.0
         matplotlib_close_if_inline(fig)
 
         return fig
