@@ -1,7 +1,0 @@
----
-fixes:
-  - |
-    Fixes an issue with the `seed` of the :class:`StatevectorSampler` class that affected randomized
-    projective measurements. When `seed` was an integer, the sampler would always output the same
-    outcomes for each projective measurement respectively. Simply setting `seed` as a
-    :class:`numpy.random.Generator` solves the issue.
