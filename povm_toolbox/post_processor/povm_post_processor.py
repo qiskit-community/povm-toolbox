@@ -16,8 +16,9 @@ import logging
 from typing import Any, cast
 
 import numpy as np
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp
 
+from povm_toolbox.quantum_info import ProductDual
 from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
 from povm_toolbox.sampler import POVMPubResult
 
@@ -220,3 +221,23 @@ class POVMPostProcessor:
             std = float("NaN")
 
         return exp_val, std
+
+    def get_state_snapshot(self, outcome: tuple[int, ...]) -> dict[tuple[int, ...], Operator]:
+        """Return the snapshot of the state associated with `outcome`.
+
+        Args:
+            outcome: the label specifying the snapshot. The outcome is a tuple of integers (one
+                index per local frame).
+
+        Returns:
+            The snapshot associated with `outcome`. The snapshot is a product operator, which is
+            returned as a dictionary mapping the subsystems of the Hilbert space (e.g. qubits) to
+            the corresponding local operators forming the product operator.
+
+        Raises:
+            NotImplementedError: if the dual frame associated with the post-processor is not
+                product.
+        """
+        if isinstance(self.dual, ProductDual):
+            return self.dual.get_operator(outcome)
+        raise NotImplementedError("This method is only implemented for `ProductDual` objects.")
