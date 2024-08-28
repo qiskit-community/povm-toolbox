@@ -58,17 +58,18 @@ class MedianOfMeans(POVMPostProcessor):
     >>> from qiskit.circuit import QuantumCircuit
     >>> from qiskit.primitives import StatevectorSampler
     >>> from qiskit.quantum_info import SparsePauliOp
+    >>> from numpy.random import default_rng
     >>> circ = QuantumCircuit(2)
     >>> _ = circ.h(0)
     >>> _ = circ.cx(0, 1)
     >>> povm = ClassicalShadows(2, seed=42)
-    >>> sampler = StatevectorSampler(seed=42)
+    >>> sampler = StatevectorSampler(seed=default_rng(42))
     >>> povm_sampler = POVMSampler(sampler)
     >>> job = povm_sampler.run([circ], povm=povm, shots=16)
     >>> result = job.result()
     >>> post_processor = MedianOfMeans(result[0], num_batches=4, seed=42)
     >>> post_processor.get_expectation_value(SparsePauliOp("ZI"))  # doctest: +FLOAT_CMP
-    (-0.75, 2.9154759474226504)
+    (-1.6653345369377348e-16, 2.9154759474226504)
     """
 
     def __init__(
