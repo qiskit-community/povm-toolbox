@@ -24,6 +24,8 @@ if sys.version_info < (3, 12):
 else:
     from typing import override  # pragma: no cover
 
+from math import prod
+
 import numpy as np
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import Operator, SparsePauliOp
@@ -45,12 +47,15 @@ class MultiQubitFrame(BaseFrame[int]):
        for more general information.
     """
 
-    def __init__(self, list_operators: list[Operator]) -> None:
+    def __init__(
+        self, list_operators: list[Operator], shape: tuple[int, ...] | None = None
+    ) -> None:
         """Initialize from explicit operators.
 
         Args:
             list_operators: list that contains the explicit frame operators. The length of the list
                 is the number of operators of the frame.
+            shape: TODO.
 
 
         Raises:
@@ -63,6 +68,8 @@ class MultiQubitFrame(BaseFrame[int]):
         self._pauli_operators: list[dict[str, complex]] | None
         self._array: np.ndarray
         self._informationally_complete: bool
+
+        self._shape = shape
 
         self.operators = list_operators
 
@@ -87,6 +94,18 @@ class MultiQubitFrame(BaseFrame[int]):
         return self._num_operators
 
     @property
+    def shape(self) -> tuple[int, ...]:
+        """Return the shape of the frame."""
+        return self._shape or (self.num_operators,)
+
+    @shape.setter
+    def shape(self, new_shape: tuple[int, ...] | None):
+        """Set the shape of the frame."""
+        if new_shape is not None and prod(new_shape) != self.num_operators:
+            raise ValueError("TODO")
+        self._shape = new_shape
+
+    @property
     def operators(self) -> list[Operator]:
         """Return the list of frame operators."""
         return self._operators
@@ -95,6 +114,8 @@ class MultiQubitFrame(BaseFrame[int]):
     def operators(self, new_operators: list[Operator]):
         """Set the frame operators."""
         self._num_operators = len(new_operators)
+        if self._shape is not None and prod(self._shape) != self._num_operators:
+            raise ValueError("TODO")
         self._dimension = new_operators[0].dim[0]
         for frame_op in new_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
@@ -153,7 +174,15 @@ class MultiQubitFrame(BaseFrame[int]):
             if not np.allclose(op, op.adjoint(), atol=1e-5):
                 raise ValueError(f"The {k}-the frame operator is not hermitian.")
 
-    def __getitem__(self, index: slice) -> Operator | list[Operator]:
+    def _ravel_index(self, index: int | tuple[int, ...]) -> int:
+        """TODO."""
+        if isinstance(index, tuple):
+            return int(np.ravel_multi_index(multi_index=index, dims=self.shape))
+        if len(self.shape) > 1:
+            raise ValueError("TODO.")
+        return index
+
+    def __getitem__(self, index: int | tuple[int, ...]) -> Operator | list[Operator]:
         """Return a frame operator or a list of frame operators.
 
         Args:
@@ -162,7 +191,7 @@ class MultiQubitFrame(BaseFrame[int]):
         Returns:
             The operator or list of operators corresponding to the index.
         """
-        return self.operators[index]
+        return self.operators[self._ravel_index(index)]
 
     def __len__(self) -> int:
         """Return the number of operators of the frame."""
@@ -179,17 +208,20 @@ class MultiQubitFrame(BaseFrame[int]):
     def analysis(
         self,
         hermitian_op: SparsePauliOp | Operator,
-        frame_op_idx: int | set[int] | None = None,
+        frame_op_idx: int | tuple[int, ...] | set[int] | set[tuple[int, ...]] | None = None,
     ) -> float | dict[int, float] | np.ndarray:
         if isinstance(hermitian_op, SparsePauliOp):
             hermitian_op = hermitian_op.to_operator()
         op_vectorized = np.conj(matrix_to_double_ket(hermitian_op.data))
 
-        if isinstance(frame_op_idx, int):
-            return float(np.dot(op_vectorized, self._array[:, frame_op_idx]).real)
+        if isinstance(frame_op_idx, (int, tuple)):
+            return float(
+                np.dot(op_vectorized, self._array[:, self._ravel_index(frame_op_idx)]).real
+            )
         if isinstance(frame_op_idx, set):
             return {
-                idx: float(np.dot(op_vectorized, self._array[:, idx]).real) for idx in frame_op_idx
+                idx: float(np.dot(op_vectorized, self._array[:, idx]).real)
+                for idx in map(self._ravel_index, frame_op_idx)
             }
         if frame_op_idx is None:
             return np.array(np.dot(op_vectorized, self._array).real)
