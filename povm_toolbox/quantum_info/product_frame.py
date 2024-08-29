@@ -70,7 +70,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         subsystem_indices = set()
         self._dimension = 1
         self._num_operators = 1
-        shape: list[int] = []
+        shape: tuple[int, ...] = tuple()
+        subshape_ndims = []
         for idx, frame in frames.items():
             idx_set = set(idx)
             if len(idx) != len(idx_set):
@@ -94,14 +95,16 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             subsystem_indices.update(idx_set)
             self._dimension *= frame.dimension
             self._num_operators *= frame.num_operators
-            shape.append(frame.num_operators)
+            shape += frame.shape
+            subshape_ndims.append(len(frame.shape))
 
         self._informationally_complete: bool = all(
             [frame.informationally_complete for frame in frames.values()]
         )
 
         self._frames = frames
-        self._shape: tuple[int, ...] = tuple(shape)
+        self._subshape_ndims = tuple(subshape_ndims)
+        self._shape = shape
 
         self._check_validity()
 
@@ -201,6 +204,31 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         for povm in self._frames.values():
             povm._check_validity()
 
+    def _ravel_index(self, index: tuple[int, ...]) -> tuple[int, ...]:
+        """TODO.
+
+        Args:
+            index: TODO.
+
+        Returns:
+            TODO.
+
+        Raises:
+            ValueError: TODO.
+        """
+        if len(index) != len(self.shape):
+            raise ValueError("TODO.")
+
+        index_processed = []
+        start = 0
+        for ndim in self._subshape_ndims:
+            local_flat_index = np.ravel_multi_index(
+                index[start : start + ndim], self.shape[start : start + ndim]
+            )
+            index_processed.append(int(local_flat_index))
+            start += ndim
+        return tuple(index_processed)
+
     def __getitem__(self, sub_system: tuple[int, ...]) -> T:
         r"""Return the :class:`.MultiQubitFrame` acting on the specified sub-system.
 
@@ -236,6 +264,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         """
         p_idx = 0.0 + 0.0j
 
+        index_processed = self._ravel_index(frame_op_idx)
+
         # Second, we iterate over our input operator, ``operator``.
         for label, op_coeff in operator.label_iter():
             summand = op_coeff
@@ -249,7 +279,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 sublabel = "".join(label[-(i + 1)] for i in idx)
                 # Try to obtain the coefficient of the local POVM for this local Pauli term.
                 try:
-                    local_idx = frame_op_idx[j]
+                    local_idx = index_processed[j]
                     coeff = povm.pauli_operators[local_idx][sublabel]
                 except KeyError:
                     # If it does not exist, the current summand becomes 0 because it would be
@@ -258,18 +288,6 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                     # In this case we can break the iteration over the remaining local POVMs.
                     break
                 except IndexError as exc:
-                    if len(frame_op_idx) <= j:
-                        raise IndexError(
-                            f"The outcome label {frame_op_idx} does not match the expected shape. "
-                            f"It is supposed to contain {len(self._frames)} integers, but has "
-                            f"{len(frame_op_idx)}."
-                        ) from exc
-                    if povm.num_operators <= frame_op_idx[j]:
-                        raise IndexError(
-                            f"Outcome index '{frame_op_idx[j]}' is out of range for the local POVM"
-                            f" acting on subsystems {idx}. This POVM has {povm.num_operators}"
-                            " outcomes."
-                        ) from exc
                     raise exc
                 else:
                     # If the label does exist, we multiply the coefficient into our summand.
