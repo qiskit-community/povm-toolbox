@@ -34,9 +34,9 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .base import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
+from .multi_qubit_povm import MultiQubitPOVM
 
 T = TypeVar("T", bound=MultiQubitFrame)
-
 
 class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     r"""Class to represent a set of product frame operators.
@@ -51,7 +51,11 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
        for more general information.
     """
 
-    def __init__(self, frames: dict[tuple[int, ...], T]) -> None:
+    def __init__(self,
+                 frames: dict[tuple[int, ...], T],
+                 converter: tuple[tuple[int,...],...] | None = None,
+                 partition: tuple[tuple[int,...],...] | None = None,
+            ) -> None:
         """Initialize from a mapping of local frames.
 
         Args:
@@ -102,6 +106,9 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         self._frames = frames
         self._shape: tuple[int, ...] = tuple(shape)
+
+        self._converter = converter
+        self._partition = partition
 
         self._check_validity()
 
@@ -186,10 +193,17 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     def shape(self) -> tuple[int, ...]:
         """Give the number of operators per sub-system."""
         return self._shape
+    
+    @property
+    def apparent_shape(self) -> tuple[int, ...]:
+        """Give the number of operators per sub-system."""
+        if self._converter is None:
+            return self.shape
+        return tuple(v for subshape in self._converter for v in subshape)
 
     @property
     def sub_systems(self) -> list[tuple[int, ...]]:
-        """Give the number of operators per sub-system."""
+        """Give the index tuple for each sub-system."""
         return list(self._frames.keys())
 
     def _check_validity(self) -> None:
@@ -234,6 +248,18 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 local frame.
             ValueError: when the output is not a real number.
         """
+        if self._converter is not None:
+            frame_op_idx = np.asarray(frame_op_idx)
+            # print(frame_op_idx)
+            idx = []
+            for subshape, subset in zip(self._converter, self._partition):
+                # print(np.asarray(subset))
+                # print(frame_op_idx[np.asarray(subset)])
+                # print(np.ravel_multi_index(frame_op_idx[np.asarray(subset)], subshape))
+                idx.append(int(np.ravel_multi_index(frame_op_idx[np.asarray(subset)], subshape)))
+            frame_op_idx = tuple(idx)
+            # print(frame_op_idx, "\n")
+
         p_idx = 0.0 + 0.0j
 
         # Second, we iterate over our input operator, ``operator``.
@@ -307,7 +333,13 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             # have its number of dimensions equal to the number of POVMs stored inside the
             # ProductPOVM. The length of each dimension is given by the number of outcomes of the
             # POVM encoded along it.
-            p_init: np.ndarray = np.zeros(self.shape, dtype=float)
+            shape = self.apparent_shape
+            if self._partition is not None:
+                shape = len(shape)*[None]
+                partition = [idx for subset in self._partition for idx in subset]
+                for idx, shape_i in zip(partition, self.apparent_shape):
+                    shape[idx] = shape_i
+            p_init: np.ndarray = np.zeros(shape, dtype=float)
 
             # First, we iterate over all the positions of ``p_init``. This corresponds to the
             # different probabilities for the different outcomes whose probability we want to
@@ -334,16 +366,68 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         Returns:
             The subsystem index and the list of tensor product operators which act upon it.
         """
-        joint_operators = [op for op in self[indices[0]].operators]
-        new_subsystem_idx = indices[0]
-        for subsystem_idx in indices[1:]:
-            new_operators = []
-            for left_operator in joint_operators:
-                for right_operator in self[subsystem_idx].operators:
-                    new_operators.append(left_operator.tensor(right_operator))
-            joint_operators = new_operators
-            new_subsystem_idx += subsystem_idx
-        return new_subsystem_idx, joint_operators
+
+        # shape = tuple(self[subsystem_label].num_operators for subsystem_label in indices)
+        # subset = list(idx for subsystem_label in indices for idx in subsystem_label)
+        # joint_operators = np.empty(np.prod(shape), dtype=object)
+        # # print(shape)
+        # # print(subset)
+        # # print(len(joint_operators))
+        # for outcome in np.ndindex(shape):
+        #     # print(outcome)
+        #     # print(outcome)
+        #     # print(int(np.ravel_multi_index(outcome, shape)))
+        #     operator = SparsePauliOp.from_operator(self[indices[0]][outcome[0]], atol=1e-20, rtol=1e-20)
+        #     for i in range(1, len(outcome)):
+        #         operator = operator.tensor(SparsePauliOp.from_operator(self[indices[i]][outcome[i]], atol=1e-20, rtol=1e-20))
+        #         # print(outcome[i], indices[i])
+        #     joint_operators[int(np.ravel_multi_index(outcome, shape))] = operator.to_operator()
+        #     # print(joint_operators)
+        # return tuple(subset), joint_operators
+    
+
+        # joint_operators = [SparsePauliOp.from_operator(op) for op in self[indices[0]].operators]
+        # new_subsystem_idx = indices[0]
+        # for subsystem_idx in indices[1:]:
+        #     new_operators = []
+        #     for left_operator in joint_operators:
+        #         for right_operator in self[subsystem_idx].operators:
+        #             new_operators.append(left_operator.tensor(SparsePauliOp.from_operator(right_operator)))
+        #     joint_operators = new_operators
+        #     new_subsystem_idx += subsystem_idx
+        # joint_operators = list(map(Operator, joint_operators))
+        # return new_subsystem_idx, joint_operators
+
+
+        shape = tuple(self[subsystem_label].num_operators for subsystem_label in indices)
+        subset = list(idx for subsystem_label in indices for idx in subsystem_label)
+        joint_operators = np.empty(shape, dtype=object)
+        # print(shape)
+        # print(subset)
+        # print(len(joint_operators))
+        for outcome in np.ndindex(shape):
+            # print(outcome)
+            # print(outcome)
+            # print(int(np.ravel_multi_index(outcome, shape)))
+            operator = self[indices[0]][outcome[0]]
+            for i in range(1, len(outcome)):
+                operator = Operator(np.kron(operator.data, self[indices[i]][outcome[i]].data))
+                # print(outcome[i], indices[i])
+            joint_operators[outcome] = operator
+            # print(joint_operators)
+        return tuple(subset), joint_operators.flatten(order="C")
+
+
+        # joint_operators = [op for op in self[indices[0]].operators]
+        # new_subsystem_idx = indices[0]
+        # for subsystem_idx in indices[1:]:
+        #     new_operators = []
+        #     for left_operator in joint_operators:
+        #         for right_operator in self[subsystem_idx].operators:
+        #             new_operators.append(left_operator.tensor(right_operator))
+        #     joint_operators = new_operators
+        #     new_subsystem_idx += subsystem_idx
+        # return new_subsystem_idx, joint_operators
 
     def group(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
         """Group some local frames together into a single multi-qubit frame representation.
@@ -363,9 +447,11 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             ValueError: if an index is in two different subsets.
             ValueError: if ``partition`` does not exactly cover all subsystems.
         """
+        keys = list(self._frames.keys())
+        key_partition = [[keys[i] for i in subset] for subset in partition]
         # Check that ``partition`` is indeed a partition:
         subsystem_indices = set()
-        for subset in partition:
+        for subset in key_partition:
             if len(subset) != len(set(subset)):
                 raise ValueError(
                     "A subsystem index must not be specified more than once in a subset. However,"
@@ -380,10 +466,24 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         if subsystem_indices != set(self._frames.keys()):
             raise ValueError(
                 "The partition must cover exactly all the subsystems. However, this condition is"
-                f" not fulfilled by {partition}."
+                f" not fulfilled by {key_partition}."
             )
         frames = {}
-        for set_indices in partition:
+        converter = []
+        for set_indices in key_partition:
             idx, joint_operators = self._tensor_product(set_indices)
-            frames[idx] = MultiQubitFrame(joint_operators)
-        return ProductFrame(frames=frames)
+            frames[idx] = MultiQubitPOVM(joint_operators)
+            converter.append(tuple(self._frames[idx].num_operators for idx in set_indices))
+        return type(self)(frames=frames, converter = converter, partition = partition)
+
+
+
+    def group_all(self) -> MultiQubitFrame:
+        """Group all local frames together into a single multi-qubit frame representation.
+
+        Returns:
+            A new ``MultiQubitFrame`` instance representing ``self``.
+        """
+        grouped_frame = self.group(partition=[list(range(len(self._frames)))])
+        return grouped_frame[grouped_frame.sub_systems[0]]
+
