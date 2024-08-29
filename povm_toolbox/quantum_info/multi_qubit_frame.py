@@ -25,6 +25,7 @@ else:
     from typing import override  # pragma: no cover
 
 from math import prod
+from typing import TypeVar
 
 import numpy as np
 from qiskit.exceptions import QiskitError
@@ -34,8 +35,10 @@ from povm_toolbox.utilities import matrix_to_double_ket
 
 from .base import BaseFrame
 
+LabelMultiQubitT = TypeVar("LabelMultiQubitT", int, tuple[int, ...])
 
-class MultiQubitFrame(BaseFrame[int]):
+
+class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
     """Class that collects all information that any frame of multiple qubits should specify.
 
     This is a representation of an operator-valued vector space frame. The effects are specified as
@@ -69,14 +72,18 @@ class MultiQubitFrame(BaseFrame[int]):
         self._array: np.ndarray
         self._informationally_complete: bool
 
-        self._shape = shape
+        self._shape: tuple[int, ...] | None = shape
 
         self.operators = list_operators
 
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.MultiQubitFrame` instance."""
         f_subsystems = f"(num_qubits={self.num_subsystems})" if self.num_subsystems > 1 else ""
-        return f"{self.__class__.__name__}{f_subsystems}<{self.num_operators}> at {hex(id(self))}"
+        repr_str = (
+            f"{self.__class__.__name__}{f_subsystems}<{','.join(map(str, self.shape))}> "
+            f"at {hex(id(self))}"
+        )
+        return repr_str
 
     @property
     def informationally_complete(self) -> bool:
@@ -208,8 +215,8 @@ class MultiQubitFrame(BaseFrame[int]):
     def analysis(
         self,
         hermitian_op: SparsePauliOp | Operator,
-        frame_op_idx: int | tuple[int, ...] | set[int] | set[tuple[int, ...]] | None = None,
-    ) -> float | dict[int, float] | np.ndarray:
+        frame_op_idx: LabelMultiQubitT | set[LabelMultiQubitT] | None = None,
+    ) -> float | dict[LabelMultiQubitT, float] | np.ndarray:
         if isinstance(hermitian_op, SparsePauliOp):
             hermitian_op = hermitian_op.to_operator()
         op_vectorized = np.conj(matrix_to_double_ket(hermitian_op.data))
@@ -220,8 +227,8 @@ class MultiQubitFrame(BaseFrame[int]):
             )
         if isinstance(frame_op_idx, set):
             return {
-                idx: float(np.dot(op_vectorized, self._array[:, idx]).real)
-                for idx in map(self._ravel_index, frame_op_idx)
+                idx: float(np.dot(op_vectorized, self._array[:, self._ravel_index(idx)]).real)
+                for idx in frame_op_idx
             }
         if frame_op_idx is None:
             return np.array(np.dot(op_vectorized, self._array).real)

@@ -287,8 +287,6 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                     summand = 0.0
                     # In this case we can break the iteration over the remaining local POVMs.
                     break
-                except IndexError as exc:
-                    raise exc
                 else:
                     # If the label does exist, we multiply the coefficient into our summand.
                     # The factor 2^N_qubit comes from Tr[(P_1...P_N)^2] = 2^N.
