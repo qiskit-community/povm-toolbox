@@ -167,7 +167,7 @@ class TestMultiQubitPOVM(TestCase):
             frame_coefficients = povm.analysis(operator)
             self.assertIsInstance(frame_coefficients, np.ndarray)
             self.assertTrue(np.allclose(frame_coefficients, np.array([0.8, 0.2])))
-        with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(TypeError):
+        with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(ValueError):
             _ = povm.analysis(operator, (0, 1))
 
     def test_draw_bloch(self):
