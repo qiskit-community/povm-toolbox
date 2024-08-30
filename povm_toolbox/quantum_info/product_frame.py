@@ -215,7 +215,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             the local multi-index has been flattened.
 
         Raises:
-            ValueError: if `index` does not have the same number of dimensions as the shape of the
+            ValueError: if ``index`` does not have the same number of dimensions as the shape of the
                 frame.
         """
         if len(index) != len(self.shape):

@@ -68,7 +68,7 @@ class TestProductFrame(TestCase):
             self.assertTrue(np.allclose(decomposition_weights_product, check))
 
     def test_shape(self):
-        """Test that the ``shape`` property works correctly"""
+        """Test that the ``shape`` property works correctly."""
         paulis = ["I", "X", "Y", "Z"]
 
         frame_0 = MultiQubitFrame([Operator.from_label(label) for label in paulis], shape=(2, 2))

@@ -32,7 +32,7 @@ class TestMultiQubitFrame(TestCase):
             _ = MultiQubitFrame(list_operators=[Operator(op) for op in ops])
 
     def test_dimension(self):
-        """Test dimension attribute"""
+        """Test dimension attribute."""
         for dim in range(1, 10):
             frame = MultiQubitFrame(3 * [Operator(1.0 / 3.0 * np.eye(dim))])
             self.assertEqual(dim, frame.dimension)
@@ -40,7 +40,7 @@ class TestMultiQubitFrame(TestCase):
             self.assertEqual((dim, dim), frame.operators[1].dim)
 
     def test_getitem(self):
-        """Test the `__getitem__` method."""
+        """Test the ``__getitem__`` method."""
         n = 6
         frame = MultiQubitFrame(
             [Operator(2 * i / (n * (n + 1)) * np.eye(4)) for i in range(1, n + 1)]
@@ -138,6 +138,7 @@ class TestMultiQubitFrame(TestCase):
             _ = frame.pauli_operators
 
     def test_analysis(self):
+        """Test that the ``analysis`` method works correctly."""
         frame = MultiQubitFrame([Operator.from_label(label) for label in ["0", "1", "I", "Z"]])
         frame_shaped = MultiQubitFrame(
             [Operator.from_label(label) for label in ["0", "1", "I", "Z"]], shape=(2, 2)
@@ -177,6 +178,7 @@ class TestMultiQubitFrame(TestCase):
             _ = frame.analysis(operator, [0])
 
     def test_shape(self):
+        """Test that the ``shape`` property works correctly."""
         paulis = ["I", "X", "Y", "Z"]
         with self.subTest("Test works correctly"):
             frame = MultiQubitFrame([Operator.from_label(label) for label in paulis], shape=(2, 2))

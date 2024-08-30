@@ -58,14 +58,14 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         Args:
             list_operators: list that contains the explicit frame operators. The length of the list
                 is the number of operators of the frame.
-            shape: the shape defining the indexing of operators in `list_operators`. If `None`, the
-                default shape is `(self.num_operators,)`.
+            shape: the shape defining the indexing of operators in ``list_operators``. If ``None``,
+                the default shape is ``(self.num_operators,)``.
 
 
         Raises:
             ValueError: if the frame operators do not have a correct shape. They should all be
                 hermitian and of the same dimension.
-            ValueError: if the length of `list_operators` is not compatible with `shape`.
+            ValueError: if the length of ``list_operators`` is not compatible with ``shape``.
         """
         self._num_operators: int
         self._dimension: int
@@ -255,7 +255,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         if frame_op_idx is None:
             return np.array(np.dot(op_vectorized, self._array).real)
         raise TypeError(
-            "The optional `frame_op_idx` can either be a single or set of integers, not a "
+            "The optional ``frame_op_idx`` can either be a single or set of integers, not a "
             f"{type(frame_op_idx)}."
         )
 
