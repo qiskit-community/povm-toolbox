@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Add an option for the post-processors to combine the counts associated with different parameter
+    values that were submitted in the same POVM sampler PUB.
+
