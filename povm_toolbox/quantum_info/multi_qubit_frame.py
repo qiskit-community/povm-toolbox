@@ -64,7 +64,28 @@ class MultiQubitFrame(BaseFrame[int]):
         self._array: np.ndarray
         self._informationally_complete: bool
 
-        self.operators = list_operators
+        self._num_operators = len(list_operators)
+        self._dimension = list_operators[0].dim[0]
+        for frame_op in list_operators:
+            if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
+                raise ValueError(
+                    f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and "
+                    "all of the same dimension."
+                )
+
+        self._operators = list_operators
+
+        self._pauli_operators = None
+
+        self._array = np.ndarray((self.dimension**2, self.num_operators), dtype=complex)
+        for k, frame_op in enumerate(list_operators):
+            self._array[:, k] = matrix_to_double_ket(frame_op.data)
+
+        self._informationally_complete = bool(
+            np.linalg.matrix_rank(self._array) == self.dimension**2
+        )
+
+        self._check_validity()
 
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.MultiQubitFrame` instance."""
@@ -90,32 +111,6 @@ class MultiQubitFrame(BaseFrame[int]):
     def operators(self) -> list[Operator]:
         """Return the list of frame operators."""
         return self._operators
-
-    @operators.setter
-    def operators(self, new_operators: list[Operator]):
-        """Set the frame operators."""
-        self._num_operators = len(new_operators)
-        self._dimension = new_operators[0].dim[0]
-        for frame_op in new_operators:
-            if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
-                raise ValueError(
-                    f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and "
-                    "all of the same dimension."
-                )
-
-        self._operators = new_operators
-
-        self._pauli_operators = None
-
-        self._array = np.ndarray((self.dimension**2, self.num_operators), dtype=complex)
-        for k, frame_op in enumerate(new_operators):
-            self._array[:, k] = matrix_to_double_ket(frame_op.data)
-
-        self._informationally_complete = bool(
-            np.linalg.matrix_rank(self._array) == self.dimension**2
-        )
-
-        self._check_validity()
 
     @property
     def pauli_operators(self) -> list[dict[str, complex]]:

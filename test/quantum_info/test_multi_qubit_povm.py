@@ -38,6 +38,13 @@ class TestMultiQubitPOVM(TestCase):
             _ = MultiQubitPOVM(
                 list_operators=[0.9 * Operator.from_label("0"), Operator.from_label("1")]
             )
+        with self.subTest("Non-square operators") and self.assertRaises(ValueError):
+            _ = MultiQubitPOVM(
+                [
+                    Operator(np.array([[1, 0, 0], [0, 0, 0]])),
+                    Operator(np.array([[0, 0, 0], [0, 1, 0]])),
+                ]
+            )
 
     def test_dimension(self):
         """Test dimension attribute"""
@@ -133,15 +140,6 @@ class TestMultiQubitPOVM(TestCase):
                 ]
             )
             self.assertEqual(povm.__repr__(), f"MultiQubitPOVM(num_qubits=2)<4> at {hex(id(povm))}")
-
-    def test_operators_setter(self):
-        """Test the ``__repr__`` method."""
-        povm = MultiQubitPOVM([Operator.from_label("0"), Operator.from_label("1")])
-        with self.subTest("Non-square operators") and self.assertRaises(ValueError):
-            povm.operators = [
-                Operator(np.array([[1, 0, 0], [0, 0, 0]])),
-                Operator(np.array([[0, 0, 0], [0, 1, 0]])),
-            ]
 
     def test_pauli_operators(self):
         """Test errors are raised  correctly for the ``pauli_operators`` attribute."""
