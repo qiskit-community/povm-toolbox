@@ -58,12 +58,14 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         Args:
             list_operators: list that contains the explicit frame operators. The length of the list
                 is the number of operators of the frame.
-            shape: TODO.
+            shape: the shape defining the indexing of operators in `list_operators`. If `None`, the
+                default shape is `(self.num_operators,)`.
 
 
         Raises:
             ValueError: if the frame operators do not have a correct shape. They should all be
                 hermitian and of the same dimension.
+            ValueError: if the length of `list_operators` is not compatible with `shape`.
         """
         self._num_operators: int
         self._dimension: int
@@ -109,7 +111,10 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
     def shape(self, new_shape: tuple[int, ...] | None):
         """Set the shape of the frame."""
         if new_shape is not None and prod(new_shape) != self.num_operators:
-            raise ValueError("TODO")
+            raise ValueError(
+                f"The shape {new_shape} is not compatible with the number of operators in the frame"
+                f" ({self.num_operators})."
+            )
         self._shape = new_shape
 
     @property
@@ -120,9 +125,12 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
     @operators.setter
     def operators(self, new_operators: list[Operator]):
         """Set the frame operators."""
+        if self._shape is not None and prod(self._shape) != len(new_operators):
+            raise ValueError(
+                f"The number of operators ({len(new_operators)}) is not compatible with the shape"
+                f" of the frame: {self.shape}."
+            )
         self._num_operators = len(new_operators)
-        if self._shape is not None and prod(self._shape) != self._num_operators:
-            raise ValueError("TODO")
         self._dimension = new_operators[0].dim[0]
         for frame_op in new_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
@@ -181,15 +189,29 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
             if not np.allclose(op, op.adjoint(), atol=1e-5):
                 raise ValueError(f"The {k}-the frame operator is not hermitian.")
 
-    def _ravel_index(self, index: int | tuple[int, ...]) -> int:
-        """TODO."""
+    def _ravel_index(self, index: LabelMultiQubitT) -> int:
+        """Ravel a multi-index into a flat index when applicable..
+
+        Args:
+            index: an integer index or multi-index matching the shape of the frame.
+
+        Returns:
+            A flattened integer index.
+
+        Raises:
+            ValueError: if an integer index is supplied for a frame that has a multi-dimensional
+                shape.
+        """
         if isinstance(index, tuple):
             return int(np.ravel_multi_index(multi_index=index, dims=self.shape))
         if len(self.shape) > 1:
-            raise ValueError("TODO.")
+            raise ValueError(
+                f"The integer index `{index}` is invalid because the frame has a {len(self.shape)}-"
+                "dimensional shape."
+            )
         return index
 
-    def __getitem__(self, index: int | tuple[int, ...]) -> Operator | list[Operator]:
+    def __getitem__(self, index: LabelMultiQubitT) -> Operator | list[Operator]:
         """Return a frame operator or a list of frame operators.
 
         Args:

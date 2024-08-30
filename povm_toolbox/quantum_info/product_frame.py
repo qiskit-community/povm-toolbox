@@ -204,19 +204,25 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             povm._check_validity()
 
     def _ravel_index(self, index: tuple[int, ...]) -> tuple[int, ...]:
-        """TODO.
+        """Process a global multi-index into a tuple of flat indices for each local frame.
 
         Args:
-            index: TODO.
+            index: a large multi-index consisting of local multi-indices, each of those
+                corresponding to a local frame.
 
         Returns:
-            TODO.
+            A multi-index where  consisting of local  integer indices. That is, for each sub-system
+            the local multi-index has been flattened.
 
         Raises:
-            ValueError: TODO.
+            ValueError: if `index` does not have the same number of dimensions as the shape of the
+                frame.
         """
         if len(index) != len(self.shape):
-            raise ValueError("TODO.")
+            raise ValueError(
+                f"The index {index} does not have the same number of dimensions as the shape of the"
+                f" frame: {self.shape}"
+            )
 
         index_processed = []
         start = 0
