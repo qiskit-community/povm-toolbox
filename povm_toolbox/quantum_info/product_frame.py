@@ -70,8 +70,6 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         subsystem_indices = set()
         self._dimension = 1
         self._num_operators = 1
-        shape: tuple[int, ...] = tuple()
-        subshape_ndims = []
         for idx, frame in frames.items():
             idx_set = set(idx)
             if len(idx) != len(idx_set):
@@ -95,16 +93,12 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             subsystem_indices.update(idx_set)
             self._dimension *= frame.dimension
             self._num_operators *= frame.num_operators
-            shape += frame.shape
-            subshape_ndims.append(len(frame.shape))
 
         self._informationally_complete: bool = all(
             [frame.informationally_complete for frame in frames.values()]
         )
 
         self._frames = frames
-        self._subshape_ndims = tuple(subshape_ndims)
-        self._shape = shape
 
         self._check_validity()
 
@@ -186,9 +180,14 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         return self._num_operators
 
     @property
+    def _sub_shapes(self) -> tuple[tuple[int, ...], ...]:
+        """Give the shapes of local frames."""
+        return tuple(frame.shape for frame in self._frames.values())
+
+    @property
     def shape(self) -> tuple[int, ...]:
-        """Give the number of operators per sub-system."""
-        return self._shape
+        """Give the shape of the product frame."""
+        return tuple(el for shape in self._sub_shapes for el in shape)
 
     @property
     def sub_systems(self) -> list[tuple[int, ...]]:
@@ -221,12 +220,12 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         index_processed = []
         start = 0
-        for ndim in self._subshape_ndims:
+        for sub_shape in self._sub_shapes:
             local_flat_index = np.ravel_multi_index(
-                index[start : start + ndim], self.shape[start : start + ndim]
+                index[start : start + len(sub_shape)], sub_shape
             )
             index_processed.append(int(local_flat_index))
-            start += ndim
+            start += len(sub_shape)
         return tuple(index_processed)
 
     def __getitem__(self, sub_system: tuple[int, ...]) -> T:
@@ -278,8 +277,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 # Extract the local Pauli term on the qubit indices of this local POVM.
                 sublabel = "".join(label[-(i + 1)] for i in idx)
                 # Try to obtain the coefficient of the local POVM for this local Pauli term.
+                local_idx = index_processed[j]
                 try:
-                    local_idx = index_processed[j]
                     coeff = povm.pauli_operators[local_idx][sublabel]
                 except KeyError:
                     # If it does not exist, the current summand becomes 0 because it would be
