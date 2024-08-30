@@ -51,18 +51,18 @@ class POVMPubResult(PubResult):
         return self._metadata  # type:ignore
 
     def get_counts(self, *, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
-        """Get the histogram data of the result.
+        """Get the counter of outcomes from the result.
 
         This method will leverage :meth:`~.POVMImplementation.get_povm_counts_from_raw` from the
         :class:`.POVMImplementation` instance stored inside the :attr:`metadata` to construct a
-        histogram of POVM outcomes.
+        counter of POVM outcomes.
 
         Args:
             loc: Which entry of the :class:`~qiskit.primitives.containers.bit_array.BitArray` to
-                return a histogram for. If the Pub that was submitted to :meth:`.POVMSampler.run`
+                return a counter for. If the pub that was submitted to :meth:`.POVMSampler.run`
                 contained circuit parameters, ``loc`` can be used to indicate the set of parameter
-                values for which to compute the histogram. If ``loc is None``, the histogram will be
-                computed for all parameter values at once.
+                values for which to compute the counter. If ``loc`` is ``None``, the histogram
+                will be computed for all parameter values at once.
 
         Returns:
             Either a single or an array of histograms of the POVM outcomes. The shape depends on the
