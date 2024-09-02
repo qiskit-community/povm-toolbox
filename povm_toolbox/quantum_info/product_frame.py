@@ -224,7 +224,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 labeled by a tuple of integers (one index per local frame).
 
         Returns:
-            The product frame operator specified by `frame_op_idx`. The operator is returned in a
+            The product frame operator specified by ``frame_op_idx``. The operator is returned in a
             product form. More specifically, is it a dictionary mapping the subsystems to the
             corresponding local frame operators forming the product frame operator.
         """
