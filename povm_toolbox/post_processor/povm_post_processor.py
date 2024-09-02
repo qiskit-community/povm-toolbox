@@ -223,14 +223,14 @@ class POVMPostProcessor:
         return exp_val, std
 
     def get_state_snapshot(self, outcome: tuple[int, ...]) -> dict[tuple[int, ...], Operator]:
-        """Return the snapshot of the state associated with `outcome`.
+        """Return the snapshot of the state associated with ``outcome``.
 
         Args:
             outcome: the label specifying the snapshot. The outcome is a tuple of integers (one
                 index per local frame).
 
         Returns:
-            The snapshot associated with `outcome`. The snapshot is a product operator, which is
+            The snapshot associated with ``outcome``. The snapshot is a product operator, which is
             returned as a dictionary mapping the subsystems of the Hilbert space (e.g. qubits) to
             the corresponding local operators forming the product operator.
 
