@@ -187,7 +187,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
     @property
     def shape(self) -> tuple[int, ...]:
         """Give the shape of the product frame."""
-        return tuple(el for shape in self._sub_shapes for el in shape)
+        return tuple(s for shape in self._sub_shapes for s in shape)
 
     @property
     def sub_systems(self) -> list[tuple[int, ...]]:
@@ -208,10 +208,11 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         Args:
             index: a large multi-index consisting of local multi-indices, each of those
-                corresponding to a local frame.
+                corresponding to a local frame. Therefore, ``index`` is supposed to be a
+                flattened ``tuple[LabelMultiQubitT, ...]``, which is always a ``tuple[int, ...]`.
 
         Returns:
-            A multi-index where  consisting of local  integer indices. That is, for each sub-system
+            A multi-index where  consisting of local integer indices. That is, for each sub-system
             the local multi-index has been flattened.
 
         Raises:
@@ -255,17 +256,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         Args:
             operator: the input operator to multiply with a frame operator.
             frame_op_idx: the label specifying the frame operator to use. The frame operator is
-                labeled by a tuple of integers (one index per local frame).
+                labeled by a tuple of integers (possibly multiple integers for one local frame).
 
         Returns:
             The trace of the product of the input operator with the specified frame operator.
-
-        Raises:
-            IndexError: when the provided outcome label (tuple of integers) has a number of integers
-                which does not correspond to the number of local frames making up the product frame.
-            IndexError: when a local index exceeds the number of operators of the corresponding
-                local frame.
-            ValueError: when the output is not a real number.
         """
         p_idx = 0.0 + 0.0j
 

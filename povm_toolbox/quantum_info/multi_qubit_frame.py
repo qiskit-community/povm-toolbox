@@ -36,6 +36,10 @@ from povm_toolbox.utilities import matrix_to_double_ket
 from .base import BaseFrame
 
 LabelMultiQubitT = TypeVar("LabelMultiQubitT", int, tuple[int, ...])
+"""Each operator in the multiqubit frame is identified by a label.
+
+This is the type of these labels. They are either integers or tuples of integers.
+"""
 
 
 class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
@@ -51,7 +55,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
     """
 
     def __init__(
-        self, list_operators: list[Operator], shape: tuple[int, ...] | None = None
+        self, list_operators: list[Operator], *, shape: tuple[int, ...] | None = None
     ) -> None:
         """Initialize from explicit operators.
 
@@ -108,7 +112,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         return self._shape or (self.num_operators,)
 
     @shape.setter
-    def shape(self, new_shape: tuple[int, ...] | None):
+    def shape(self, new_shape: tuple[int, ...] | None) -> None:
         """Set the shape of the frame."""
         if new_shape is not None and prod(new_shape) != self.num_operators:
             raise ValueError(
@@ -255,7 +259,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         if frame_op_idx is None:
             return np.array(np.dot(op_vectorized, self._array).real)
         raise TypeError(
-            "The optional ``frame_op_idx`` can either be a single or set of integers, not a "
+            "The optional `frame_op_idx` can either be a single or set of integers, not a "
             f"{type(frame_op_idx)}."
         )
 
