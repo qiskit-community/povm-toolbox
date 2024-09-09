@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The :attr:`.MultiQubitFrame.operators` attribute of :class:`.MultiQubitFrame` objects is now
+    read-only.

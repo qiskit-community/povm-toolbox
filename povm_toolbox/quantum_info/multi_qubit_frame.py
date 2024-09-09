@@ -67,9 +67,9 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
 
 
         Raises:
+            ValueError: if the length of ``list_operators`` is not compatible with ``shape``.
             ValueError: if the frame operators do not have a correct shape. They should all be
                 hermitian and of the same dimension.
-            ValueError: if the length of ``list_operators`` is not compatible with ``shape``.
         """
         self._num_operators: int
         self._dimension: int
@@ -80,7 +80,34 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
 
         self._shape: tuple[int, ...] | None = shape
 
-        self.operators = list_operators
+        if self._shape is not None and prod(self._shape) != len(list_operators):
+            raise ValueError(
+                f"The number of operators ({len(list_operators)}) is not compatible with the shape"
+                f" of the frame: {self.shape}."
+            )
+        
+        self._num_operators = len(list_operators)
+        self._dimension = list_operators[0].dim[0]
+        for frame_op in list_operators:
+            if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
+                raise ValueError(
+                    f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and "
+                    "all of the same dimension."
+                )
+
+        self._operators = list_operators
+
+        self._pauli_operators = None
+
+        self._array = np.ndarray((self.dimension**2, self.num_operators), dtype=complex)
+        for k, frame_op in enumerate(list_operators):
+            self._array[:, k] = matrix_to_double_ket(frame_op.data)
+
+        self._informationally_complete = bool(
+            np.linalg.matrix_rank(self._array) == self.dimension**2
+        )
+
+        self._check_validity()
 
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.MultiQubitFrame` instance."""
