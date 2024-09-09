@@ -60,6 +60,7 @@ class POVMPostProcessor:
         self,
         povm_sample: POVMPubResult,
         dual: BaseDual | None = None,
+        *,
         combine_counts: bool = False,
     ) -> None:
         """Initialize the POVM post-processor.
