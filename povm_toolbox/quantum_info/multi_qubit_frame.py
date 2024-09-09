@@ -85,7 +85,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
                 f"The number of operators ({len(list_operators)}) is not compatible with the shape"
                 f" of the frame: {self.shape}."
             )
-        
+
         self._num_operators = len(list_operators)
         self._dimension = list_operators[0].dim[0]
         for frame_op in list_operators:

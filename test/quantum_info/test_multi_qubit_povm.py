@@ -15,8 +15,8 @@ from unittest import TestCase
 import numpy as np
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
-from qiskit.quantum_info import Operator
 from qiskit.exceptions import QiskitError
+from qiskit.quantum_info import Operator
 
 
 class TestMultiQubitPOVM(TestCase):
@@ -136,7 +136,7 @@ class TestMultiQubitPOVM(TestCase):
             frame_coefficients = povm.analysis(operator)
             self.assertIsInstance(frame_coefficients, np.ndarray)
             self.assertTrue(np.allclose(frame_coefficients, np.array([0.8, 0.2])))
-        with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(TypeError):
+        with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(ValueError):
             _ = povm.analysis(operator, (0, 1))
 
     def test_draw_bloch(self):
