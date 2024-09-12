@@ -111,26 +111,6 @@ class TestMultiQubitFrame(TestCase):
                 frame.__repr__(), f"MultiQubitFrame(num_qubits=2)<2,2> at {hex(id(frame))}"
             )
 
-    def test_operators_setter(self):
-        """Test the ``__repr__`` method."""
-        with self.subTest("Non-square operators") and self.assertRaises(ValueError):
-            frame = MultiQubitFrame([Operator.from_label("0"), Operator.from_label("1")])
-            frame.operators = [
-                Operator(np.array([[1, 0, 0], [0, 0, 0]])),
-                Operator(np.array([[0, 0, 0], [0, 1, 0]])),
-            ]
-        with self.subTest("Change number of operators"):
-            frame = MultiQubitFrame([Operator.from_label("0"), Operator.from_label("1")])
-            frame.operators = [Operator.from_label("I")]
-            self.assertEqual(frame.shape, (1,))
-        with self.subTest("Number of operators incompatible with shape.") and self.assertRaises(
-            ValueError
-        ):
-            frame = MultiQubitFrame(
-                [Operator.from_label("0"), Operator.from_label("1")], shape=(2,)
-            )
-            frame.operators = [Operator.from_label("I")]
-
     def test_pauli_operators(self):
         """Test errors are raised  correctly for the ``pauli_operators`` attribute."""
         frame = MultiQubitFrame([Operator(np.eye(3))])
@@ -185,8 +165,6 @@ class TestMultiQubitFrame(TestCase):
             self.assertEqual(frame.shape, (2, 2))
             frame.shape = (4, 1)
             self.assertEqual(frame.shape, (4, 1))
-            frame.shape = None
-            self.assertEqual(frame.shape, (4,))
         with self.subTest("Test raises errors correctly") and self.assertRaises(ValueError):
             frame = MultiQubitFrame([Operator.from_label(label) for label in paulis])
             frame.shape = (2, 3)

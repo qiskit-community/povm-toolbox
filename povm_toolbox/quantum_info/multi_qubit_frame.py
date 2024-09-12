@@ -78,15 +78,8 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         self._array: np.ndarray
         self._informationally_complete: bool
 
-        self._shape: tuple[int, ...] | None = shape
-
-        if self._shape is not None and prod(self._shape) != len(list_operators):
-            raise ValueError(
-                f"The number of operators ({len(list_operators)}) is not compatible with the shape"
-                f" of the frame: {self.shape}."
-            )
-
         self._num_operators = len(list_operators)
+        self.shape = shape or (self._num_operators,)
         self._dimension = list_operators[0].dim[0]
         for frame_op in list_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
@@ -136,12 +129,12 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
     @property
     def shape(self) -> tuple[int, ...]:
         """Return the shape of the frame."""
-        return self._shape or (self.num_operators,)
+        return self._shape
 
     @shape.setter
-    def shape(self, new_shape: tuple[int, ...] | None) -> None:
+    def shape(self, new_shape: tuple[int, ...]) -> None:
         """Set the shape of the frame."""
-        if new_shape is not None and prod(new_shape) != self.num_operators:
+        if prod(new_shape) != self.num_operators:
             raise ValueError(
                 f"The shape {new_shape} is not compatible with the number of operators in the frame"
                 f" ({self.num_operators})."
@@ -152,37 +145,6 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
     def operators(self) -> list[Operator]:
         """Return the list of frame operators."""
         return self._operators
-
-    @operators.setter
-    def operators(self, new_operators: list[Operator]):
-        """Set the frame operators."""
-        if self._shape is not None and prod(self._shape) != len(new_operators):
-            raise ValueError(
-                f"The number of operators ({len(new_operators)}) is not compatible with the shape"
-                f" of the frame: {self.shape}."
-            )
-        self._num_operators = len(new_operators)
-        self._dimension = new_operators[0].dim[0]
-        for frame_op in new_operators:
-            if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
-                raise ValueError(
-                    f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and "
-                    f"all of the same dimension: {self._dimension}."
-                )
-
-        self._operators = new_operators
-
-        self._pauli_operators = None
-
-        self._array = np.ndarray((self.dimension**2, self.num_operators), dtype=complex)
-        for k, frame_op in enumerate(new_operators):
-            self._array[:, k] = matrix_to_double_ket(frame_op.data)
-
-        self._informationally_complete = bool(
-            np.linalg.matrix_rank(self._array) == self.dimension**2
-        )
-
-        self._check_validity()
 
     @property
     def pauli_operators(self) -> list[dict[str, complex]]:

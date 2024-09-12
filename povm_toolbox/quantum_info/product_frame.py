@@ -250,6 +250,23 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         """Return the number of outcomes of the product frame."""
         return self.num_operators
 
+    def get_operator(self, frame_op_idx: tuple[int, ...]) -> dict[tuple[int, ...], Operator]:
+        """Return a product frame operator in a product form.
+
+        Args:
+            frame_op_idx: the label specifying the frame operator to get. The frame operator is
+                labeled by a tuple of integers (one index per local frame).
+
+        Returns:
+            The product frame operator specified by ``frame_op_idx``. The operator is returned in a
+            product form. More specifically, is it a dictionary mapping the subsystems to the
+            corresponding local frame operators forming the product frame operator.
+        """
+        product_operator = {}
+        for local_idx, (subsystem, povm) in zip(frame_op_idx, self._frames.items()):
+            product_operator[subsystem] = povm.operators[local_idx]
+        return product_operator
+
     def _trace_of_prod(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
         """Return the trace of the product of a Hermitian operator with a specific frame operator.
 
