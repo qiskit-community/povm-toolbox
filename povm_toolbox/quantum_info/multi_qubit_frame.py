@@ -36,7 +36,7 @@ from povm_toolbox.utilities import matrix_to_double_ket
 from .base import BaseFrame
 
 LabelMultiQubitT = TypeVar("LabelMultiQubitT", int, tuple[int, ...])
-"""Each operator in the multiqubit frame is identified by a label.
+"""Each operator in the frame spanning multiple qubits is identified by a label.
 
 This is the type of these labels. They are either integers or tuples of integers.
 """
@@ -167,7 +167,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
                 raise ValueError(
                     f"Frame operators need to be square ({frame_op.dim[0]},{frame_op.dim[1]}) and "
-                    "all of the same dimension."
+                    f"all of the same dimension: {self._dimension}."
                 )
 
         self._operators = new_operators

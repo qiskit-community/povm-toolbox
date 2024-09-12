@@ -212,8 +212,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 flattened ``tuple[LabelMultiQubitT, ...]``, which is always a ``tuple[int, ...]`.
 
         Returns:
-            A multi-index where  consisting of local integer indices. That is, for each sub-system
-            the local multi-index has been flattened.
+            A multi-index consisting of one integer index per local frame. That is, for each
+            sub-system the local multi-index has been raveled.
 
         Raises:
             ValueError: if ``index`` does not have the same number of dimensions as the shape of the
