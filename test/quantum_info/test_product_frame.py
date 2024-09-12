@@ -67,6 +67,105 @@ class TestProductFrame(TestCase):
             self.assertTrue(np.allclose(decomposition_weights_n_qubit, check))
             self.assertTrue(np.allclose(decomposition_weights_product, check))
 
+    def test_shape(self):
+        """Test that the ``shape`` property works correctly."""
+        paulis = ["I", "X", "Y", "Z"]
+
+        frame_0 = MultiQubitFrame([Operator.from_label(label) for label in paulis], shape=(2, 2))
+        frame_1 = MultiQubitFrame([Operator.from_label(label) for label in paulis])
+        prod_frame = ProductFrame.from_list([frame_0, frame_1])
+
+        with self.subTest("Test shape."):
+            self.assertEqual(prod_frame.shape, (2, 2, 4))
+            self.assertEqual(prod_frame._sub_shapes, ((2, 2), (4,)))
+
+        with self.subTest("Test reshape."):
+            prod_frame[(1,)].shape = (1, 2, 2)
+            self.assertEqual(prod_frame.shape, (2, 2, 1, 2, 2))
+            self.assertEqual(prod_frame._sub_shapes, ((2, 2), (1, 2, 2)))
+
+    def test_custom_shape_and_analysis(self):
+        """Test that the ``analysis`` method works correctly when the frame has a custom shape."""
+        paulis = ["I", "X", "Y", "Z"]
+
+        frame_0 = MultiQubitFrame([Operator.from_label(label) for label in paulis], shape=(2, 2))
+        frame_1 = MultiQubitFrame([Operator.from_label(label) for label in paulis])
+        prod_frame = ProductFrame.from_list([frame_0, frame_1])
+
+        with self.subTest("Test analysis method with specific index."):
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0, 0)
+            )
+            self.assertAlmostEqual(val, 4.0)
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0, 1)
+            )
+            self.assertAlmostEqual(val, 0.0)
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("XI"), frame_op_idx=(0, 0, 1)
+            )
+            self.assertAlmostEqual(val, 4.0)
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("II"), frame_op_idx=(1, 0, 1)
+            )
+            self.assertAlmostEqual(val, 0.0)
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("XY"), frame_op_idx=(1, 0, 1)
+            )
+            self.assertAlmostEqual(val, 4.0)
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("ZZ"), frame_op_idx=(1, 1, 3)
+            )
+            self.assertAlmostEqual(val, 4.0)
+
+        with self.subTest("Test index out of bounds.") and self.assertRaises(ValueError):
+            prod_frame.analysis(hermitian_op=Operator.from_label("II"), frame_op_idx=(2, 0, 0))
+
+        with self.subTest("Test index too short.") and self.assertRaises(ValueError):
+            prod_frame.analysis(hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0))
+
+        with self.subTest("Test index too long.") and self.assertRaises(ValueError):
+            prod_frame.analysis(hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0, 0, 0))
+
+        with self.subTest("Test analysis method with set of indices.") and self.assertRaises(
+            KeyError
+        ):
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("II"), frame_op_idx={(0, 0, 0), (0, 1, 2)}
+            )
+            self.assertIsInstance(val, dict)
+            self.assertAlmostEqual(val[0, 0, 0], 4.0)
+            self.assertAlmostEqual(val[0, 1, 2], 0.0)
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("YZ"), frame_op_idx={(0, 0, 0), (1, 1, 2)}
+            )
+            self.assertAlmostEqual(val[0, 0, 0], 0.0)
+            self.assertAlmostEqual(val[1, 1, 2], 4.0)
+            val[0, 1, 2]
+
+        with self.subTest("Test analysis method with all indices."):
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("XZ") + Operator.from_label("II"),
+                frame_op_idx=None,
+            )
+            self.assertIsInstance(val, np.ndarray)
+            self.assertEqual(val.shape, (2, 2, 4))
+            expected_val = np.zeros(shape=(2, 2, 4))
+            expected_val[0, 0, 0] = expected_val[1, 1, 1] = 4.0
+            self.assertTrue(np.allclose(val, expected_val))
+
+        frame_2 = MultiQubitFrame([Operator.from_label(label) for label in paulis], shape=(1, 2, 2))
+        prod_frame = ProductFrame.from_list([frame_0, frame_2])
+        with self.subTest("Test analysis method with special shape."):
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 1, 0, 1, 0)
+            )
+            self.assertAlmostEqual(val, 0.0)
+            val = prod_frame.analysis(
+                hermitian_op=Operator.from_label("YX"), frame_op_idx=(0, 1, 0, 1, 0)
+            )
+            self.assertAlmostEqual(val, 4.0)
+
     def test_get_operator(self):
         """Test that the ``get_operator`` method works correctly."""
         frame_0 = MultiQubitFrame([Operator.from_label(label) for label in ["I", "X", "Y", "Z"]])

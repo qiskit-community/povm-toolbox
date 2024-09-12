@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    The :class:`.MultiQubitFrame` now has a ``shape`` attribute. Before, its shape was implicitly
+    assumed to be ``(len(frame.num_operators),)`` and the operators were indexed by integers. Note
+    that this is is still the default shape and indexing method. However, the frame operators can
+    now also be indexed by multi-indices (tuple of integers) if a custom shape is specified.

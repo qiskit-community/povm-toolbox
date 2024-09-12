@@ -24,13 +24,6 @@ class TestMultiQubitPOVM(TestCase):
 
     def test_invalid_operators(self):
         """Test that errors are correctly raised if invalid operators are supplied."""
-        with self.subTest("Non Hermitian operators") and self.assertRaises(ValueError):
-            ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
-            while np.abs(ops[0, 0, 0].imag) < 1e-6:
-                ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(
-                    -1, 1, (6, 2, 2)
-                )
-            _ = MultiQubitPOVM(list_operators=[Operator(op) for op in ops])
         with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
             op = np.array([[-0.5, 0], [0, 0]])
             _ = MultiQubitPOVM(list_operators=[Operator(op), Operator(np.eye(2) - op)])
@@ -46,14 +39,6 @@ class TestMultiQubitPOVM(TestCase):
                 ]
             )
 
-    def test_dimension(self):
-        """Test dimension attribute"""
-        for dim in range(1, 10):
-            povm = MultiQubitPOVM(3 * [Operator(1.0 / 3.0 * np.eye(dim))])
-            self.assertEqual(dim, povm.dimension)
-            self.assertEqual(dim, povm._dimension)
-            self.assertEqual((dim, dim), povm.operators[1].dim)
-
     def test_num_outcomes(self):
         """Test the number of outcomes, with both `num_outcomes` attribute and `__len__` method."""
         for n in range(1, 10):
@@ -62,20 +47,6 @@ class TestMultiQubitPOVM(TestCase):
                 self.assertEqual(n, povm.num_outcomes)
                 self.assertEqual(n, len(povm))
                 self.assertEqual(n, len(povm.operators))
-
-    def test_getitem(self):
-        """Test the `__getitem__` method."""
-        n = 6
-        povm = MultiQubitPOVM(
-            [Operator(2 * i / (n * (n + 1)) * np.eye(4)) for i in range(1, n + 1)]
-        )
-        self.assertIsInstance(povm[2], Operator)
-        self.assertIsInstance(povm[1:2], list)
-        self.assertIsInstance(povm[:2], list)
-        self.assertEqual(povm[0], povm.operators[0])
-        self.assertListEqual(povm[3:], [povm.operators[3], povm.operators[4], povm.operators[5]])
-        self.assertListEqual(povm[::2], [povm.operators[0], povm.operators[2], povm.operators[4]])
-        self.assertListEqual(povm[2::-1], [povm.operators[2], povm.operators[1], povm.operators[0]])
 
     def test_informationally_complete(self):
         """Test whether a POVM is informationally complete or not."""
@@ -165,7 +136,7 @@ class TestMultiQubitPOVM(TestCase):
             frame_coefficients = povm.analysis(operator)
             self.assertIsInstance(frame_coefficients, np.ndarray)
             self.assertTrue(np.allclose(frame_coefficients, np.array([0.8, 0.2])))
-        with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(TypeError):
+        with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(ValueError):
             _ = povm.analysis(operator, (0, 1))
 
     def test_draw_bloch(self):

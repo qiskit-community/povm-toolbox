@@ -322,17 +322,17 @@ class TestProductPOVM(TestCase):
             observable = 1.0j * Operator.from_label("XXX")
             _ = prod_povm.analysis(observable)
         with self.subTest("Test invalid shape for ``frame_op_idx``.") and self.assertRaises(
-            IndexError
+            ValueError
         ):
             observable = Operator.from_label("ZZZ")
             _ = prod_povm.analysis(observable, frame_op_idx=(0, 0))
         with self.subTest(
             "Test invalid ``frame_op_idx`` argument (out of range)."
-        ) and self.assertRaises(IndexError):
+        ) and self.assertRaises(ValueError):
             observable = Operator.from_label("ZZZ")
             _ = prod_povm.analysis(observable, frame_op_idx=(0, 0, 6))
         with self.subTest(
             "Test invalid ``frame_op_idx`` argument (negative out of range)."
-        ) and self.assertRaises(IndexError):
+        ) and self.assertRaises(ValueError):
             observable = Operator.from_label("ZZZ")
             _ = prod_povm.analysis(observable, frame_op_idx=(0, 0, -10))

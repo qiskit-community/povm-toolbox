@@ -24,6 +24,9 @@ if sys.version_info < (3, 12):
 else:
     from typing import override  # pragma: no cover
 
+from math import prod
+from typing import TypeVar
+
 import numpy as np
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import Operator, SparsePauliOp
@@ -32,8 +35,14 @@ from povm_toolbox.utilities import matrix_to_double_ket
 
 from .base import BaseFrame
 
+LabelMultiQubitT = TypeVar("LabelMultiQubitT", int, tuple[int, ...])
+"""Each operator in the frame spanning multiple qubits is identified by a label.
 
-class MultiQubitFrame(BaseFrame[int]):
+This is the type of these labels. They are either integers or tuples of integers.
+"""
+
+
+class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
     """Class that collects all information that any frame of multiple qubits should specify.
 
     This is a representation of an operator-valued vector space frame. The effects are specified as
@@ -45,15 +54,20 @@ class MultiQubitFrame(BaseFrame[int]):
        for more general information.
     """
 
-    def __init__(self, list_operators: list[Operator]) -> None:
+    def __init__(
+        self, list_operators: list[Operator], *, shape: tuple[int, ...] | None = None
+    ) -> None:
         """Initialize from explicit operators.
 
         Args:
             list_operators: list that contains the explicit frame operators. The length of the list
                 is the number of operators of the frame.
+            shape: the shape defining the indexing of operators in ``list_operators``. If ``None``,
+                the default shape is ``(self.num_operators,)``.
 
 
         Raises:
+            ValueError: if the length of ``list_operators`` is not compatible with ``shape``.
             ValueError: if the frame operators do not have a correct shape. They should all be
                 hermitian and of the same dimension.
         """
@@ -65,6 +79,7 @@ class MultiQubitFrame(BaseFrame[int]):
         self._informationally_complete: bool
 
         self._num_operators = len(list_operators)
+        self.shape = shape or (self._num_operators,)
         self._dimension = list_operators[0].dim[0]
         for frame_op in list_operators:
             if not (self._dimension == frame_op.dim[0] and self._dimension == frame_op.dim[1]):
@@ -90,7 +105,11 @@ class MultiQubitFrame(BaseFrame[int]):
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.MultiQubitFrame` instance."""
         f_subsystems = f"(num_qubits={self.num_subsystems})" if self.num_subsystems > 1 else ""
-        return f"{self.__class__.__name__}{f_subsystems}<{self.num_operators}> at {hex(id(self))}"
+        repr_str = (
+            f"{self.__class__.__name__}{f_subsystems}<{','.join(map(str, self.shape))}> "
+            f"at {hex(id(self))}"
+        )
+        return repr_str
 
     @property
     def informationally_complete(self) -> bool:
@@ -106,6 +125,21 @@ class MultiQubitFrame(BaseFrame[int]):
     def num_operators(self) -> int:
         """The number of effects of the frame."""
         return self._num_operators
+
+    @property
+    def shape(self) -> tuple[int, ...]:
+        """Return the shape of the frame."""
+        return self._shape
+
+    @shape.setter
+    def shape(self, new_shape: tuple[int, ...]) -> None:
+        """Set the shape of the frame."""
+        if prod(new_shape) != self.num_operators:
+            raise ValueError(
+                f"The shape {new_shape} is not compatible with the number of operators in the frame"
+                f" ({self.num_operators})."
+            )
+        self._shape = new_shape
 
     @property
     def operators(self) -> list[Operator]:
@@ -148,7 +182,29 @@ class MultiQubitFrame(BaseFrame[int]):
             if not np.allclose(op, op.adjoint(), atol=1e-5):
                 raise ValueError(f"The {k}-the frame operator is not hermitian.")
 
-    def __getitem__(self, index: slice) -> Operator | list[Operator]:
+    def _ravel_index(self, index: LabelMultiQubitT) -> int:
+        """Ravel a multi-index into a flat index when applicable..
+
+        Args:
+            index: an integer index or multi-index matching the shape of the frame.
+
+        Returns:
+            A flattened integer index.
+
+        Raises:
+            ValueError: if an integer index is supplied for a frame that has a multi-dimensional
+                shape.
+        """
+        if isinstance(index, tuple):
+            return int(np.ravel_multi_index(multi_index=index, dims=self.shape))
+        if len(self.shape) > 1:
+            raise ValueError(
+                f"The integer index `{index}` is invalid because the frame has a {len(self.shape)}-"
+                "dimensional shape."
+            )
+        return index
+
+    def __getitem__(self, index: LabelMultiQubitT) -> Operator | list[Operator]:
         """Return a frame operator or a list of frame operators.
 
         Args:
@@ -157,7 +213,7 @@ class MultiQubitFrame(BaseFrame[int]):
         Returns:
             The operator or list of operators corresponding to the index.
         """
-        return self.operators[index]
+        return self.operators[self._ravel_index(index)]
 
     def __len__(self) -> int:
         """Return the number of operators of the frame."""
@@ -174,17 +230,20 @@ class MultiQubitFrame(BaseFrame[int]):
     def analysis(
         self,
         hermitian_op: SparsePauliOp | Operator,
-        frame_op_idx: int | set[int] | None = None,
-    ) -> float | dict[int, float] | np.ndarray:
+        frame_op_idx: LabelMultiQubitT | set[LabelMultiQubitT] | None = None,
+    ) -> float | dict[LabelMultiQubitT, float] | np.ndarray:
         if isinstance(hermitian_op, SparsePauliOp):
             hermitian_op = hermitian_op.to_operator()
         op_vectorized = np.conj(matrix_to_double_ket(hermitian_op.data))
 
-        if isinstance(frame_op_idx, int):
-            return float(np.dot(op_vectorized, self._array[:, frame_op_idx]).real)
+        if isinstance(frame_op_idx, (int, tuple)):
+            return float(
+                np.dot(op_vectorized, self._array[:, self._ravel_index(frame_op_idx)]).real
+            )
         if isinstance(frame_op_idx, set):
             return {
-                idx: float(np.dot(op_vectorized, self._array[:, idx]).real) for idx in frame_op_idx
+                idx: float(np.dot(op_vectorized, self._array[:, self._ravel_index(idx)]).real)
+                for idx in frame_op_idx
             }
         if frame_op_idx is None:
             return np.array(np.dot(op_vectorized, self._array).real)
