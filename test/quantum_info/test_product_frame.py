@@ -66,3 +66,24 @@ class TestProductFrame(TestCase):
             check = np.ones(len(product_paulis)) * 2**num_qubit
             self.assertTrue(np.allclose(decomposition_weights_n_qubit, check))
             self.assertTrue(np.allclose(decomposition_weights_product, check))
+
+    def test_get_operator(self):
+        """Test that the ``get_operator`` method works correctly."""
+        frame_0 = MultiQubitFrame([Operator.from_label(label) for label in ["I", "X", "Y", "Z"]])
+        frame_1 = MultiQubitFrame([Operator.from_label(label) for label in ["0", "1"]])
+        frame_product = ProductFrame.from_list(frames=[frame_0, frame_1])
+
+        with self.subTest("Test method works correctly"):
+            frame_op_idx = (0, 1)
+            expected_snapshot = {(0,): Operator.from_label("I"), (1,): Operator.from_label("1")}
+            snapshot = frame_product.get_operator(frame_op_idx)
+            self.assertDictEqual(snapshot, expected_snapshot)
+
+            frame_op_idx = (2, 0)
+            expected_snapshot = {(0,): Operator.from_label("Y"), (1,): Operator.from_label("0")}
+            snapshot = frame_product.get_operator(frame_op_idx)
+            self.assertDictEqual(snapshot, expected_snapshot)
+
+        with self.subTest("invalid frame_op_idx") and self.assertRaises(IndexError):
+            frame_op_idx = (10, 20)
+            frame_product.get_operator(frame_op_idx)

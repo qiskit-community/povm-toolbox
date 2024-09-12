@@ -15,12 +15,12 @@ from unittest import TestCase
 import numpy as np
 from povm_toolbox.library import ClassicalShadows, LocallyBiasedClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
-from povm_toolbox.quantum_info.product_dual import ProductDual
+from povm_toolbox.quantum_info import MultiQubitDual, ProductDual
 from povm_toolbox.sampler import POVMSampler
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 from qiskit.primitives import StatevectorSampler as Sampler
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 
 class TestPostProcessor(TestCase):
@@ -187,3 +187,23 @@ class TestPostProcessor(TestCase):
 
         self.assertAlmostEqual(exp_val, 0.0)
         self.assertTrue(np.isnan(std))
+
+    def test_get_state_snapshot(self):
+        """Test that the ``get_state_snapshot`` method works correctly."""
+        post_processor = POVMPostProcessor(self.pub_result)
+
+        with self.subTest("Test method works correctly"):
+            outcome = self.pub_result.get_samples()[0]
+            # check outcome first
+            self.assertEqual(outcome, (5, 1))
+            expected_snapshot = {
+                (0,): Operator([[0.5, 1.5j], [-1.5j, 0.5]]),
+                (1,): Operator([[-1, 0.0], [0, 2.0]]),
+            }
+            snapshot = post_processor.get_state_snapshot(outcome)
+            # check snapshot
+            self.assertDictEqual(snapshot, expected_snapshot)
+
+        with self.subTest("Test raises errors") and self.assertRaises(NotImplementedError):
+            post_processor._dual = MultiQubitDual([Operator(np.eye(4))])
+            _ = post_processor.get_state_snapshot(outcome)
