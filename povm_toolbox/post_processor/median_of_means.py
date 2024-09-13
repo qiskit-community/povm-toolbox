@@ -77,6 +77,7 @@ class MedianOfMeans(POVMPostProcessor):
         povm_sample: POVMPubResult,
         dual: BaseDual | None = None,
         *,
+        combine_counts: bool = False,
         num_batches: int | None = None,
         upper_delta_confidence: float | None = None,
         seed: int | Generator | None = None,
@@ -90,6 +91,9 @@ class MedianOfMeans(POVMPostProcessor):
                 :meth:`get_decomposition_weights`. When this is ``None``, the default
                 "state-average" Dual frame will be constructed from the POVM stored in the
                 ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
+            combine_counts: indicates, when applicable, whether to combine the counts associated
+                with different parameter values that were submitted for a single parametrized
+                circuit.
             num_batches: number of batches, i.e. number of samples means, used in the median-of-means
                 estimator. This value will be overridden if a ``delta_confidence`` argument is supplied.
             upper_delta_confidence: an upper bound for the confidence parameter :math:`\delta` used to
@@ -107,7 +111,7 @@ class MedianOfMeans(POVMPostProcessor):
                 ``povm_samples``'s :attr:`.POVMPubResult.metadata`.
             TypeError: If the type of ``seed`` is not valid.
         """
-        super().__init__(povm_sample=povm_sample, dual=dual)
+        super().__init__(povm_sample=povm_sample, dual=dual, combine_counts=combine_counts)
 
         self.num_batches: int
         """Number of batches, i.e. number of samples means, used in the median-of-means estimator."""

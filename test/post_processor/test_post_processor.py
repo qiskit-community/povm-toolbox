@@ -119,18 +119,24 @@ class TestPostProcessor(TestCase):
             exp_val, std = post_processor.get_expectation_value(observable, loc=0)
             self.assertAlmostEqual(exp_val, -1.6406249999999998)
             self.assertAlmostEqual(std, 1.3442744428582185)
+
+    def test_get_expectation_value_parametrized_circuit(self):
+        """Test that the ``get_expectation_value`` method works correctly with parametrized circuit."""
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.ry(theta=Parameter("theta"), qubit=0)
+        povm_sampler = POVMSampler(sampler=Sampler(seed=self.SEED))
+        measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
+        job = povm_sampler.run(
+            [(qc, np.array(2 * [[0, np.pi / 3, np.pi]]))], shots=32, povm=measurement
+        )
+        pub_result = job.result()[0]
+        observable = SparsePauliOp(["IZ", "XX", "ZY"], coeffs=[-0.5, 1, -2])
         with self.subTest("Test with default ``loc`` for parametrized circuit."):
-            qc = QuantumCircuit(2)
-            qc.h(0)
-            qc.cx(0, 1)
-            qc.ry(theta=Parameter("theta"), qubit=0)
-            povm_sampler = POVMSampler(sampler=Sampler(seed=self.SEED))
-            measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
-            job = povm_sampler.run(
-                [(qc, np.array(2 * [[0, np.pi / 3, np.pi]]))], shots=32, povm=measurement
-            )
-            pub_result = job.result()[0]
             post_processor = POVMPostProcessor(pub_result)
+            self.assertEqual(post_processor.counts.shape, (2, 3))
+            self.assertEqual(sum(post_processor.counts[0, 0].values()), 32)
             exp_val, std = post_processor.get_expectation_value(observable)
             self.assertIsInstance(exp_val, np.ndarray)
             self.assertEqual(exp_val.shape, (2, 3))
@@ -158,6 +164,14 @@ class TestPostProcessor(TestCase):
                     ),
                 )
             )
+        with self.subTest("Test with combining counts."):
+            post_processor = POVMPostProcessor(pub_result, combine_counts=True)
+            self.assertEqual(post_processor.counts.shape, (1,))
+            self.assertEqual(sum(post_processor.counts[0].values()), 2 * 3 * 32)
+            exp_val, std = post_processor.get_expectation_value(observable)
+            self.assertIsInstance(exp_val, float)
+            self.assertAlmostEqual(exp_val, -1.5546875)
+            self.assertAlmostEqual(std, 0.47945849433203297)
 
     def test_single_exp_value_and_std(self):
         """Test that the ``_single_exp_value_and_std`` method works correctly."""
