@@ -34,6 +34,7 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .base import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
+from .multi_qubit_povm import MultiQubitPOVM
 
 T = TypeVar("T", bound=MultiQubitFrame)
 
@@ -353,3 +354,75 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         if isinstance(frame_op_idx, tuple):
             return self._trace_of_prod(hermitian_op, frame_op_idx)
         raise TypeError("Wrong type for ``frame_op_idx``.")
+
+    def _tensor_product(
+        self, indices: list[tuple[int, ...]]
+    ) -> tuple[tuple[int, ...], list[Operator]]:
+        """Explicitly construct the tensor product of some local frames.
+        Args:
+            indices: list of tuples specifying the local frames whose operators are to be tensor-
+                multiplied.
+        Returns:
+            The subsystem index and the list of tensor product operators which act upon it.
+        """
+        shape = tuple(self[subsystem_label].num_operators for subsystem_label in indices)
+        subset = list(idx for subsystem_label in indices for idx in subsystem_label)
+        joint_operators = np.empty(shape, dtype=object)
+        for outcome in np.ndindex(shape):
+            operator = self[indices[0]][outcome[0]]
+            for i in range(1, len(outcome)):
+                operator = Operator(np.kron(operator.data, self[indices[i]][outcome[i]].data))
+            joint_operators[outcome] = operator
+        return tuple(subset), joint_operators.flatten(order="C")
+
+    def group(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
+        """Group some local frames together into a single multi-qubit frame representation.
+        Args:
+            partition: partition of product frame, where all local frames are grouped into different
+                subsets. Each such subset is specified as a list of integer tuples, each of which
+                specifies a local frame. All local frames in a given subset are grouped together and
+                then represented by a single multi-qubit frame (we lose track of the product
+                structure within the set).
+        Returns:
+            A new ``ProductFrame`` instance representing ``self`` as specified by ``partition``.
+        Raises:
+            ValueError: if a subset contains twice the same index.
+            ValueError: if an index is in two different subsets.
+            ValueError: if ``partition`` does not exactly cover all subsystems.
+        """
+        keys = list(self._frames.keys())
+        key_partition = [[keys[i] for i in subset] for subset in partition]
+        # Check that ``partition`` is indeed a partition:
+        subsystem_indices = set()
+        for subset in key_partition:
+            if len(subset) != len(set(subset)):
+                raise ValueError(
+                    "A subsystem index must not be specified more than once in a subset. However,"
+                    f" the subset {subset} has duplicate elements."
+                )
+            if any(i in subsystem_indices for i in subset):
+                raise ValueError(
+                    "The subsets specifying the partition must be mutually exclusive. However, at"
+                    f" least one of the indices in '{subset}' was already encountered before."
+                )
+            subsystem_indices.update(set(subset))
+        if subsystem_indices != set(self._frames.keys()):
+            raise ValueError(
+                "The partition must cover exactly all the subsystems. However, this condition is"
+                f" not fulfilled by {key_partition}."
+            )
+
+        frames = {}
+        for set_indices in key_partition:
+            idx, joint_operators = self._tensor_product(set_indices)
+            shape = tuple(s for subsystem_label in set_indices for s in self[subsystem_label].shape)
+            frames[idx] = MultiQubitPOVM(joint_operators, shape=shape)
+        return type(self)(frames=frames)
+
+    def group_all(self) -> MultiQubitFrame:
+        """Group all local frames together into a single multi-qubit frame representation.
+        Returns:
+            A new ``MultiQubitFrame`` instance representing ``self``.
+        """
+        grouped_frame = self.group(partition=[list(range(len(self._frames)))])
+        return grouped_frame[grouped_frame.sub_systems[0]]
