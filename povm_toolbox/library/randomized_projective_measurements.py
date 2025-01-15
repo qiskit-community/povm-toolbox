@@ -89,8 +89,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             num_qubits: the number of qubits.
             bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs.
-                These floats should sum to 1. If 2D, it will have a new set of biases for each
-                qubit.
+                These floats should sum to 1. If 2D, the expected shape of the array is
+                ``(num_qubits, num_pvms)`` and a new set of biases will be set for each qubit.
             angles: can be either 1D or 2D. If 1D, it should be a flatten array containing float
                 values to indicate the different angles of each PVM. I.e. its length equals two
                 times the number of PVMs (since we have 2 angles per PVM). If 2D, it will have a new
