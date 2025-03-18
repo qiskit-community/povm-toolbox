@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import matplotlib as mpl
 import numpy as np
 from matplotlib.axes import Axes
@@ -111,7 +113,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
             r[i, 0] = 2 * np.real_if_close(pauli_op.get("X", 0))
             r[i, 1] = 2 * np.real_if_close(pauli_op.get("Y", 0))
             r[i, 2] = 2 * np.real_if_close(pauli_op.get("Z", 0))
-        return r
+        return cast(np.ndarray, r)
 
     def draw_bloch(
         self,

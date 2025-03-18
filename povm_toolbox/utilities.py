@@ -22,6 +22,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 
@@ -63,7 +65,7 @@ def gram_schmidt(vectors: np.ndarray) -> np.ndarray:
         The resulting orthonormal basis.
     """
     Q, _ = np.linalg.qr(vectors)
-    return Q
+    return cast(np.ndarray, Q)
 
 
 # Unit vector on n-sphere
@@ -86,4 +88,4 @@ def n_sphere(angles: np.ndarray) -> np.ndarray:
     unit_vector[-2] *= np.cos(2 * np.pi * angles[-1])
     unit_vector[-1] *= np.sin(2 * np.pi * angles[-1])
 
-    return unit_vector
+    return cast(np.ndarray, unit_vector)

@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import sys
 import time
+from typing import cast
 
 if sys.version_info < (3, 12):
     from typing_extensions import override
@@ -469,7 +470,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                     (*circuit_binding.shape, shots)
                 )
 
-        return pvm_idx
+        return cast(np.ndarray, pvm_idx)
 
     def _get_pvm_bindings_array(self, pvm_idx: np.ndarray) -> BindingsArray:
         """Return the concrete parameter values associated to a PVM label.

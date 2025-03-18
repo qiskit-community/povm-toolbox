@@ -246,7 +246,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
                 for idx in frame_op_idx
             }
         if frame_op_idx is None:
-            return np.array(np.dot(op_vectorized, self._array).real)
+            return np.ndarray(np.dot(op_vectorized, self._array).real)
         raise TypeError(
             "The optional `frame_op_idx` can either be a single or set of integers, not a "
             f"{type(frame_op_idx)}."

@@ -310,7 +310,9 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
 
         if bit_array.ndim == 0:
-            return np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object)
+            return np.ndarray(
+                [Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object
+            )
 
         shape = bit_array.shape
         outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
