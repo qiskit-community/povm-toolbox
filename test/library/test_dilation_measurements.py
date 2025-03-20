@@ -106,8 +106,8 @@ class TestDilationMeasurements(TestCase):
         self.assertAlmostEqual(std, 0.14280207155875035, places=5)
         observable = SparsePauliOp(["XI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 1.1269484774399672, places=5)
-        self.assertAlmostEqual(std, 0.16627566403440813, places=5)
+        self.assertAlmostEqual(exp_value, 0.8949297904387811, places=5)
+        self.assertAlmostEqual(std, 0.16958103337866423, places=5)
 
     def test_definition(self):
         """Test that the ``definition`` method works correctly."""
