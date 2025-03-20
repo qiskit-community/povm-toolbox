@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 from numpy.random import Generator
 from scipy.spatial.transform import Rotation
@@ -180,4 +182,4 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
         thetas = np.arctan2(np.linalg.norm(bloch_vectors[:, :2], axis=1), bloch_vectors[:, 2])
         phis = np.arctan2(bloch_vectors[:, 1], bloch_vectors[:, 0])
 
-        return (np.vstack((thetas, phis)).T).flatten()
+        return cast(np.ndarray, (np.vstack((thetas, phis)).T).flatten())

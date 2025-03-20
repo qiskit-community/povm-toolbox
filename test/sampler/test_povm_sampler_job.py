@@ -17,6 +17,7 @@ from unittest import TestCase
 import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
+from povm_toolbox.library.metadata import POVMMetadata
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMPubResult, POVMSampler, POVMSamplerJob
 from qiskit import QuantumCircuit, qpy
@@ -166,12 +167,13 @@ class TestPOVMSamplerJob(TestCase):
         instance = os.getenv("QISKIT_IBM_INSTANCE")
         token = os.getenv("QISKIT_IBM_TOKEN")
         url = os.getenv("QISKIT_IBM_URL")
-        if instance is None or token is None or url is None:
+        qpu = os.getenv("QISKIT_IBM_QPU")
+        if instance is None or token is None or url is None or qpu is None:
             pytest.skip("Missing QiskitRuntimeService configuration.")
         channel = "ibm_quantum" if url.find("quantum-computing.ibm.com") >= 0 else "ibm_cloud"
         service = QiskitRuntimeService(instance=instance, token=token, url=url, channel=channel)
 
-        backend = service.least_busy(operational=True, simulator=True)
+        backend = service.backend(name=qpu)
         pm = generate_preset_pass_manager(
             optimization_level=2, backend=backend, seed_transpiler=self.SEED
         )
@@ -180,7 +182,6 @@ class TestPOVMSamplerJob(TestCase):
 
         measurement = ClassicalShadows(2, seed=self.SEED)
         runtime_sampler = RuntimeSampler(mode=backend)
-        runtime_sampler.options.simulator.seed_simulator = self.SEED
         povm_sampler = POVMSampler(runtime_sampler)
         job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
 
@@ -191,11 +192,11 @@ class TestPOVMSamplerJob(TestCase):
             self.assertIsInstance(job_recovered, POVMSamplerJob)
             result = job_recovered.result()
             pub_result = result[0]
-            observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
-            post_processor = POVMPostProcessor(pub_result)
-            exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -1.3906250000000009)
-            self.assertAlmostEqual(std, 0.6732583954195841)
+            self.assertIsInstance(result, PrimitiveResult)
+            self.assertIsInstance(pub_result, POVMPubResult)
+            self.assertIsInstance(pub_result.metadata, POVMMetadata)
+            self.assertEqual(pub_result.data.povm_measurement_creg.num_bits, 2)
+            self.assertEqual(pub_result.data.povm_measurement_creg.num_shots, 128)
         except BaseException as exc:  # catch anything
             raise exc
         finally:

@@ -104,8 +104,8 @@ def dual_from_empirical_frequencies(
     marginals = [np.zeros(subsystem_shape) for subsystem_shape in povm.shape]
 
     # Computing marginals
-    shots = sum(counts.values())
-    for outcome, count in counts.items():
+    shots = sum(counts.values())  # type: ignore[attr-defined]
+    for outcome, count in counts.items():  # type: ignore[attr-defined]
         for i, k_i in enumerate(outcome):
             marginals[i][k_i] += count / shots
 

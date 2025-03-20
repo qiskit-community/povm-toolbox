@@ -147,8 +147,8 @@ class MedianOfMeans(POVMPostProcessor):
         self, observable: SparsePauliOp, *, loc: int | tuple[int, ...]
     ) -> tuple[float, float]:
         count = self.counts[loc]
-        shots = sum(count.values())
-        omegas = self.get_decomposition_weights(observable, set(count.keys()))
+        shots = sum(count.values())  # type: ignore[attr-defined]
+        omegas = self.get_decomposition_weights(observable, set(count.keys()))  # type: ignore[attr-defined]
 
         # get the samples and randomize their order
         sampled_weights = np.zeros(shots)

@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import sys
+from typing import cast
 
 if sys.version_info < (3, 11):
     from typing_extensions import Self
@@ -246,7 +247,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
                 for idx in frame_op_idx
             }
         if frame_op_idx is None:
-            return np.array(np.dot(op_vectorized, self._array).real)
+            return cast(np.ndarray, np.array(np.dot(op_vectorized, self._array).real))
         raise TypeError(
             "The optional `frame_op_idx` can either be a single or set of integers, not a "
             f"{type(frame_op_idx)}."
