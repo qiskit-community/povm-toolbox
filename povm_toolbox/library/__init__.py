@@ -49,10 +49,10 @@ from .povm_implementation import POVMImplementation
 from .randomized_projective_measurements import RandomizedProjectiveMeasurements
 
 __all__ = [
-    "POVMImplementation",
-    "RandomizedProjectiveMeasurements",
-    "MutuallyUnbiasedBasesMeasurements",
-    "LocallyBiasedClassicalShadows",
     "ClassicalShadows",
     "DilationMeasurements",
+    "LocallyBiasedClassicalShadows",
+    "MutuallyUnbiasedBasesMeasurements",
+    "POVMImplementation",
+    "RandomizedProjectiveMeasurements",
 ]

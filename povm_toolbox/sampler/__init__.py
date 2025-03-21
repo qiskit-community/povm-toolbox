@@ -55,9 +55,9 @@ from .povm_sampler_job import POVMSamplerJob
 from .povm_sampler_pub import POVMSamplerPub, POVMSamplerPubLike
 
 __all__ = [
+    "POVMPubResult",
     "POVMSampler",
     "POVMSamplerJob",
     "POVMSamplerPub",
     "POVMSamplerPubLike",
-    "POVMPubResult",
 ]
