@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from typing import Any, cast
 
 import numpy as np
@@ -60,6 +61,8 @@ class POVMPostProcessor:
         self,
         povm_sample: POVMPubResult,
         dual: BaseDual | None = None,
+        *,
+        combine_counts: bool = False,
     ) -> None:
         """Initialize the POVM post-processor.
 
@@ -70,6 +73,9 @@ class POVMPostProcessor:
                 :meth:`get_decomposition_weights`. When this is ``None``, the standard
                 "state-average" Dual frame will be constructed from the POVM stored in the
                 ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
+            combine_counts: indicates, when applicable, whether to combine the counts associated
+                with different parameter values that were submitted for a single parametrized
+                circuit.
 
         Raises:
             ValueError: If the provided ``dual`` is not a dual frame to the POVM stored in the
@@ -78,6 +84,11 @@ class POVMPostProcessor:
         self._povm = povm_sample.metadata.povm_implementation.definition()
 
         self._counts = cast(np.ndarray, povm_sample.get_counts())
+        if combine_counts:
+            combined_counter: Counter = Counter()
+            for count in self._counts.flatten():
+                combined_counter.update(count)
+            self._counts = np.array([combined_counter], dtype=object)
 
         if (dual is not None) and (not dual.is_dual_to(self._povm)):
             raise ValueError(
