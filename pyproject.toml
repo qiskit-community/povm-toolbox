@@ -178,7 +178,7 @@ max-statements = 65
 ]
 "docs/**/*" = [
     "E402", # module level import not at top of file
-    "D100", # missing docstring in public module
+    "D",    # pydocstyle
 ]
 
 [tool.ruff.lint.flake8-copyright]
