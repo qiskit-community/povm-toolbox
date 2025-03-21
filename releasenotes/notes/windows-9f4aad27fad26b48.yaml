@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    This release adds support for Windows.  No code changes were necessary,
+    so older releases are expected to work on Windows too.
