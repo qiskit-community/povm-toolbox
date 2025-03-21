@@ -82,11 +82,11 @@ from .product_povm import ProductPOVM
 from .single_qubit_povm import SingleQubitPOVM
 
 __all__ = [
-    "MultiQubitPOVM",
-    "SingleQubitPOVM",
-    "ProductPOVM",
     "MultiQubitDual",
-    "ProductDual",
     "MultiQubitFrame",
+    "MultiQubitPOVM",
+    "ProductDual",
     "ProductFrame",
+    "ProductPOVM",
+    "SingleQubitPOVM",
 ]

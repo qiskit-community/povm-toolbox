@@ -56,8 +56,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
         """
         if not self.dimension == 2:
             raise ValueError(
-                "Dimension of Single Qubit POVM operator space should be 2,"
-                f" not {self.dimension}."
+                f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}."
             )
         super()._check_validity()
 
