@@ -62,7 +62,7 @@ style = [
 lint = [
     "povm_toolbox[style]",
     "mypy==1.15.0",
-    "pylint~=3.1.0",
+    "pylint==3.3.6",
     "reno>=4.1",
     "toml>=0.9.6",
 ]
