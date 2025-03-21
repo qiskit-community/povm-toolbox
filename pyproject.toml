@@ -8,7 +8,6 @@ version = "0.2.0"
 readme = "README.md"
 description = "A toolbox for the implementation of positive operator-valued measures (POVMs)."
 license = {file = "LICENSE.txt"}
-
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
@@ -16,10 +15,12 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
@@ -109,7 +110,10 @@ ignore_missing_imports = true
 
 [tool.pylint.main]
 py-version = "3.9"
-load-plugins=["pylint.extensions.docparams"]
+load-plugins = [
+    "pylint.extensions.no_self_use",
+    "pylint.extensions.docparams",
+]
 
 [tool.pylint."messages control"]
 disable = ["all"]
@@ -140,13 +144,11 @@ enable = [
 ]
 
 [tool.pytest.ini_options]
-filterwarnings = ["ignore:::.*qiskit.opflow*"]
 testpaths = ["./povm_toolbox/", "./test/"]
 
 [tool.ruff]
 line-length = 100
 src = ["povm_toolbox", "test"]
-extend-include = ["*.ipynb"]
 target-version = "py39"
 
 [tool.ruff.lint]
@@ -154,8 +156,8 @@ select = [
     "I",   # isort
     "E",   # pycodestyle
     "W",   # pycodestyle
+    "D",   # pydocstyle
     "F",   # pyflakes
-    "PL",  # pylint
     "RUF", # ruff
     "UP",  # pyupgrade
     "SIM", # flake8-simplify
@@ -163,26 +165,25 @@ select = [
     "A",   # flake8-builtins
 ]
 ignore = [
-    "E501",
-    "PLR2004",
+    "E501", # line too long
 ]
-explicit-preview-rules = true
-
-[tool.ruff.lint.pydocstyle]
-convention = "numpy"
 
 [tool.ruff.lint.pylint]
 max-args = 10
 max-statements = 65
 
 [tool.ruff.lint.extend-per-file-ignores]
+"test/**.py" = [
+    "D",  # pydocstyle
+]
 "docs/**/*" = [
     "E402", # module level import not at top of file
+    "D100", # missing docstring in public module
 ]
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = """
-# \\(C\\) Copyright IBM 2024\\.
+# \\(C\\) Copyright IBM \\d{4}((,\\s)\\d{4})*\\.
 #
 # This code is licensed under the Apache License, Version 2\\.0\\. You may
 # obtain a copy of this license in the LICENSE\\.txt file in the root directory
@@ -192,6 +193,9 @@ notice-rgx = """
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals\\.
 """
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.typos.default.extend-words]
 arange = "arange"
