@@ -58,17 +58,18 @@ class MedianOfMeans(POVMPostProcessor):
     >>> from qiskit.circuit import QuantumCircuit
     >>> from qiskit.primitives import StatevectorSampler
     >>> from qiskit.quantum_info import SparsePauliOp
+    >>> from numpy.random import default_rng
     >>> circ = QuantumCircuit(2)
     >>> _ = circ.h(0)
     >>> _ = circ.cx(0, 1)
     >>> povm = ClassicalShadows(2, seed=42)
-    >>> sampler = StatevectorSampler(seed=42)
+    >>> sampler = StatevectorSampler(seed=default_rng(42))
     >>> povm_sampler = POVMSampler(sampler)
     >>> job = povm_sampler.run([circ], povm=povm, shots=16)
     >>> result = job.result()
     >>> post_processor = MedianOfMeans(result[0], num_batches=4, seed=42)
     >>> post_processor.get_expectation_value(SparsePauliOp("ZI"))  # doctest: +FLOAT_CMP
-    (-0.75, 2.9154759474226504)
+    (-1.6653345369377348e-16, 2.9154759474226504)
     """
 
     def __init__(
@@ -86,9 +87,9 @@ class MedianOfMeans(POVMPostProcessor):
             povm_sample: a result from a POVM sampler run.
             dual: the Dual frame that will be used to obtain the decomposition weights of an
                 observable when computing its expectation value. For more details, refer to
-                :meth:`get_decomposition_weights`. When this is ``None``, the canonical Dual frame
-                will be constructed from the POVM stored in the ``povm_sample``'s
-                :attr:`.POVMPubResult.metadata`.
+                :meth:`get_decomposition_weights`. When this is ``None``, the default
+                "state-average" Dual frame will be constructed from the POVM stored in the
+                ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
             num_batches: number of batches, i.e. number of samples means, used in the median-of-means
                 estimator. This value will be overridden if a ``delta_confidence`` argument is supplied.
             upper_delta_confidence: an upper bound for the confidence parameter :math:`\delta` used to
@@ -146,8 +147,8 @@ class MedianOfMeans(POVMPostProcessor):
         self, observable: SparsePauliOp, *, loc: int | tuple[int, ...]
     ) -> tuple[float, float]:
         count = self.counts[loc]
-        shots = sum(count.values())
-        omegas = self.get_decomposition_weights(observable, set(count.keys()))
+        shots = sum(count.values())  # type: ignore[attr-defined]
+        omegas = self.get_decomposition_weights(observable, set(count.keys()))  # type: ignore[attr-defined]
 
         # get the samples and randomize their order
         sampled_weights = np.zeros(shots)

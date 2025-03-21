@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    A new method, :meth:`.POVMPostProcessor.get_state_snapshot`, is implemented to easily access the
+    classical "snapshots" of the state after taking some measurements. A classical "snapshot" of the
+    state is the dual frame operator associated with the corresponding outcome. The new method
+    returns the snapshot (typically as a product of local operators) associated with the queried
+    outcome (typically a tuple of integers).
+    In parallel, the :meth:`.ProductFrame.get_operator` method has been added for more general
+    access to frame operators in a product form.

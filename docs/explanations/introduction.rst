@@ -46,7 +46,8 @@ Given such a decomposition of :math:`\mathcal{O}`, the expectation value
 .. math::
    :label: expectation_value_decomp
 
-   {\langle\mathcal{O}\rangle}_\rho = \mathrm{Tr}[\rho O] = \sum_k \omega_k \mathrm{Tr}[\rho M_k] = \mathbb{E}_{k \sim \{p_k\}}[\omega_k].
+   {\langle\mathcal{O}\rangle}_\rho = \mathrm{Tr}[\rho O] = \sum_k \omega_k \mathrm{Tr}[\rho M_k]
+   = \mathbb{E}_{k \sim \{p_k\}}[\omega_k].
 
 In other words, :math:`{\langle\mathcal{O}\rangle}_\rho` can be expressed as the mean
 value of the random variable :math:`\omega_k` over the probability
@@ -58,6 +59,19 @@ unbiased Monte-Carlo estimator of :math:`{\langle\mathcal{O}\rangle}_\rho` as
    :label: canonical_estimator
 
    \hat{o} : \{k^{(1)},\dots, k^{(S)}\} \mapsto \frac{1}{S} \sum_{s=1}^{S} \omega_{k^{(s)}}.
+
+The expected value of the estimator is given by :math:`\mathbb{E}[\hat{o}] = {\langle\mathcal{O}\rangle}_\rho`
+and its variance is given by
+
+.. math::
+   :label: estimator_variance
+
+   \mathrm{Var}[\hat{o}] = \frac{1}{S}\left(\sum_k p_k \omega_k^2 - ( \sum_k p_k \omega_k )^2\right)
+   \propto \sum_k p_k \omega_k^2 - {\langle\mathcal{O}\rangle}_\rho^2 \, , 
+
+which depends on both the choice of the POVM :math:`\{M_k\}_{k}` and the decomposition weights
+:math:`\{\omega_k\}_{k}`, when they are not unique. Ideally we would like to choose the POVM and the
+decomposition weights that minimize the variance.
 
 ------------------
 PM-simulable POVMs

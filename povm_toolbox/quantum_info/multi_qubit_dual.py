@@ -21,6 +21,7 @@ else:
 
 import numpy as np
 from qiskit.quantum_info import Operator
+from scipy.linalg import orth
 
 from povm_toolbox.utilities import double_ket_to_matrix
 
@@ -38,7 +39,18 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
     @override
     def is_dual_to(self, frame: BaseFrame) -> bool:
         if isinstance(frame, MultiQubitFrame):
-            return np.allclose(frame @ np.conj(self).T, np.eye(self.dimension**2), atol=1e-6)
+            check_matrix = frame @ np.conj(self).T
+            if frame.informationally_complete:
+                rank = frame.dimension**2
+            else:
+                # compute the projectors onto the support of the frame:
+                orthogonal_projectors = orth(frame)
+                rank = orthogonal_projectors.shape[1]
+                check_matrix = (
+                    np.conj(orthogonal_projectors).T @ check_matrix @ orthogonal_projectors
+                )
+            # check if ``self`` is dual to ``frame`` on its support:
+            return np.allclose(check_matrix, np.eye(rank), atol=1e-6)
         raise NotImplementedError
 
     @override
@@ -59,15 +71,33 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
                     " parameters were provided."
                 )
 
-            # Set the weighting matrix according to the alpha-parameters
-            diag_trace = np.diag([1.0 / alpha for alpha in alphas])
-            # Compute the weighed frame super-operator.
-            superop = frame @ diag_trace @ np.conj(frame).T
+            # Check if some of the primal frame operators are null. This could happen for instance
+            # for locally-biased classical shadows if someone is only interested to measure in the
+            # `Z` and `X` bases and therefore sets the `bias` of the `Y` basis to zero. We keep the
+            # null operators to preserve the indexing of the operators which might follow a
+            # convention, as it is the case for classical shadows. If a primal frame operator is
+            # null, its corresponding dual frame operator will also be null.
+            frame_array = np.array(frame)
+            dual_operators_array = np.zeros(frame_array.shape, dtype=complex)
+            mask = np.array(
+                [not np.allclose(np.zeros(len(frame_op)), frame_op) for frame_op in frame_array.T],
+                dtype=bool,
+            )
+            # Temporarily remove the null operators to determine the non-null dual frame operators.
+            frame_array = frame_array[:, mask]
 
-            # Solve the linear system to find the dual operators.
-            dual_operators_array = np.linalg.solve(
+            # Set the weighting matrix according to the alpha-parameters.
+            diag_trace = np.diag(1.0 / (np.array(alphas)[mask]))
+            # Compute the weighted frame super-operator.
+            superop = frame_array @ diag_trace @ np.conj(frame_array).T
+
+            # Solve the linear system to find the dual operators. If ``frame`` is IC, then
+            # ``superop`` will be full rank and invertible. If ``frame`` is not IC, then ``superop``
+            # will not be full rank and we use the Moore-Penrose inverse to determine the dual
+            # operators on the support of ``frame``.
+            dual_operators_array[:, mask], _, _, _ = np.linalg.lstsq(
                 superop,
-                frame @ diag_trace,
+                frame_array @ diag_trace,
             )
             # Convert dual operators from double-ket to operator representation.
             dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]

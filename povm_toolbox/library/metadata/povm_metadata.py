@@ -50,7 +50,7 @@ class POVMMetadata:
             f_name = field.name
             f_val = getattr(self, field.name)
             if isinstance(f_val, np.ndarray):
-                f_val = f'np.ndarray<{",".join(map(str, f_val.shape))}>'
+                f_val = f"np.ndarray<{','.join(map(str, f_val.shape))}>"
             elif isinstance(f_val, QuantumCircuit):
                 f_val = f_val.__repr__()
             lst_fields.append((f_name, f_val))

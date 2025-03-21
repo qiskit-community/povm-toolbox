@@ -12,13 +12,17 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, cast
 
 import numpy as np
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp
 
+from povm_toolbox.quantum_info import ProductDual
 from povm_toolbox.quantum_info.base import BaseDual, BasePOVM
 from povm_toolbox.sampler import POVMPubResult
+
+LOGGER = logging.getLogger(__name__)
 
 
 class POVMPostProcessor:
@@ -34,17 +38,18 @@ class POVMPostProcessor:
     >>> from qiskit.circuit import QuantumCircuit
     >>> from qiskit.primitives import StatevectorSampler
     >>> from qiskit.quantum_info import SparsePauliOp
+    >>> from numpy.random import default_rng
     >>> circ = QuantumCircuit(2)
     >>> _ = circ.h(0)
     >>> _ = circ.cx(0, 1)
     >>> povm = ClassicalShadows(2, seed=42)
-    >>> sampler = StatevectorSampler(seed=42)
+    >>> sampler = StatevectorSampler(seed=default_rng(42))
     >>> povm_sampler = POVMSampler(sampler)
     >>> job = povm_sampler.run([circ], povm=povm, shots=16)
     >>> result = job.result()
     >>> post_processor = POVMPostProcessor(result[0])
     >>> post_processor.get_expectation_value(SparsePauliOp("ZI"))  # doctest: +FLOAT_CMP
-    (-0.75, 0.33541019662496846)
+    (-2.7755575615628914e-17, 0.3872983346207416)
 
     Additionally, this post-processor also supports the customization of the Dual frame in which the
     decomposition weights of the provided observable are obtained. Check out
@@ -62,9 +67,9 @@ class POVMPostProcessor:
             povm_sample: a result from a POVM sampler run.
             dual: the Dual frame that will be used to obtain the decomposition weights of an
                 observable when computing its expectation value. For more details, refer to
-                :meth:`get_decomposition_weights`. When this is ``None``, the canonical Dual frame
-                will be constructed from the POVM stored in the ``povm_sample``'s
-                :attr:`.POVMPubResult.metadata`.
+                :meth:`get_decomposition_weights`. When this is ``None``, the standard
+                "state-average" Dual frame will be constructed from the POVM stored in the
+                ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
 
         Raises:
             ValueError: If the provided ``dual`` is not a dual frame to the POVM stored in the
@@ -189,11 +194,11 @@ class POVMPostProcessor:
             A tuple of (estimated) expectation value and standard deviation.
         """
         count = self.counts[loc]
-        shots = sum(count.values())
+        shots = sum(count.values())  # type: ignore[attr-defined]
         # TODO: performance gains to be made when computing the omegas here ?
         # like storing the dict of computed omegas and updating the dict with the
         # missing values that were still never computed.
-        omegas = self.get_decomposition_weights(observable, set(count.keys()))
+        omegas = self.get_decomposition_weights(observable, set(count.keys()))  # type: ignore[attr-defined]
 
         exp_val = 0.0
         std = 0.0
@@ -206,6 +211,33 @@ class POVMPostProcessor:
         exp_val /= shots
         std /= shots
 
-        std = float(np.sqrt((std - exp_val**2) / (shots - 1)))
+        try:
+            std = float(np.sqrt((std - exp_val**2) / (shots - 1)))
+        except ZeroDivisionError:
+            LOGGER.info(
+                "Encountered a division by zero, due to `shots` being 1. Cannot compute a standard "
+                "deviation in this case."
+            )
+            std = float("NaN")
 
         return exp_val, std
+
+    def get_state_snapshot(self, outcome: tuple[int, ...]) -> dict[tuple[int, ...], Operator]:
+        """Return the snapshot of the state associated with ``outcome``.
+
+        Args:
+            outcome: the label specifying the snapshot. The outcome is a tuple of integers (one
+                index per local frame).
+
+        Returns:
+            The snapshot associated with ``outcome``. The snapshot is a product operator, which is
+            returned as a dictionary mapping the subsystems of the Hilbert space (e.g. qubits) to
+            the corresponding local operators forming the product operator.
+
+        Raises:
+            NotImplementedError: if the dual frame associated with the post-processor is not
+                product.
+        """
+        if isinstance(self.dual, ProductDual):
+            return self.dual.get_operator(outcome)
+        raise NotImplementedError("This method is only implemented for `ProductDual` objects.")

@@ -13,6 +13,7 @@
 from unittest import TestCase
 
 import numpy as np
+from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
@@ -54,7 +55,7 @@ class TestClassicalShadows(TestCase):
             num_qubits,
             seed=self.SEED,
         )
-        sampler = StatevectorSampler(seed=self.SEED)
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
         povm_sampler = POVMSampler(sampler=sampler)
 
         job = povm_sampler.run([qc], shots=32, povm=measurement)

@@ -12,6 +12,7 @@
 
 from unittest import TestCase
 
+from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
 from qiskit.circuit import ClassicalRegister, QuantumCircuit
 from qiskit.circuit.exceptions import CircuitError
@@ -87,7 +88,7 @@ class TestPOVMImplementation(TestCase):
     def test_composed_circuits(self):
         """Test the composition of the input circuit with the measurement circuit."""
 
-        sampler = StatevectorSampler(seed=self.SEED)
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
 
         with self.subTest("Composed circuit."):
             pvm = ClassicalShadows(3, seed=self.SEED)
@@ -104,7 +105,7 @@ class TestPOVMImplementation(TestCase):
             result = pvm._get_bitarray(job.result()[0].data)
 
             # validate outcome
-            expected = {"101": 28, "110": 66, "111": 17, "100": 17}
+            expected = {"000": 25, "001": 15, "010": 7, "100": 34, "101": 17, "110": 15, "111": 15}
             self.assertEqual(result.get_counts(), expected)
 
         with self.subTest("Composed after transpilation of input circuit."):
@@ -125,7 +126,16 @@ class TestPOVMImplementation(TestCase):
             result = pvm._get_bitarray(job.result()[0].data)
 
             # validate outcome
-            expected = {"101": 68, "110": 26, "111": 17, "100": 17}
+            expected = {
+                "000": 27,
+                "001": 8,
+                "010": 2,
+                "011": 9,
+                "100": 30,
+                "101": 17,
+                "110": 21,
+                "111": 14,
+            }
             self.assertEqual(result.get_counts(), expected)
 
         with self.subTest("With a TranspileLayout present"):
@@ -152,7 +162,7 @@ class TestPOVMImplementation(TestCase):
             result = pvm._get_bitarray(job.result()[0].data)
 
             # validate outcome
-            expected = {"101": 68, "110": 26, "111": 17, "100": 17}
+            expected = {"001": 15, "010": 4, "011": 5, "100": 62, "101": 17, "110": 17, "111": 8}
             self.assertEqual(result.get_counts(), expected)
 
         with self.subTest("Using measurement_layout"):
@@ -176,7 +186,7 @@ class TestPOVMImplementation(TestCase):
             result = pvm._get_bitarray(job.result()[0].data)
 
             # validate outcome
-            expected = {"10": 43, "11": 85}
+            expected = {"10": 67, "11": 27, "00": 20, "01": 14}
             self.assertEqual(result.get_counts(), expected)
 
         with self.subTest("Test the insert_barriers option"):

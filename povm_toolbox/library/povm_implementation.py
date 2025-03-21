@@ -17,7 +17,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import copy
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 import numpy as np
 from qiskit.circuit import AncillaRegister, QuantumCircuit
@@ -310,7 +310,10 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
 
         if bit_array.ndim == 0:
-            return np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object)
+            return cast(
+                np.ndarray,
+                np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object),
+            )
 
         shape = bit_array.shape
         outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)

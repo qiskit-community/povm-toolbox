@@ -1,4 +1,4 @@
-name: Code coverage
+name: Coverage
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   coverage:
-    name: coverage (${{ matrix.os }}, ${{ matrix.python-version }})
+    name: code coverage (${{ matrix.os }}, ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -32,8 +32,19 @@ jobs:
           pip install tox coverage
       - name: Run coverage
         env:
+          QISKIT_IBM_QPU: ${{ secrets.QISKIT_IBM_QPU }}
           QISKIT_IBM_URL: ${{ secrets.QISKIT_IBM_URL }}
           QISKIT_IBM_TOKEN: ${{ secrets.QISKIT_IBM_TOKEN }}
           QISKIT_IBM_INSTANCE: ${{ secrets.QISKIT_IBM_INSTANCE }}
         run: |
           tox -e coverage
+      - name: Convert to lcov
+        if: always()
+        run: coverage3 lcov -o coveralls.lcov
+      - name: Upload report to Coveralls
+        if: always()
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: coveralls.lcov
+          format: lcov

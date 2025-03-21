@@ -40,7 +40,7 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
                 angles=np.array([0.75, -np.pi / 3, 0.2]),
                 seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.SEED)
+            sampler = StatevectorSampler(seed=default_rng(self.SEED))
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=128, povm=measurement)
@@ -50,12 +50,12 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
 
             observable = SparsePauliOp(["ZI"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.8203852056374071)
-            self.assertAlmostEqual(std, 0.110717917472513)
+            self.assertAlmostEqual(exp_value, 0.6518233926221875)
+            self.assertAlmostEqual(std, 0.11921601584589436)
             observable = SparsePauliOp(["ZY"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.5861179063820388)
-            self.assertAlmostEqual(std, 0.22424900800106443)
+            self.assertAlmostEqual(exp_value, -1.0553339936080581)
+            self.assertAlmostEqual(std, 0.2102928553415571)
 
         with self.subTest("Test specific angles for each qubit."):
             measurement = MutuallyUnbiasedBasesMeasurements(
@@ -64,7 +64,7 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
                 angles=np.array([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
                 seed=self.SEED,
             )
-            sampler = StatevectorSampler(seed=self.SEED)
+            sampler = StatevectorSampler(seed=default_rng(self.SEED))
             povm_sampler = POVMSampler(sampler=sampler)
 
             job = povm_sampler.run([qc], shots=128, povm=measurement)
@@ -74,12 +74,12 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
 
             observable = SparsePauliOp(["ZI"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.7697473374029422)
-            self.assertAlmostEqual(std, 0.10914516505579042)
+            self.assertAlmostEqual(exp_value, 0.7504820624371005)
+            self.assertAlmostEqual(std, 0.11019654428864213)
             observable = SparsePauliOp(["ZY"], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -1.5095011005732455)
-            self.assertAlmostEqual(std, 0.2080399186206604)
+            self.assertAlmostEqual(exp_value, -0.8423974419138216)
+            self.assertAlmostEqual(std, 0.23586993121676594)
 
     def test_init_errors(self):
         """Test that the ``__init__`` method raises errors correctly."""

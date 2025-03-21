@@ -115,7 +115,7 @@ unitary :math:`U_i`, sampled from a set :math:`\mathcal{U}`, and then
 performing a measurement in the computational basis. We show in the section :ref:`pm-simulable` that
 this protocol is equivalent to performing the PM-simulable POVM
 :math:`\mathbf{M} = \biguplus_i q_i \mathbf{P}_i = \{q_i P_{i,k}\}_{(i,k)}`,
-where :math:`P_{i,k} = U_i^\dagger \ketbra{k} U_i` and the outcomes are labeled by
+where :math:`P_{i,k} = U_i^\dagger \ketbra{k}{k} U_i` and the outcomes are labeled by
 :math:`(i,k)`. It now appears that the measurement channel
 
 .. math::

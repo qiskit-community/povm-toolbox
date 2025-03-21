@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from numbers import Integral
-from typing import Union
+from typing import Union, cast
 
 from qiskit.circuit import QuantumCircuit
 from qiskit.primitives.containers import BindingsArrayLike
@@ -167,8 +167,8 @@ class POVMSamplerPub(ShapedMixin):
         return cls(
             circuit=circuit,
             parameter_values=parameter_values,
-            shots=pub_shots,
-            povm=pub_povm,
+            shots=cast(int, pub_shots),
+            povm=cast(POVMImplementation, pub_povm),
             validate=True,
         )
 

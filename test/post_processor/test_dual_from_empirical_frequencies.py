@@ -14,6 +14,7 @@ from copy import deepcopy
 from unittest import TestCase
 
 import numpy as np
+from numpy.random import default_rng
 from povm_toolbox.library import (
     ClassicalShadows,
     RandomizedProjectiveMeasurements,
@@ -59,7 +60,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         measurement = RandomizedProjectiveMeasurements(
             num_qubits, bias=bias, angles=angles, seed=self.SEED
         )
-        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
         job = povm_sampler.run([qc], shots=127, povm=measurement)
         pub_result = job.result()[0]
         self.post_processor = POVMPostProcessor(pub_result)
@@ -70,16 +71,16 @@ class TestDualFromEmpiricalFrequencies(TestCase):
 
         with self.subTest("Test canonical dual."):
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -1.920301957227794)
-            self.assertAlmostEqual(std, 0.468920055605158)
+            self.assertAlmostEqual(exp_value, 0.7168743782790395)
+            self.assertAlmostEqual(std, 0.4724232310929573)
 
         with self.subTest("Test empirical dual with default arguments."):
             self.post_processor.dual = dual_from_empirical_frequencies(
                 povm_post_processor=self.post_processor
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -4.156136105226559)
-            self.assertAlmostEqual(std, 0.10312825405831737)
+            self.assertAlmostEqual(exp_value, 0.10431839053361033)
+            self.assertAlmostEqual(std, 0.3117383078877236)
 
         with self.subTest("Test empirical dual with lists arguments."):
             self.post_processor.dual = dual_from_empirical_frequencies(
@@ -92,8 +93,8 @@ class TestDualFromEmpiricalFrequencies(TestCase):
                 ],
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -4.16623022578294)
-            self.assertAlmostEqual(std, 0.1035227891358374)
+            self.assertAlmostEqual(exp_value, 0.1106660978854775)
+            self.assertAlmostEqual(std, 0.3118348520393772)
 
         with self.subTest(
             "Test empirical dual with `bias` and `ansatz` arguments repeated for all qubits."
@@ -105,8 +106,8 @@ class TestDualFromEmpiricalFrequencies(TestCase):
                 ansatz=SparsePauliOp(["I"], coeffs=np.array([0.5])),
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -4.0202588245449125)
-            self.assertAlmostEqual(std, 0.11724423989411743)
+            self.assertAlmostEqual(exp_value, 0.14024741778087743)
+            self.assertAlmostEqual(std, 0.3148832990774694)
 
     def test_errors_raised(self):
         """Test that the method raises the appropriate errors when suitable."""
@@ -134,7 +135,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         ):
             qc = QuantumCircuit(2)
             qc.ry(theta=Parameter("theta"), qubit=0)
-            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=self.SEED))
+            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
             measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
             job = povm_sampler.run([(qc, np.array([0, np.pi]))], shots=16, povm=measurement)
             pub_result = job.result()[0]

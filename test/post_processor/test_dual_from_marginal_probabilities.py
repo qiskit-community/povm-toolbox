@@ -13,6 +13,7 @@
 from unittest import TestCase
 
 import numpy as np
+from numpy.random import default_rng
 from povm_toolbox.library import (
     RandomizedProjectiveMeasurements,
 )
@@ -84,7 +85,7 @@ class TestDualFromMarginalProbabilities(TestCase):
         measurement = RandomizedProjectiveMeasurements(
             num_qubits, bias=bias, angles=angles, seed=self.SEED
         )
-        sampler = StatevectorSampler(seed=self.SEED)
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
         povm_sampler = POVMSampler(sampler=sampler)
         job = povm_sampler.run([qc], shots=127, povm=measurement)
         pub_result = job.result()[0]
@@ -97,20 +98,20 @@ class TestDualFromMarginalProbabilities(TestCase):
 
         with self.subTest("Test canonical dual."):
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -2.0140231870395082)
-            self.assertAlmostEqual(std, 0.664625983884081)
+            self.assertAlmostEqual(exp_value, -1.125222785367572)
+            self.assertAlmostEqual(std, 0.5305722525114711)
 
         with self.subTest("Test marginal dual."):
             post_processor.dual = dual_from_marginal_probabilities(
                 povm=post_processor.povm, state=Statevector(qc)
             )
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -2.431562926033147)
-            self.assertAlmostEqual(std, 0.6951590669925843)
+            self.assertAlmostEqual(exp_value, -1.4247893013196669)
+            self.assertAlmostEqual(std, 0.4097543480314448)
 
         with self.subTest("Test threshold on marginal dual."):
             post_processor.dual = dual_from_marginal_probabilities(
                 povm=post_processor.povm, state=Statevector(qc), threshold=1.0
             )
-            self.assertAlmostEqual(exp_value, -2.4315629260331466)
-            self.assertAlmostEqual(std, 0.6951590669925845)
+            self.assertAlmostEqual(exp_value, -1.4247893013196669)
+            self.assertAlmostEqual(std, 0.4097543480314448)

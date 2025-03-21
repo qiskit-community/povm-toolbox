@@ -13,16 +13,17 @@
 from unittest import TestCase
 
 import numpy as np
+from numpy.random import default_rng
 from povm_toolbox.library import (
     DilationMeasurements,
 )
 from povm_toolbox.post_processor import POVMPostProcessor
 from povm_toolbox.sampler import POVMSampler
 from qiskit.circuit import QuantumCircuit
+from qiskit.primitives import BackendSamplerV2 as Sampler
 from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 
@@ -65,10 +66,10 @@ class TestDilationMeasurements(TestCase):
         qc = QuantumCircuit(2)
         qc.h(0)
         qc.h(1)
-
         backend = FakeManilaV2()
-        backend.set_options(seed_simulator=self.SEED)
-        povm_sampler = POVMSampler(sampler=RuntimeSampler(mode=backend))
+        povm_sampler = POVMSampler(
+            sampler=Sampler(backend=backend, options={"seed_simulator": self.SEED})
+        )
 
         pm = generate_preset_pass_manager(
             optimization_level=2, backend=backend, seed_transpiler=self.SEED
@@ -97,16 +98,16 @@ class TestDilationMeasurements(TestCase):
 
         observable = SparsePauliOp(["ZI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.09375100309506113)
-        self.assertAlmostEqual(std, 0.15820620317705336)
+        self.assertAlmostEqual(exp_value, -0.18749595202757485, places=5)
+        self.assertAlmostEqual(std, 0.1428020261876306, places=5)
         observable = SparsePauliOp(["IZ"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.06250168079223002)
-        self.assertAlmostEqual(std, 0.15676579098034854)
+        self.assertAlmostEqual(exp_value, -0.18749696469140917, places=5)
+        self.assertAlmostEqual(std, 0.14280207155875035, places=5)
         observable = SparsePauliOp(["XI"], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 1.0275137444747091)
-        self.assertAlmostEqual(std, 0.1612840231061351)
+        self.assertAlmostEqual(exp_value, 0.8949297904387811, places=5)
+        self.assertAlmostEqual(std, 0.16958103337866423, places=5)
 
     def test_definition(self):
         """Test that the ``definition`` method works correctly."""
@@ -166,7 +167,7 @@ class TestDilationMeasurements(TestCase):
 
     def test_compose_circuit(self):
         """Test that the ``compose_circuit`` method works correctly."""
-        sampler = StatevectorSampler(seed=self.SEED)
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
         povm_sampler = POVMSampler(sampler)
         measurement = DilationMeasurements(
             num_qubits=2,
@@ -194,8 +195,8 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 2.0517605907028327)
-            self.assertAlmostEqual(std, 1.1158789520748584)
+            self.assertAlmostEqual(exp_value, 2.051760590702834)
+            self.assertAlmostEqual(std, 1.115878952074859)
         with self.subTest("Not enough idle qubits in input circuit."):
             qc = QuantumCircuit(3)
             qc.h(0)
@@ -208,8 +209,8 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 2.0517605907028327)
-            self.assertAlmostEqual(std, 1.1158789520748584)
+            self.assertAlmostEqual(exp_value, 2.6629118614521414)
+            self.assertAlmostEqual(std, 0.8490992540168614)
         with self.subTest("Exactly enough idle qubits in input circuit."):
             qc = QuantumCircuit(4)
             qc.h(0)
@@ -222,8 +223,8 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 2.0517605907028327)
-            self.assertAlmostEqual(std, 1.1158789520748584)
+            self.assertAlmostEqual(exp_value, 1.1767743787146197)
+            self.assertAlmostEqual(std, 1.0595301460920068)
         with self.subTest("Too many idle qubits in input circuit."):
             qc = QuantumCircuit(5)
             qc.h(0)
@@ -236,5 +237,5 @@ class TestDilationMeasurements(TestCase):
             observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
             post_processor = POVMPostProcessor(pub_result)
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 2.0517605907028327)
-            self.assertAlmostEqual(std, 1.1158789520748584)
+            self.assertAlmostEqual(exp_value, 0.7866208373769082)
+            self.assertAlmostEqual(std, 1.0328018649968345)

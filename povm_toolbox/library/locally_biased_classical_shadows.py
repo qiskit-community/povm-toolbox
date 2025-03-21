@@ -57,8 +57,10 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
             num_qubits: the number of qubits.
             bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
-                These floats should sum to 1. If 2D, it will have a new set of biases for each
-                qubit.
+                The first bias corresponds to the Z-measurement, the second bias to the
+                X-measurement and the third bias to the Y-measurement. These floats should sum to 1.
+                If 2D, the expected shape of the array is ``(num_qubits, 3)`` and a new set of
+                biases will be set for each qubit.
             measurement_layout: optional list of indices specifying on which qubits the POVM acts.
                 See :attr:`.measurement_layout` for more details.
             measurement_twirl: whether to randomly twirl the measurements. For each single-qubit

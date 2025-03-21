@@ -70,7 +70,6 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         subsystem_indices = set()
         self._dimension = 1
         self._num_operators = 1
-        shape: list[int] = []
         for idx, frame in frames.items():
             idx_set = set(idx)
             if len(idx) != len(idx_set):
@@ -94,14 +93,12 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             subsystem_indices.update(idx_set)
             self._dimension *= frame.dimension
             self._num_operators *= frame.num_operators
-            shape.append(frame.num_operators)
 
         self._informationally_complete: bool = all(
             [frame.informationally_complete for frame in frames.values()]
         )
 
         self._frames = frames
-        self._shape: tuple[int, ...] = tuple(shape)
 
         self._check_validity()
 
@@ -183,9 +180,14 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         return self._num_operators
 
     @property
+    def _sub_shapes(self) -> tuple[tuple[int, ...], ...]:
+        """Give the shapes of local frames."""
+        return tuple(frame.shape for frame in self._frames.values())
+
+    @property
     def shape(self) -> tuple[int, ...]:
-        """Give the number of operators per sub-system."""
-        return self._shape
+        """Give the shape of the product frame."""
+        return tuple(s for shape in self._sub_shapes for s in shape)
 
     @property
     def sub_systems(self) -> list[tuple[int, ...]]:
@@ -200,6 +202,38 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         """
         for povm in self._frames.values():
             povm._check_validity()
+
+    def _ravel_index(self, index: tuple[int, ...]) -> tuple[int, ...]:
+        """Process a global multi-index into a tuple of flat indices for each local frame.
+
+        Args:
+            index: a large multi-index consisting of local multi-indices, each of those
+                corresponding to a local frame. Therefore, ``index`` is supposed to be a
+                flattened ``tuple[LabelMultiQubitT, ...]``, which is always a ``tuple[int, ...]`.
+
+        Returns:
+            A multi-index consisting of one integer index per local frame. That is, for each
+            sub-system the local multi-index has been raveled.
+
+        Raises:
+            ValueError: if ``index`` does not have the same number of dimensions as the shape of the
+                frame.
+        """
+        if len(index) != len(self.shape):
+            raise ValueError(
+                f"The index {index} does not have the same number of dimensions as the shape of the"
+                f" frame: {self.shape}"
+            )
+
+        index_processed = []
+        start = 0
+        for sub_shape in self._sub_shapes:
+            local_flat_index = np.ravel_multi_index(
+                index[start : start + len(sub_shape)], sub_shape
+            )
+            index_processed.append(int(local_flat_index))
+            start += len(sub_shape)
+        return tuple(index_processed)
 
     def __getitem__(self, sub_system: tuple[int, ...]) -> T:
         r"""Return the :class:`.MultiQubitFrame` acting on the specified sub-system.
@@ -216,25 +250,37 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         """Return the number of outcomes of the product frame."""
         return self.num_operators
 
+    def get_operator(self, frame_op_idx: tuple[int, ...]) -> dict[tuple[int, ...], Operator]:
+        """Return a product frame operator in a product form.
+
+        Args:
+            frame_op_idx: the label specifying the frame operator to get. The frame operator is
+                labeled by a tuple of integers (one index per local frame).
+
+        Returns:
+            The product frame operator specified by ``frame_op_idx``. The operator is returned in a
+            product form. More specifically, is it a dictionary mapping the subsystems to the
+            corresponding local frame operators forming the product frame operator.
+        """
+        product_operator = {}
+        for local_idx, (subsystem, povm) in zip(frame_op_idx, self._frames.items()):
+            product_operator[subsystem] = povm.operators[local_idx]
+        return product_operator
+
     def _trace_of_prod(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
         """Return the trace of the product of a Hermitian operator with a specific frame operator.
 
         Args:
             operator: the input operator to multiply with a frame operator.
             frame_op_idx: the label specifying the frame operator to use. The frame operator is
-                labeled by a tuple of integers (one index per local frame).
+                labeled by a tuple of integers (possibly multiple integers for one local frame).
 
         Returns:
             The trace of the product of the input operator with the specified frame operator.
-
-        Raises:
-            IndexError: when the provided outcome label (tuple of integers) has a number of integers
-                which does not correspond to the number of local frames making up the product frame.
-            IndexError: when a local index exceeds the number of operators of the corresponding
-                local frame.
-            ValueError: when the output is not a real number.
         """
         p_idx = 0.0 + 0.0j
+
+        index_processed = self._ravel_index(frame_op_idx)
 
         # Second, we iterate over our input operator, ``operator``.
         for label, op_coeff in operator.label_iter():
@@ -248,8 +294,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 # Extract the local Pauli term on the qubit indices of this local POVM.
                 sublabel = "".join(label[-(i + 1)] for i in idx)
                 # Try to obtain the coefficient of the local POVM for this local Pauli term.
+                local_idx = index_processed[j]
                 try:
-                    local_idx = frame_op_idx[j]
                     coeff = povm.pauli_operators[local_idx][sublabel]
                 except KeyError:
                     # If it does not exist, the current summand becomes 0 because it would be
@@ -257,24 +303,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                     summand = 0.0
                     # In this case we can break the iteration over the remaining local POVMs.
                     break
-                except IndexError as exc:
-                    if len(frame_op_idx) <= j:
-                        raise IndexError(
-                            f"The outcome label {frame_op_idx} does not match the expected shape. "
-                            f"It is supposed to contain {len(self._frames)} integers, but has "
-                            f"{len(frame_op_idx)}."
-                        ) from exc
-                    if povm.num_operators <= frame_op_idx[j]:
-                        raise IndexError(
-                            f"Outcome index '{frame_op_idx[j]}' is out of range for the local POVM"
-                            f" acting on subsystems {idx}. This POVM has {povm.num_operators}"
-                            " outcomes."
-                        ) from exc
-                    raise exc
                 else:
                     # If the label does exist, we multiply the coefficient into our summand.
-                    # The factor 2*N_qubit comes from Tr[(P_1...P_N)^2] = 2*N.
-                    summand *= coeff * 2 * povm.num_subsystems
+                    # The factor 2^N_qubit comes from Tr[(P_1...P_N)^2] = 2^N.
+                    summand *= coeff * 2**povm.num_subsystems
 
             # Once we have finished computing our summand, we add it into ``p_init``.
             p_idx += summand

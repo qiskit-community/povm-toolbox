@@ -13,18 +13,19 @@
 from unittest import TestCase
 
 import numpy as np
+from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows, LocallyBiasedClassicalShadows
 from povm_toolbox.sampler import POVMSampler, POVMSamplerJob
 from qiskit.circuit.random import random_circuit
-from qiskit.primitives import BaseSamplerV2
-from qiskit_aer.primitives import SamplerV2 as AerSampler
+from qiskit.primitives import BaseSamplerV2, StatevectorSampler
 
 
 class TestPOVMSampler(TestCase):
     """Tests for the ``POVMSampler`` class."""
 
     def setUp(self) -> None:
-        self.sampler = AerSampler()
+        rng = default_rng(12465)
+        self.sampler = StatevectorSampler(seed=rng)
 
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
