@@ -22,30 +22,44 @@ In this documentation you can find a number of resources including:
 - dive into more specific features with the `how-to guides <how_tos/index.html>`_
 - and, of course, look up specific details of the `API <apidocs/povm_toolbox.html>`_
 
+Documentation
+-------------
+
+All documentation is available `here <https://qiskit-community.github.io/povm-toolbox/>`_.
+
 Installation
 ------------
 
-Make sure that you have the correct Python environment active, into which you
-want to install this code, before running the below.
-
-You can install this code via pip:
+We encourage installing this package via ``pip``, when possible:
 
 .. code-block:: bash
 
-   pip install povm-toolbox
+   pip install 'povm-toolbox'
 
-Alternatively, you can install it from source:
 
-.. code-block:: bash
+For more installation information refer to the `installation instructions <install.rst>`_ in the documentation.
 
-   git clone git@github.com:qiskit-community/povm-toolbox.git
-   cd povm-toolbox
-   pip install -e .
+Deprecation Policy
+------------------
 
-This performs an editable install to simplify code development.
+We follow `semantic versioning <https://semver.org/>`_ and are guided by the principles in
+`Qiskit's deprecation policy <https://github.com/Qiskit/qiskit/blob/main/DEPRECATION.md>`_.
+We may occasionally make breaking changes in order to improve the user experience.
+When possible, we will keep old interfaces and mark them as deprecated, as long as they can co-exist with the
+new ones.
+Each substantial improvement, breaking change, or deprecation will be documented in the
+`release notes <https://qiskit-community.github.io/povm-toolbox/release-notes.html>`_.
 
-If you intend to develop on this code, you should consider reading the
-`contributing guide <https://github.com/qiskit-community/povm-toolbox/blob/main/CONTRIBUTING.md>`_.
+Contributing
+------------
+
+The source code is available `on GitHub <https://github.com/qiskit-community/povm-toolbox>`_.
+
+The developer guide is located at `CONTRIBUTING.md <https://github.com/qiskit-community/povm-toolbox/blob/main/CONTRIBUTING.md>`_
+in the root of this project's repository.
+By participating, you are expected to uphold Qiskit's `code of conduct <https://github.com/Qiskit/qiskit/blob/main/CODE_OF_CONDUCT.md>`_.
+
+We use `GitHub issues <https://github.com/qiskit-community/povm-toolbox/issues/new/choose>`_ for tracking requests and bugs.
 
 
 Citation
@@ -58,11 +72,17 @@ If you use this project, please cite the following reference:
     Phys. Rev. A 109, 062415;
     DOI: https://doi.org/10.1103/PhysRevA.109.062415
 
+License
+-------
+
+`Apache License 2.0 <https://github.com/qiskit-community/povm-toolbox/blob/main/LICENSE.txt>`_
+
 
 .. toctree::
   :hidden:
 
    Documentation Home <self>
+   Installation Instructions <install>
    Tutorials <tutorials/index>
    How-To Guides <how_tos/index>
    Explanations <explanations/index>
