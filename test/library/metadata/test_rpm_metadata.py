@@ -10,6 +10,7 @@
 
 """Tests for the RPMMetadata class."""
 
+import platform
 from unittest import TestCase
 
 import numpy as np
