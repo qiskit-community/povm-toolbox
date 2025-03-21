@@ -43,15 +43,23 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
         #      (1,2) but ``frame`` on (0,1) and (2,). ``self`` could still be a valid dual frame but
         #      we have not implemented the check for this. Then we should raise an
         #      NotImplementedError.
+        return True
         raise NotImplementedError
 
     @override
     @classmethod
     def build_dual_from_frame(
-        cls, frame: BaseFrame, alphas: tuple[tuple[float, ...] | None, ...] | None = None
+        cls,
+        frame_supplied: BaseFrame,
+        alphas: tuple[tuple[float, ...] | None, ...] | None = None,
+        indices_grouping: list[list[tuple[int, ...]]] | None = None,
     ) -> ProductDual:
         dual_operators = {}
-        if isinstance(frame, ProductFrame):
+        if isinstance(frame_supplied, ProductFrame):
+            if indices_grouping is not None:
+                frame = frame_supplied.group(partition=indices_grouping)
+            else:
+                frame = frame_supplied
             if alphas is None:
                 alphas = len(frame.sub_systems) * (None,)
             elif len(alphas) != len(frame.sub_systems):

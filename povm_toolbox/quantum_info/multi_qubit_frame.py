@@ -165,7 +165,8 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         if self._pauli_operators is None:
             try:
                 self._pauli_operators = [
-                    dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.operators
+                    dict(SparsePauliOp.from_operator(op, atol=1e-20, rtol=1e-20).label_iter())
+                    for op in self.operators
                 ]
             except QiskitError as exc:
                 raise QiskitError(
