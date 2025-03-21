@@ -10,6 +10,7 @@
 
 """Tests for the POVMMetadata class."""
 
+import platform
 from unittest import TestCase
 
 from povm_toolbox.library import ClassicalShadows
@@ -45,10 +46,13 @@ class TestPOVMMetadata(TestCase):
 
         measurement = ClassicalShadows(num_qubits=num_qubits)
         qc_composed = measurement.compose_circuits(qc)
+        qc_id = id(qc_composed)
+        padding = "016" if platform.system() == "Windows" else ""
+        qc_hex_id = f"0x{qc_id:{padding}x}"
 
         povm_metadata = POVMMetadata(measurement, qc_composed)
         self.assertEqual(
             f"{povm_metadata}",
             "POVMMetadata(povm_implementation=ClassicalShadows(num_qubits=2), composed_circuit="
-            f"<qiskit.circuit.quantumcircuit.QuantumCircuit object at {hex(id(qc_composed))}>)",
+            f"<qiskit.circuit.quantumcircuit.QuantumCircuit object at {qc_hex_id}>)",
         )

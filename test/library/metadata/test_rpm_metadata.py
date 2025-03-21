@@ -53,6 +53,9 @@ class TestRPMMetadata(TestCase):
 
         measurement = ClassicalShadows(num_qubits=num_qubits)
         qc_composed = measurement.compose_circuits(qc)
+        qc_id = id(qc_composed)
+        padding = "016" if platform.system() == "Windows" else ""
+        qc_hex_id = f"0x{qc_id:{padding}x}"
 
         shape = (4, 5, 3, num_qubits)
         pvm_keys = np.arange(np.prod(shape)).reshape(shape)
@@ -61,6 +64,6 @@ class TestRPMMetadata(TestCase):
         self.assertEqual(
             f"{rpm_metadata}",
             "RPMMetadata(povm_implementation=ClassicalShadows(num_qubits=2), composed_circuit="
-            f"<qiskit.circuit.quantumcircuit.QuantumCircuit object at {hex(id(qc_composed))}>,"
+            f"<qiskit.circuit.quantumcircuit.QuantumCircuit object at {qc_hex_id}>,"
             f" pvm_keys=np.ndarray<4,5,3,{num_qubits}>)",
         )
