@@ -29,7 +29,7 @@ requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.23",
     "numba>=0.59",
-    "qiskit>=1.0",
+    "qiskit>=1.1, <2",
     "qiskit-ibm-runtime>=0.24",
     "matplotlib!=3.9.1.post1",
 ]
@@ -37,9 +37,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "povm_toolbox[test,doctest,nbtest,lint,docs,notebook-dependencies]",
+    "tox>=4.4.3",
 ]
 basetest = [
-    "tox>=4.0",
     "pytest>=8.0",
     "pytest-cov>=5.0",
 ]
@@ -64,21 +64,21 @@ lint = [
     "mypy~=1.10.0",
     "pylint~=3.1.0",
     "reno>=4.1",
-    "toml",
+    "toml>=0.9.6",
 ]
 notebook-dependencies = [
     "povm_toolbox",
     "pylatexenc",
 ]
 docs = [
-    "qiskit-sphinx-theme~=1.16",
+    "povm-toolbox[doctest]",
+    "qiskit-sphinx-theme~=2.0.0",
     "jupyter-sphinx",
     "sphinx-design",
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",
-    "nbsphinx",
+    "nbsphinx>=0.9.4",
     "reno>=4.1",
-    "pytest-doctestplus>=1.2.1",
 ]
 [project.urls]
 "Documentation" = "https://qiskit-community.github.io/povm-toolbox/"
