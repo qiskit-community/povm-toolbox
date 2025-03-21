@@ -47,7 +47,7 @@ class BasePOVM(BaseFrame[LabelT], ABC):
             In the frame theory formalism, the mapping
             :math:`A: \rho \mapsto \{\text{Tr}\left[M_k \rho\right]\}_k`
             is referred to as the *analysis operator*, which is implemented by
-            the :meth:`.analysis` method.
+            the :meth:`analysis` method.
 
         Args:
             rho: the state for which to compute the outcome probabilities.

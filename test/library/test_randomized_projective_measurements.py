@@ -10,9 +10,11 @@
 
 """Tests for the RandomizedProjectiveMeasurements class."""
 
+import unittest
 from unittest import TestCase
 
 import numpy as np
+import qiskit
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasurements
 from povm_toolbox.library.metadata import POVMMetadata
@@ -146,6 +148,10 @@ class TestRandomizedPMs(TestCase):
 
             self.assertEqual(qc.num_qubits, num_qubits)
 
+    @unittest.skipIf(
+        not qiskit.__version__.startswith("1"),
+        "https://github.com/qiskit-community/povm-toolbox/issues/109",
+    )
     def test_to_sampler_pub(self):
         """Test that the ``to_sampler_pub`` method works correctly."""
         num_qubits = 2

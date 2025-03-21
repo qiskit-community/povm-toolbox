@@ -53,9 +53,9 @@ from .median_of_means import MedianOfMeans
 from .povm_post_processor import POVMPostProcessor
 
 __all__ = [
-    "POVMPostProcessor",
     "MedianOfMeans",
-    "dual_from_state",
-    "dual_from_marginal_probabilities",
+    "POVMPostProcessor",
     "dual_from_empirical_frequencies",
+    "dual_from_marginal_probabilities",
+    "dual_from_state",
 ]

@@ -141,10 +141,7 @@ class TestProductPOVM(TestCase):
         prod_dual = ProductDual.from_list([dual_1])
         self.assertEqual(
             prod_dual.__repr__(),
-            (
-                "ProductDual(num_subsystems=1)<2>:\n   (0,): MultiQubitDual<2>"
-                f" at {hex(id(dual_1))}"
-            ),
+            (f"ProductDual(num_subsystems=1)<2>:\n   (0,): MultiQubitDual<2> at {hex(id(dual_1))}"),
         )
         prod_dual = ProductDual.from_list([dual_1, dual_2])
         self.assertEqual(

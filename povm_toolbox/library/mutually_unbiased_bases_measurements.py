@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 from numpy.random import Generator
 from scipy.spatial.transform import Rotation
@@ -67,8 +69,8 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
             num_qubits: the number of qubits.
             bias: can be either 1D or 2D. If 1D, it should contain float values indicating the bias
                 for measuring in each of the PVMs. I.e., its length equals the number of PVMs (3).
-                These floats should sum to 1. If 2D, it will have a new set of biases for each
-                qubit.
+                These floats should sum to 1. If 2D, the expected shape of the array is
+                ``(num_qubits, 3)`` and a new set of biases will be set for each qubit.
             angles: can be either 1D or 2D. If 1D, it should be of length 3 and contain float values
                 to indicate the three Euler angles to rotate the locally-biased classical shadows
                 (LBCS) measurement in the Bloch sphere representation. If 2D, it will have a new set
@@ -180,4 +182,4 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
         thetas = np.arctan2(np.linalg.norm(bloch_vectors[:, :2], axis=1), bloch_vectors[:, 2])
         phis = np.arctan2(bloch_vectors[:, 1], bloch_vectors[:, 0])
 
-        return (np.vstack((thetas, phis)).T).flatten()
+        return cast(np.ndarray, (np.vstack((thetas, phis)).T).flatten())

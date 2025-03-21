@@ -184,26 +184,26 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
         # Return the corresponding :class:`.POVMSampler` object:
         return cls(base_job, metadata)
 
-    @override  # type: ignore[misc]
-    def status(self) -> JobStatus:
+    @override
+    def status(self) -> JobStatus:  # type: ignore[misc]
         return self.base_job.status()
 
-    @override  # type: ignore[misc]
-    def done(self) -> bool:
+    @override
+    def done(self) -> bool:  # type: ignore[misc]
         return bool(self.base_job.done())
 
-    @override  # type: ignore[misc]
-    def running(self) -> bool:
+    @override
+    def running(self) -> bool:  # type: ignore[misc]
         return bool(self.base_job.running())
 
-    @override  # type: ignore[misc]
-    def cancelled(self) -> bool:
+    @override
+    def cancelled(self) -> bool:  # type: ignore[misc]
         return bool(self.base_job.cancelled())
 
-    @override  # type: ignore[misc]
-    def in_final_state(self) -> bool:
+    @override
+    def in_final_state(self) -> bool:  # type: ignore[misc]
         return bool(self.base_job.in_final_state())
 
-    @override  # type: ignore[misc]
-    def cancel(self):
+    @override
+    def cancel(self):  # type: ignore[misc]
         self.base_job.cancel()

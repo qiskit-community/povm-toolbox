@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import matplotlib as mpl
 import numpy as np
 from matplotlib.axes import Axes
@@ -54,8 +56,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
         """
         if not self.dimension == 2:
             raise ValueError(
-                "Dimension of Single Qubit POVM operator space should be 2,"
-                f" not {self.dimension}."
+                f"Dimension of Single Qubit POVM operator space should be 2, not {self.dimension}."
             )
         super()._check_validity()
 
@@ -98,7 +99,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
 
         Raises:
             ValueError: if any effect of this POVM has a rank greater than 1.
-        """
+        """  # noqa: D412
         r = np.empty((self.num_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
             # Check that the povm effect is rank-1:
@@ -111,7 +112,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
             r[i, 0] = 2 * np.real_if_close(pauli_op.get("X", 0))
             r[i, 1] = 2 * np.real_if_close(pauli_op.get("Y", 0))
             r[i, 2] = 2 * np.real_if_close(pauli_op.get("Z", 0))
-        return r
+        return cast(np.ndarray, r)
 
     def draw_bloch(
         self,

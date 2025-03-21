@@ -15,8 +15,8 @@ from .base_frame import BaseFrame, LabelT
 from .base_povm import BasePOVM
 
 __all__ = [
-    "LabelT",
+    "BaseDual",
     "BaseFrame",
     "BasePOVM",
-    "BaseDual",
+    "LabelT",
 ]

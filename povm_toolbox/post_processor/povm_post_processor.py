@@ -194,11 +194,11 @@ class POVMPostProcessor:
             A tuple of (estimated) expectation value and standard deviation.
         """
         count = self.counts[loc]
-        shots = sum(count.values())
+        shots = sum(count.values())  # type: ignore[attr-defined]
         # TODO: performance gains to be made when computing the omegas here ?
         # like storing the dict of computed omegas and updating the dict with the
         # missing values that were still never computed.
-        omegas = self.get_decomposition_weights(observable, set(count.keys()))
+        omegas = self.get_decomposition_weights(observable, set(count.keys()))  # type: ignore[attr-defined]
 
         exp_val = 0.0
         std = 0.0
