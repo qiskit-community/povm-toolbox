@@ -47,8 +47,8 @@ class TestPOVMMetadata(TestCase):
         measurement = ClassicalShadows(num_qubits=num_qubits)
         qc_composed = measurement.compose_circuits(qc)
         qc_id = id(qc_composed)
-        padding = "016" if platform.system() == "Windows" else ""
-        qc_hex_id = f"0x{qc_id:{padding}x}"
+        encoding = "016X" if platform.system() == "Windows" else "x"
+        qc_hex_id = f"0x{qc_id:{encoding}}"
 
         povm_metadata = POVMMetadata(measurement, qc_composed)
         self.assertEqual(
