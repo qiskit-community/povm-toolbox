@@ -288,6 +288,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
         )
 
     def _unitary_from_parameters(self, parameters: np.ndarray) -> np.ndarray:
+        # pylint: disable=no-self-use
         """Construct the unitary defining the dilation POVM from parameters.
 
         Args:

@@ -100,7 +100,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
 
         Raises:
             ValueError: if any effect of this POVM has a rank greater than 1.
-        """
+        """  # noqa: D412
         r = np.empty((self.num_outcomes, 3))
         for i, pauli_op in enumerate(self.pauli_operators):
             # Check that the povm effect is rank-1:

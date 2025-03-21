@@ -53,7 +53,7 @@ class BaseDual(BaseFrame[LabelT], ABC):
             In the frame theory formalism, the mapping
             :math:`A: \mathcal{O} \mapsto \{\text{Tr}\left[\mathcal{O} D_k\right]\}_k`
             is referred to as the *analysis operator*, which is implemented by
-            the :meth:`.analysis` method.
+            the :meth:`analysis` method.
 
         Args:
             observable: the observable for which to compute the decomposition weights.
