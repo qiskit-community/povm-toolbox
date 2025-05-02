@@ -38,6 +38,7 @@ jobs:
         env:
           QISKIT_IBM_QPU: ${{ secrets.QISKIT_IBM_QPU }}
           QISKIT_IBM_TOKEN: ${{ secrets.QISKIT_IBM_TOKEN }}
+          QISKIT_IBM_CHANNEL: ${{ secrets.QISKIT_IBM_CHANNEL }}
           QISKIT_IBM_INSTANCE: ${{ secrets.QISKIT_IBM_INSTANCE }}
         run: |
           tox -e py,notebook,doctest --parallel --parallel-no-spinner
