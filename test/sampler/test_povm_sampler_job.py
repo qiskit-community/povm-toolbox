@@ -166,12 +166,10 @@ class TestPOVMSamplerJob(TestCase):
 
         instance = os.getenv("QISKIT_IBM_INSTANCE")
         token = os.getenv("QISKIT_IBM_TOKEN")
-        url = os.getenv("QISKIT_IBM_URL")
         qpu = os.getenv("QISKIT_IBM_QPU")
-        if instance is None or token is None or url is None or qpu is None:
+        if instance is None or token is None or qpu is None:
             pytest.skip("Missing QiskitRuntimeService configuration.")
-        channel = "ibm_quantum" if url.find("quantum-computing.ibm.com") >= 0 else "ibm_cloud"
-        service = QiskitRuntimeService(instance=instance, token=token, url=url, channel=channel)
+        service = QiskitRuntimeService(instance=instance, token=token)
 
         backend = service.backend(name=qpu)
         pm = generate_preset_pass_manager(
