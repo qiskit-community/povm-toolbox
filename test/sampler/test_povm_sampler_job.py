@@ -165,13 +165,8 @@ class TestPOVMSamplerJob(TestCase):
         instance = os.getenv("QISKIT_IBM_INSTANCE")
         channel = os.getenv("QISKIT_IBM_CHANNEL")
         token = os.getenv("QISKIT_IBM_TOKEN")
-<<<<<<< HEAD
-        url = os.getenv("QISKIT_IBM_URL")
-        if instance is None or token is None or url is None:
-=======
         qpu = os.getenv("QISKIT_IBM_QPU")
         if instance is None or channel is None or token is None or qpu is None:
->>>>>>> fc8c07e (fix: the setup of the QiskitRuntimeService in CI (#121))
             pytest.skip("Missing QiskitRuntimeService configuration.")
         service = QiskitRuntimeService(instance=instance, channel=channel, token=token)
 
