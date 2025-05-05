@@ -157,7 +157,7 @@ class TestPOVMSamplerJob(TestCase):
                 Path(filename).unlink(missing_ok=True)
 
     @pytest.mark.skipif(
-        os.getenv("QISKIT_IBM_TOKEN") is None, reason="Missing QiskitRuntimeService configuration."
+        not os.getenv("QISKIT_IBM_TOKEN"), reason="Missing QiskitRuntimeService configuration."
     )
     def test_recover_job_runtime(self):
         qc = QuantumCircuit(2)
