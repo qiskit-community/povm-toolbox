@@ -102,8 +102,8 @@ modindex_common_prefix = ["povm_toolbox."]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "qiskit": ("https://docs.quantum.ibm.com/api/qiskit/", None),
-    "qiskit_ibm_runtime": ("https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/", None),
+    "qiskit": ("https://quantum.cloud.ibm.com/docs/api/qiskit/", None),
+    "qiskit_ibm_runtime": ("https://quantum.cloud.ibm.com/docs/api/qiskit-ibm-runtime/", None),
     "rustworkx": ("https://www.rustworkx.org/", None),
 }
 

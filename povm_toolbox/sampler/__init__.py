@@ -14,7 +14,7 @@
 
 At their core, POVMs are used in combination with sampling the state of a quantum circuit.
 In Qiskit, this functionality is provided via the
-`Sampler primitive <https://docs.quantum.ibm.com/guides/primitives>`_.
+`Sampler primitive <https://quantum.cloud.ibm.com/docs/guides/primitives>`_.
 
 To this end, this module provides a number of tools for sampling the state of
 :class:`~qiskit.circuit.QuantumCircuit` objects using a :class:`.POVMImplementation`.
