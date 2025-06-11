@@ -49,8 +49,8 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         with open("test/post_processor/random_circuit_qubits=2_depth=1_seed=30.qpy", "rb") as file:
             qc = qpy.load(file)[0]
         num_qubits = qc.num_qubits
-        bias = np.array([0.5, 0.25, 0.25])
-        angles = np.array(
+        bias = np.asarray([0.5, 0.25, 0.25])
+        angles = np.asarray(
             [
                 [2.01757238, -1.85001671, 2.52155716, 0.45636669, 1.17175533, -0.48263278],
                 [0.0, 0.0, 1.57079633, -2.35619449, 1.57079633, -0.78539816],
@@ -89,7 +89,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
                 bias=[6, 6],
                 ansatz=[
                     DensityMatrix(np.eye(2) / 2),
-                    DensityMatrix(np.array([[2, 0], [1, 0]]) / 3),
+                    DensityMatrix(np.asarray([[2, 0], [1, 0]]) / 3),
                 ],
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
@@ -103,7 +103,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
                 povm_post_processor=self.post_processor,
                 loc=0,
                 bias=15,
-                ansatz=SparsePauliOp(["I"], coeffs=np.array([0.5])),
+                ansatz=SparsePauliOp(["I"], coeffs=np.asarray([0.5])),
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
             self.assertAlmostEqual(exp_value, 0.14024741778087743)
@@ -137,7 +137,7 @@ class TestDualFromEmpiricalFrequencies(TestCase):
             qc.ry(theta=Parameter("theta"), qubit=0)
             povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
             measurement = ClassicalShadows(num_qubits=2, seed=self.SEED)
-            job = povm_sampler.run([(qc, np.array([0, np.pi]))], shots=16, povm=measurement)
+            job = povm_sampler.run([(qc, np.asarray([0, np.pi]))], shots=16, povm=measurement)
             pub_result = job.result()[0]
             post_processor_3 = POVMPostProcessor(pub_result)
             _ = dual_from_empirical_frequencies(post_processor_3)

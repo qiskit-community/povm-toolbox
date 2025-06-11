@@ -33,7 +33,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
     >>> import cmath
     >>> import numpy as np
     >>> from povm_toolbox.quantum_info import SingleQubitPOVM
-    >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+    >>> vecs = np.sqrt(1.0 / 2.0) * np.asarray(
     ...     [
     ...         [1, 0],
     ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
@@ -78,7 +78,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
         >>> import cmath
         >>> import numpy as np
         >>> from povm_toolbox.quantum_info import SingleQubitPOVM
-        >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+        >>> vecs = np.sqrt(1.0 / 2.0) * np.asarray(
         ...     [
         ...         [1, 0],
         ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
@@ -132,7 +132,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
            >>> import cmath
            >>> import numpy as np
            >>> from povm_toolbox.quantum_info import SingleQubitPOVM
-           >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+           >>> vecs = np.sqrt(1.0 / 2.0) * np.asarray(
            ...     [
            ...         [1, 0],
            ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],

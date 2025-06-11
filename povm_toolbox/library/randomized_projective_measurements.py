@@ -52,8 +52,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
        >>> from povm_toolbox.library import RandomizedProjectiveMeasurements
        >>> povm = RandomizedProjectiveMeasurements(
        ...     2,
-       ...     bias=np.array([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
-       ...     angles=np.array([
+       ...     bias=np.asarray([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
+       ...     angles=np.asarray([
        ...         [np.pi/6, 5*np.pi/6, -np.pi/4, -np.pi/2, -np.pi/2, np.pi/4],
        ...         [np.pi/3, np.pi/3, -np.pi/3, np.pi/3, np.pi/3, -np.pi/3],
        ...     ]),

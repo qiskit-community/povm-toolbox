@@ -312,7 +312,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         if bit_array.ndim == 0:
             return cast(
                 np.ndarray,
-                np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object),
+                np.asarray([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object),
             )
 
         shape = bit_array.shape

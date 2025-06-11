@@ -66,7 +66,7 @@ class TestSingleQubitPovm(TestCase):
                 0.2 * Operator.from_label("-"),
             ]
         )
-        vectors = np.array([[0, 0, 0.8], [0, 0, -0.8], [0.2, 0, 0], [-0.2, 0, 0]])
+        vectors = np.asarray([[0, 0, 0.8], [0, 0, -0.8], [0.2, 0, 0], [-0.2, 0, 0]])
         self.assertTrue(np.allclose(sqpovm.get_bloch_vectors(), vectors))
 
         sqpovm = SingleQubitPOVM(
@@ -77,7 +77,7 @@ class TestSingleQubitPovm(TestCase):
                 0.6 * Operator.from_label("l"),
             ]
         )
-        vectors = np.array([[-0.4, 0, 0], [0.4, 0, 0], [0, 0.6, 0], [0, -0.6, 0]])
+        vectors = np.asarray([[-0.4, 0, 0], [0.4, 0, 0], [0, 0.6, 0], [0, -0.6, 0]])
         self.assertTrue(np.allclose(sqpovm.get_bloch_vectors(), vectors))
 
         sqpovm = SingleQubitPOVM(
@@ -91,7 +91,7 @@ class TestSingleQubitPovm(TestCase):
             sqpovm.get_bloch_vectors()
 
         sqpovm = ClassicalShadows(1).definition()[(0,)]
-        vectors = np.array(
+        vectors = np.asarray(
             [
                 [0, 0, 1 / 3],
                 [0, 0, -1 / 3],
@@ -105,10 +105,10 @@ class TestSingleQubitPovm(TestCase):
 
         sqpovm = RandomizedProjectiveMeasurements(
             1,
-            bias=np.array([0.2, 0.8]),
-            angles=np.array([0.25 * np.pi, 0, 0.25 * np.pi, 0.25 * np.pi]),
+            bias=np.asarray([0.2, 0.8]),
+            angles=np.asarray([0.25 * np.pi, 0, 0.25 * np.pi, 0.25 * np.pi]),
         ).definition()[(0,)]
-        vectors = np.sqrt(0.5) * np.array(
+        vectors = np.sqrt(0.5) * np.asarray(
             [
                 [0.2, 0, 0.2],
                 [-0.2, 0, -0.2],

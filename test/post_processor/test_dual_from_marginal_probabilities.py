@@ -74,8 +74,8 @@ class TestDualFromMarginalProbabilities(TestCase):
         with open("test/post_processor/random_circuit_qubits=2_depth=1_seed=30.qpy", "rb") as file:
             qc = qpy.load(file)[0]
         num_qubits = qc.num_qubits
-        bias = np.array([0.5, 0.25, 0.25])
-        angles = np.array(
+        bias = np.asarray([0.5, 0.25, 0.25])
+        angles = np.asarray(
             [
                 [2.01757238, -1.85001671, 2.52155716, 0.45636669, 1.17175533, -0.48263278],
                 [0.0, 0.0, 1.57079633, -2.35619449, 1.57079633, -0.78539816],

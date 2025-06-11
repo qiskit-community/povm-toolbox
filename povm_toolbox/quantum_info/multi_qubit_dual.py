@@ -77,9 +77,9 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
             # null operators to preserve the indexing of the operators which might follow a
             # convention, as it is the case for classical shadows. If a primal frame operator is
             # null, its corresponding dual frame operator will also be null.
-            frame_array = np.array(frame)
+            frame_array = np.asarray(frame)
             dual_operators_array = np.zeros(frame_array.shape, dtype=complex)
-            mask = np.array(
+            mask = np.asarray(
                 [not np.allclose(np.zeros(len(frame_op)), frame_op) for frame_op in frame_array.T],
                 dtype=bool,
             )
@@ -87,7 +87,7 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
             frame_array = frame_array[:, mask]
 
             # Set the weighting matrix according to the alpha-parameters.
-            diag_trace = np.diag(1.0 / (np.array(alphas)[mask]))
+            diag_trace = np.diag(1.0 / (np.asarray(alphas)[mask]))
             # Compute the weighted frame super-operator.
             superop = frame_array @ diag_trace @ np.conj(frame_array).T
 

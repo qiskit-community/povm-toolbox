@@ -71,7 +71,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
        >>> from povm_toolbox.library import DilationMeasurements
        >>> povm = DilationMeasurements(
        ...     1,
-       ...     parameters=np.array(
+       ...     parameters=np.asarray(
        ...         [0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]
        ...     ),
        ... )

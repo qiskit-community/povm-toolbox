@@ -35,8 +35,8 @@ class TestRandomizedPMs(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        basis_0 = np.array([1.0, 0], dtype=complex)
-        basis_1 = np.array([0, 1.0], dtype=complex)
+        basis_0 = np.asarray([1.0, 0], dtype=complex)
+        basis_1 = np.asarray([0, 1.0], dtype=complex)
         basis_plus = 1.0 / np.sqrt(2) * (basis_0 + basis_1)
         basis_minus = 1.0 / np.sqrt(2) * (basis_0 - basis_1)
         basis_plus_i = 1.0 / np.sqrt(2) * (basis_0 + 1.0j * basis_1)
@@ -53,52 +53,56 @@ class TestRandomizedPMs(TestCase):
         """Test that the ``__init__`` method raises errors correctly."""
         # Sanity check
         measurement = RandomizedProjectiveMeasurements(
-            1, bias=np.array([0.5, 0.5]), angles=np.array([0.0, 0.0, 0.5, 0.0])
+            1, bias=np.asarray([0.5, 0.5]), angles=np.asarray([0.0, 0.0, 0.5, 0.0])
         )
         self.assertIsInstance(measurement, RandomizedProjectiveMeasurements)
         with self.subTest("Incompatible ``bias`` and ``angles`` shapes.") and self.assertRaises(
             ValueError
         ):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([0.5, 0.5]), angles=np.array([0.0, 0.0, 0.5, 0.0, 0.4])
+                1, bias=np.asarray([0.5, 0.5]), angles=np.asarray([0.0, 0.0, 0.5, 0.0, 0.4])
             )
         with self.subTest(
             "Shape of ``bias`` incompatible with number of qubits."
         ) and self.assertRaises(ValueError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([[0.5, 0.5], [0.5, 0.5]]), angles=np.array([0.0, 0.0, 0.5, 0.0])
+                1,
+                bias=np.asarray([[0.5, 0.5], [0.5, 0.5]]),
+                angles=np.asarray([0.0, 0.0, 0.5, 0.0]),
             )
         with self.subTest("Too many dims in ``bias``.") and self.assertRaises(ValueError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([[[0.5, 0.5]]]), angles=np.array([0.0, 0.0, 0.5, 0.0])
+                1, bias=np.asarray([[[0.5, 0.5]]]), angles=np.asarray([0.0, 0.0, 0.5, 0.0])
             )
         with self.subTest("Negative value in ``bias``.") and self.assertRaises(ValueError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([1.5, -0.5]), angles=np.array([0.0, 0.0, 0.5, 0.0])
+                1, bias=np.asarray([1.5, -0.5]), angles=np.asarray([0.0, 0.0, 0.5, 0.0])
             )
         with self.subTest("``bias`` not summing up to one.") and self.assertRaises(ValueError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([0.5, 0.4]), angles=np.array([0.0, 0.0, 0.5, 0.0])
+                1, bias=np.asarray([0.5, 0.4]), angles=np.asarray([0.0, 0.0, 0.5, 0.0])
             )
         with self.subTest("``bias`` not summing up to one.") and self.assertRaises(ValueError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([[0.5, 0.4], [0.5, 0.6]]), angles=np.array([0.0, 0.0, 0.5, 0.0])
+                1,
+                bias=np.asarray([[0.5, 0.4], [0.5, 0.6]]),
+                angles=np.asarray([0.0, 0.0, 0.5, 0.0]),
             )
         with self.subTest(
             "Shape of ``angles`` incompatible with number of qubits."
         ) and self.assertRaises(ValueError):
             RandomizedProjectiveMeasurements(
                 1,
-                bias=np.array([0.5, 0.5]),
-                angles=np.array([[0.0, 0.0, 0.5, 0.0], [0.0, 0.0, 0.5, 0.0]]),
+                bias=np.asarray([0.5, 0.5]),
+                angles=np.asarray([[0.0, 0.0, 0.5, 0.0], [0.0, 0.0, 0.5, 0.0]]),
             )
         with self.subTest("Too many dims in ``angles``.") and self.assertRaises(ValueError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([0.5, 0.5]), angles=np.array([[[0.0, 0.0, 0.5, 0.0]]])
+                1, bias=np.asarray([0.5, 0.5]), angles=np.asarray([[[0.0, 0.0, 0.5, 0.0]]])
             )
         with self.subTest("Invalid type for ``seed``.") and self.assertRaises(TypeError):
             RandomizedProjectiveMeasurements(
-                1, bias=np.array([0.5, 0.5]), angles=np.array([0.0, 0.0, 0.5, 0.0]), seed=1.2
+                1, bias=np.asarray([0.5, 0.5]), angles=np.asarray([0.0, 0.0, 0.5, 0.0]), seed=1.2
             )
 
     def test_init(self):
@@ -129,7 +133,7 @@ class TestRandomizedPMs(TestCase):
             "RandomizedProjectiveMeasurements(num_qubits=1, bias=array([[0.2, "
             "0.8]]), angles=array([[[0, 1],\n        [2, 3]]]))"
         )
-        povm = RandomizedProjectiveMeasurements(1, bias=np.array([0.2, 0.8]), angles=np.arange(4))
+        povm = RandomizedProjectiveMeasurements(1, bias=np.asarray([0.2, 0.8]), angles=np.arange(4))
         self.assertEqual(povm.__repr__(), mub_str)
 
     def test_qc_build(self):
@@ -138,7 +142,7 @@ class TestRandomizedPMs(TestCase):
             q = np.random.uniform(0, 5, size=3 * num_qubits).reshape((num_qubits, 3))
             q /= q.sum(axis=1)[:, np.newaxis]
 
-            angles = np.array([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
+            angles = np.asarray([0.0, 0.0, 0.5 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi])
 
             cs_implementation = RandomizedProjectiveMeasurements(
                 num_qubits=num_qubits, bias=q, angles=angles
@@ -167,8 +171,8 @@ class TestRandomizedPMs(TestCase):
 
         measurement = RandomizedProjectiveMeasurements(
             num_qubits,
-            bias=np.array([0.2, 0.4, 0.4]),
-            angles=np.array([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
+            bias=np.asarray([0.2, 0.4, 0.4]),
+            angles=np.asarray([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
             seed=self.SEED,
         )
 
@@ -199,8 +203,8 @@ class TestRandomizedPMs(TestCase):
 
         measurement = RandomizedProjectiveMeasurements(
             num_qubits,
-            bias=np.array([0.2, 0.4, 0.4]),
-            angles=np.array([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
+            bias=np.asarray([0.2, 0.4, 0.4]),
+            angles=np.asarray([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
             seed=self.SEED,
         )
 
@@ -298,8 +302,8 @@ class TestRandomizedPMs(TestCase):
         """Test that errors in ``_povm_outcomes`` method are raised correctly."""
         measurement = RandomizedProjectiveMeasurements(
             2,
-            bias=np.array([0.3, 0.4, 0.3]),
-            angles=np.array([0.0, 0.0, 0.5, 0.0, 0.5, 0.5]),
+            bias=np.asarray([0.3, 0.4, 0.3]),
+            angles=np.asarray([0.0, 0.0, 0.5, 0.0, 0.5, 0.5]),
             seed=self.SEED,
         )
         qc = QuantumCircuit(2)
@@ -334,8 +338,8 @@ class TestRandomizedPMs(TestCase):
 
         measurement = RandomizedProjectiveMeasurements(
             2,
-            bias=np.array([0.3, 0.4, 0.3]),
-            angles=np.array([0.0, 0.0, 0.5, 0.0, 0.5, 0.5]),
+            bias=np.asarray([0.3, 0.4, 0.3]),
+            angles=np.asarray([0.0, 0.0, 0.5, 0.0, 0.5, 0.5]),
             seed=self.SEED,
         )
         with self.assertRaises(ValueError):
@@ -385,8 +389,8 @@ class TestRandomizedPMs(TestCase):
 
         measurement = RandomizedProjectiveMeasurements(
             num_qubits=1,
-            angles=np.array([0.0, 0.0, np.pi / 2, np.pi / 2]),
-            bias=np.array([0.5, 0.5]),
+            angles=np.asarray([0.0, 0.0, np.pi / 2, np.pi / 2]),
+            bias=np.asarray([0.5, 0.5]),
             seed=self.SEED,
         )
 
