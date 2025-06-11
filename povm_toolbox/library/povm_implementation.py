@@ -274,14 +274,22 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array: BitArray,
         povm_metadata: MetadataT,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: tuple[int, ...],
     ) -> list[tuple[int, ...]]:
         """Convert the raw bitstrings into POVM outcomes based on the associated metadata.
 
         Args:
             bit_array: The raw bitstrings.
             povm_metadata: The associated metadata.
-            loc: an optional location to slice the bitstrings.
+            loc: index of the element of the `bit_array` from which return the outcomes. More
+                precisely, `bit_array` has the shape of the array of parameter sets provided to this
+                `POVMSamplerPub` and `loc` must specify exactly one of the parameter set. Therefore,
+                we must have `len(loc)==len(bit_array.shape)`. Especially, if no parameter sets were
+                provided in the pub -- i.e., the quantum circuit was not parametrized or already
+                bound -- then `loc` must be an empty tuple `(,)`.
+
+        Raises:
+            ValueError: if `loc` is not compatible with the shape of `bit_array`.
 
         Returns:
             The converted POVM outcomes.
@@ -307,12 +315,19 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array = self._get_bitarray(data)
 
         if loc is not None:
+            # `loc` is `int` or `tuple[int, ...]`
+            if isinstance(loc, int):
+                loc = (loc,)
             return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
 
+        # `loc` is `None`
         if bit_array.ndim == 0:
+            loc = tuple()
             return cast(
                 np.ndarray,
-                np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object),
+                np.asarray(
+                    [Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))], dtype=object
+                ),
             )
 
         shape = bit_array.shape
@@ -340,7 +355,15 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """
         bit_array = self._get_bitarray(data)
 
-        if loc is not None or bit_array.ndim == 0:
+        if loc is not None:
+            # `loc` is `int` or `tuple[int, ...]`
+            if isinstance(loc, int):
+                loc = (loc,)
+            return self._povm_outcomes(bit_array, povm_metadata, loc=loc)
+
+        # `loc` is `None`
+        if bit_array.ndim == 0:
+            loc = tuple()
             return self._povm_outcomes(bit_array, povm_metadata, loc=loc)
 
         shape = bit_array.shape
