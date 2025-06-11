@@ -114,9 +114,10 @@ class TestDilationMeasurements(TestCase):
         num_qubits = 1
 
         # parameters defining a SIC-POVM
-        sic_parameters = np.array(
-            [[0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]]
-        )
+        sic_parameters = [
+            [0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]
+        ]
+
         # define measurement and the quantum-informational POVM
         measurement = DilationMeasurements(num_qubits, parameters=sic_parameters)
         povm = measurement.definition()[(0,)]
