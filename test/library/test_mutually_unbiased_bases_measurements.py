@@ -90,9 +90,9 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
-        mub_str = "MutuallyUnbiasedBasesMeasurements(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]), angles=array([0, 1, 2]))"
+        mub_str = "MutuallyUnbiasedBasesMeasurements(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]), angles=array([0., 1., 2.]))"
         povm = MutuallyUnbiasedBasesMeasurements(
-            1, bias=np.array([0.2, 0.3, 0.5]), angles=np.arange(3)
+            1, bias=np.array([0.2, 0.3, 0.5]), angles=np.arange(3, dtype=float)
         )
         self.assertEqual(povm.__repr__(), mub_str)
 

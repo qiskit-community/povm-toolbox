@@ -127,9 +127,11 @@ class TestRandomizedPMs(TestCase):
         """Test that the ``__repr__`` method works correctly."""
         mub_str = (
             "RandomizedProjectiveMeasurements(num_qubits=1, bias=array([[0.2, "
-            "0.8]]), angles=array([[[0, 1],\n        [2, 3]]]))"
+            "0.8]]), angles=array([[[0., 1.],\n        [2., 3.]]]))"
         )
-        povm = RandomizedProjectiveMeasurements(1, bias=np.array([0.2, 0.8]), angles=np.arange(4))
+        povm = RandomizedProjectiveMeasurements(
+            1, bias=np.array([0.2, 0.8]), angles=np.arange(4, dtype=float)
+        )
         self.assertEqual(povm.__repr__(), mub_str)
 
     def test_qc_build(self):
