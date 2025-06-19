@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from numpy.random import Generator
 
 from .mutually_unbiased_bases_measurements import MutuallyUnbiasedBasesMeasurements
@@ -43,7 +44,7 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
     def __init__(
         self,
         num_qubits: int,
-        bias: np.ndarray,
+        bias: npt.ArrayLike,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
@@ -81,6 +82,7 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
                 specified by ``bias``. The user can also directly provide a random generator. If
                 ``None``, a random seed will be used.
         """
+        bias = np.asarray(bias, dtype=float)
         angles = np.asarray([0.0, 0.0, 0.0])
         assert bias.shape[-1] == 3
         super().__init__(

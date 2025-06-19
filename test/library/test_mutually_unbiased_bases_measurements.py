@@ -81,6 +81,30 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
             self.assertAlmostEqual(exp_value, -0.8423974419138216)
             self.assertAlmostEqual(std, 0.23586993121676594)
 
+        with self.subTest("Test `array_like` bias and angles."):
+            measurement = MutuallyUnbiasedBasesMeasurements(
+                num_qubits,
+                bias=[1 / 3, 1 / 3, 1 / 3],
+                angles=[[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]],
+                seed=self.SEED,
+            )
+            sampler = StatevectorSampler(seed=default_rng(self.SEED))
+            povm_sampler = POVMSampler(sampler=sampler)
+
+            job = povm_sampler.run([qc], shots=128, povm=measurement)
+            pub_result = job.result()[0]
+
+            post_processor = POVMPostProcessor(pub_result)
+
+            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 0.7504820624371005)
+            self.assertAlmostEqual(std, 0.11019654428864213)
+            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -0.8423974419138216)
+            self.assertAlmostEqual(std, 0.23586993121676594)
+
     def test_init_errors(self):
         """Test that the ``__init__`` method raises errors correctly."""
         with self.subTest("Test invalid shape for ``bias``.") and self.assertRaises(ValueError):
@@ -90,9 +114,9 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
-        mub_str = "MutuallyUnbiasedBasesMeasurements(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]), angles=array([0, 1, 2]))"
+        mub_str = "MutuallyUnbiasedBasesMeasurements(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]), angles=array([0., 1., 2.]))"
         povm = MutuallyUnbiasedBasesMeasurements(
-            1, bias=np.asarray([0.2, 0.3, 0.5]), angles=np.arange(3)
+            1, bias=np.asarray([0.2, 0.3, 0.5]), angles=np.arange(3, dtype=float)
         )
         self.assertEqual(povm.__repr__(), mub_str)
 

@@ -97,6 +97,29 @@ class TestRandomizedPMs(TestCase):
             self.assertAlmostEqual(exp_value, -0.78125)
             self.assertAlmostEqual(std, 0.43626216977818505)
 
+        with self.subTest("Test `array_like` bias."):
+            measurement = LocallyBiasedClassicalShadows(
+                num_qubits,
+                bias=[[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]],
+                seed=self.SEED,
+            )
+            sampler = StatevectorSampler(seed=default_rng(self.SEED))
+            povm_sampler = POVMSampler(sampler=sampler)
+
+            job = povm_sampler.run([qc], shots=32, povm=measurement)
+            pub_result = job.result()[0]
+
+            post_processor = POVMPostProcessor(pub_result)
+
+            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 0.7291666666666665)
+            self.assertAlmostEqual(std, 0.24749529339140175)
+            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -0.78125)
+            self.assertAlmostEqual(std, 0.43626216977818505)
+
     def test_qc_build(self):
         """Test if we can build a LB Classical Shadow POVM from the generic class"""
 
