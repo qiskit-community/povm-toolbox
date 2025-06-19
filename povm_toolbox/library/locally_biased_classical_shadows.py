@@ -34,7 +34,7 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
 
        >>> import numpy as np
        >>> from povm_toolbox.library import LocallyBiasedClassicalShadows
-       >>> povm = LocallyBiasedClassicalShadows(2, bias=np.array([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]))
+       >>> povm = LocallyBiasedClassicalShadows(2, bias=np.asarray([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]))
        >>> print(povm)
        LocallyBiasedClassicalShadows(num_qubits=2, bias=array([[0.1 , 0.6 , 0.3 ], [0.5 , 0.25, 0.25]]))
        >>> povm.definition().draw_bloch()
@@ -83,7 +83,7 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
                 ``None``, a random seed will be used.
         """
         bias = np.asarray(bias, dtype=float)
-        angles = np.array([0.0, 0.0, 0.0])
+        angles = np.asarray([0.0, 0.0, 0.0])
         assert bias.shape[-1] == 3
         super().__init__(
             num_qubits=num_qubits,

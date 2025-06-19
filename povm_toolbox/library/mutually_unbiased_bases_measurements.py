@@ -42,8 +42,8 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
        >>> from povm_toolbox.library import MutuallyUnbiasedBasesMeasurements
        >>> povm = MutuallyUnbiasedBasesMeasurements(
        ...     2,
-       ...     bias=np.array([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
-       ...     angles=np.array([[np.pi/4, np.pi/4, np.pi/4], [np.pi/3, np.pi/6, np.pi/3]]),
+       ...     bias=np.asarray([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
+       ...     angles=np.asarray([[np.pi/4, np.pi/4, np.pi/4], [np.pi/3, np.pi/6, np.pi/3]]),
        ... )
        >>> print(povm)
        MutuallyUnbiasedBasesMeasurements(num_qubits=2, bias=array([[0.1 , 0.6 , 0.3 ], [0.5 , 0.25, 0.25]]),

@@ -25,8 +25,8 @@ class TestProductPOVM(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        basis_0 = np.array([1.0, 0], dtype=complex)
-        basis_1 = np.array([0, 1.0], dtype=complex)
+        basis_0 = np.asarray([1.0, 0], dtype=complex)
+        basis_1 = np.asarray([0, 1.0], dtype=complex)
         basis_plus = 1.0 / np.sqrt(2) * (basis_0 + basis_1)
         basis_minus = 1.0 / np.sqrt(2) * (basis_0 - basis_1)
         basis_plus_i = 1.0 / np.sqrt(2) * (basis_0 + 1.0j * basis_1)
@@ -54,7 +54,7 @@ class TestProductPOVM(TestCase):
             mq_povm2._operators = [Operator(op) for op in ops]
             _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
         with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
-            op = np.array([[-0.5, 0], [0, 0]])
+            op = np.asarray([[-0.5, 0], [0, 0]])
             # artificially make the 2nd povm invalid and bypass the private `check_validity` method
             mq_povm2._operators = [Operator(op), Operator(np.eye(2) - op)]
             _ = ProductPOVM({(0,): mq_povm1, (1,): mq_povm2})
@@ -171,7 +171,9 @@ class TestProductPOVM(TestCase):
                 prod_povm = ProductPOVM.from_list(povm_list)
                 rho = random_density_matrix(dims=2**num_qubits, seed=seed)
                 p = prod_povm.get_prob(rho)
-                self.assertTrue(np.allclose(a=np.array(checks[f"n_{num_qubits}"]), b=np.array(p)))
+                self.assertTrue(
+                    np.allclose(a=np.asarray(checks[f"n_{num_qubits}"]), b=np.asarray(p))
+                )
                 if num_qubits >= 2:
                     for n_idx in range(2, 5):
                         outcome_idx = np.random.randint(low=0, high=6, size=(n_idx, num_qubits))
@@ -193,7 +195,7 @@ class TestProductPOVM(TestCase):
             bell_states = (
                 1.0
                 / np.sqrt(2)
-                * np.array(
+                * np.asarray(
                     [
                         [1.0, 0.0, 0.0, +1.0],
                         [1.0, 0.0, 0.0, -1.0],
@@ -232,7 +234,7 @@ class TestProductPOVM(TestCase):
         """Test whether a POVM is informationally complete or not."""
         import cmath
 
-        vecs = np.sqrt(1.0 / 2.0) * np.array(
+        vecs = np.sqrt(1.0 / 2.0) * np.asarray(
             [
                 [1, 0],
                 [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],

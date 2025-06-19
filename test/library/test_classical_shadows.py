@@ -29,8 +29,8 @@ class TestClassicalShadows(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        basis_0 = np.array([1.0, 0], dtype=complex)
-        basis_1 = np.array([0, 1.0], dtype=complex)
+        basis_0 = np.asarray([1.0, 0], dtype=complex)
+        basis_1 = np.asarray([0, 1.0], dtype=complex)
         basis_plus = 1.0 / np.sqrt(2) * (basis_0 + basis_1)
         basis_minus = 1.0 / np.sqrt(2) * (basis_0 - basis_1)
         basis_plus_i = 1.0 / np.sqrt(2) * (basis_0 + 1.0j * basis_1)

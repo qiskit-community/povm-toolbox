@@ -25,7 +25,7 @@ class TestMultiQubitPOVM(TestCase):
     def test_invalid_operators(self):
         """Test that errors are correctly raised if invalid operators are supplied."""
         with self.subTest("Operators with negative eigenvalues") and self.assertRaises(ValueError):
-            op = np.array([[-0.5, 0], [0, 0]])
+            op = np.asarray([[-0.5, 0], [0, 0]])
             _ = MultiQubitPOVM(list_operators=[Operator(op), Operator(np.eye(2) - op)])
         with self.subTest("Operators not summing up to identity") and self.assertRaises(ValueError):
             _ = MultiQubitPOVM(
@@ -34,8 +34,8 @@ class TestMultiQubitPOVM(TestCase):
         with self.subTest("Non-square operators") and self.assertRaises(ValueError):
             _ = MultiQubitPOVM(
                 [
-                    Operator(np.array([[1, 0, 0], [0, 0, 0]])),
-                    Operator(np.array([[0, 0, 0], [0, 1, 0]])),
+                    Operator(np.asarray([[1, 0, 0], [0, 0, 0]])),
+                    Operator(np.asarray([[0, 0, 0], [0, 1, 0]])),
                 ]
             )
 
@@ -53,7 +53,7 @@ class TestMultiQubitPOVM(TestCase):
         with self.subTest("SIC-POVM"):
             import cmath
 
-            vecs = np.sqrt(1.0 / 2.0) * np.array(
+            vecs = np.sqrt(1.0 / 2.0) * np.asarray(
                 [
                     [1, 0],
                     [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
@@ -135,7 +135,7 @@ class TestMultiQubitPOVM(TestCase):
         with self.subTest("Get all frame coefficients."):
             frame_coefficients = povm.analysis(operator)
             self.assertIsInstance(frame_coefficients, np.ndarray)
-            self.assertTrue(np.allclose(frame_coefficients, np.array([0.8, 0.2])))
+            self.assertTrue(np.allclose(frame_coefficients, np.asarray([0.8, 0.2])))
         with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(ValueError):
             _ = povm.analysis(operator, (0, 1))
 

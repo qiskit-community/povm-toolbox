@@ -37,7 +37,7 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
             measurement = MutuallyUnbiasedBasesMeasurements(
                 num_qubits,
                 bias=np.ones(3) / 3,
-                angles=np.array([0.75, -np.pi / 3, 0.2]),
+                angles=np.asarray([0.75, -np.pi / 3, 0.2]),
                 seed=self.SEED,
             )
             sampler = StatevectorSampler(seed=default_rng(self.SEED))
@@ -61,7 +61,7 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
             measurement = MutuallyUnbiasedBasesMeasurements(
                 num_qubits,
                 bias=np.ones(3) / 3,
-                angles=np.array([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
+                angles=np.asarray([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
                 seed=self.SEED,
             )
             sampler = StatevectorSampler(seed=default_rng(self.SEED))
@@ -116,7 +116,7 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
         """Test that the ``__repr__`` method works correctly."""
         mub_str = "MutuallyUnbiasedBasesMeasurements(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]), angles=array([0., 1., 2.]))"
         povm = MutuallyUnbiasedBasesMeasurements(
-            1, bias=np.array([0.2, 0.3, 0.5]), angles=np.arange(3, dtype=float)
+            1, bias=np.asarray([0.2, 0.3, 0.5]), angles=np.arange(3, dtype=float)
         )
         self.assertEqual(povm.__repr__(), mub_str)
 
@@ -135,9 +135,9 @@ class TestMutuallyUnbiasedBasesMeasurements(TestCase):
             S = SGate().to_matrix()
             U = UGate(theta, phi, lam).to_matrix()
 
-            rotated_Z_msmt = U @ np.array([1, 0])
-            rotated_X_msmt = U @ H @ np.array([1, 0])
-            rotated_Y_msmt = U @ S @ H @ np.array([1, 0])
+            rotated_Z_msmt = U @ np.asarray([1, 0])
+            rotated_X_msmt = U @ H @ np.asarray([1, 0])
+            rotated_Y_msmt = U @ S @ H @ np.asarray([1, 0])
             rotated_msmts = [rotated_Z_msmt, rotated_X_msmt, rotated_Y_msmt]
 
             bloch_vectors = np.real_if_close(

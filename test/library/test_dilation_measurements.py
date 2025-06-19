@@ -77,7 +77,7 @@ class TestDilationMeasurements(TestCase):
 
         measurement = DilationMeasurements(
             num_qubits,
-            parameters=np.array(
+            parameters=np.asarray(
                 [
                     0.75,
                     0.30408673,
@@ -114,9 +114,9 @@ class TestDilationMeasurements(TestCase):
         num_qubits = 1
 
         # parameters defining a SIC-POVM
-        sic_parameters = [
-            [0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]
-        ]
+        sic_parameters = np.asarray(
+            [[0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]]
+        )
 
         # define measurement and the quantum-informational POVM
         measurement = DilationMeasurements(num_qubits, parameters=sic_parameters)
@@ -124,25 +124,25 @@ class TestDilationMeasurements(TestCase):
 
         with self.subTest("Test effects"):
             effects = np.empty((4, 2, 2), dtype=complex)
-            effects[0] = np.array(
+            effects[0] = np.asarray(
                 [
                     [5.00000000e-01 + 0.00000000e00j, 3.25620884e-09 - 4.42295492e-06j],
                     [3.25620884e-09 + 4.42295492e-06j, 3.91250817e-11 - 2.67501659e-30j],
                 ]
             )
-            effects[1] = np.array(
+            effects[1] = np.asarray(
                 [
                     [0.16666667 + 0.00000000e00j, 0.23570227 + 4.41719108e-06j],
                     [0.23570227 - 4.41719108e-06j, 0.33333335 - 9.43454930e-23j],
                 ]
             )
-            effects[2] = np.array(
+            effects[2] = np.asarray(
                 [
                     [0.16666666 + 0.00000000e00j, -0.11785114 - 2.04124135e-01j],
                     [-0.11785114 + 2.04124135e-01j, 0.33333334 - 8.73465760e-18j],
                 ]
             )
-            effects[3] = np.array(
+            effects[3] = np.asarray(
                 [
                     [0.16666667 + 0.00000000e00j, -0.11785113 + 2.04124140e-01j],
                     [-0.11785113 - 2.04124140e-01j, 0.33333331 - 6.84480542e-18j],
@@ -152,7 +152,7 @@ class TestDilationMeasurements(TestCase):
                 self.assertTrue(np.allclose(povm_operator.data, effect))
 
         with self.subTest("Test bloch vectors"):
-            bloch_vectors_check = np.array(
+            bloch_vectors_check = np.asarray(
                 [
                     [
                         0.0,
@@ -172,7 +172,7 @@ class TestDilationMeasurements(TestCase):
         povm_sampler = POVMSampler(sampler)
         measurement = DilationMeasurements(
             num_qubits=2,
-            parameters=np.array(
+            parameters=np.asarray(
                 [
                     0.75,
                     0.30408673,
