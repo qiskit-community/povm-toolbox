@@ -18,7 +18,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import copy
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 if sys.version_info < (3, 10):
     from typing import Any as EllipsisType  # pragma: no cover
@@ -318,37 +318,20 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Returns:
             The POVM counts.
         """
-        bit_array = self._get_bitarray(data)
-
-        if loc is None:
-            counter: Counter = Counter()
-            for idx in np.ndindex(bit_array.shape):
-                counter.update(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
-            return counter
+        samples = self.get_povm_outcomes_from_raw(data, povm_metadata, loc=loc)
 
         if loc == ...:
-            if bit_array.ndim == 0:
-                loc = tuple()
-                return cast(
-                    np.ndarray,
-                    np.asarray(
-                        [Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))],
-                        dtype=object,
-                    ),
-                )
-
-            shape = bit_array.shape
-
+            if not isinstance(samples, np.ndarray):
+                raise TypeError
+            shape = samples.shape
             outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
             for idx in np.ndindex(shape):
-                outcomes_array[idx] = Counter(
-                    self._povm_outcomes(bit_array, povm_metadata, loc=idx)
-                )
+                outcomes_array[idx] = Counter(samples[idx])
             return outcomes_array
 
-        if isinstance(loc, int):
-            loc = (loc,)
-        return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
+        if not isinstance(samples, list):
+            raise TypeError
+        return Counter(samples)
 
     def get_povm_outcomes_from_raw(
         self,
