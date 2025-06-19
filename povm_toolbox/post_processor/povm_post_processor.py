@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import logging
-from collections import Counter
 from typing import Any, cast
 
 import numpy as np
@@ -83,12 +82,11 @@ class POVMPostProcessor:
         """
         self._povm = povm_sample.metadata.povm_implementation.definition()
 
-        self._counts = cast(np.ndarray, povm_sample.get_counts(loc=...))
+        self._counts: np.ndarray
         if combine_counts:
-            combined_counter: Counter = Counter()
-            for count in self._counts.flatten():
-                combined_counter.update(count)
-            self._counts = np.array([combined_counter], dtype=object)
+            self._counts = np.asarray([povm_sample.get_counts(loc=None)], dtype=object)
+        else:
+            self._counts = cast(np.ndarray, povm_sample.get_counts(loc=...))
 
         if (dual is not None) and (not dual.is_dual_to(self._povm)):
             raise ValueError(
