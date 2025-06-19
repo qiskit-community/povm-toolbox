@@ -96,7 +96,7 @@ class TestPostProcessor(TestCase):
     def test_get_counts(self):
         """Test that the ``get_counts`` method works correctly."""
         with self.subTest("No loc"):
-            counts = self.pub_result.get_counts()
+            counts = self.pub_result.get_counts(loc=...)
             self.assertEqual(counts[0], Counter(self.samples_check[0]))
             self.assertEqual(counts[1], Counter(self.samples_check[1]))
 
@@ -107,7 +107,7 @@ class TestPostProcessor(TestCase):
     def test_get_samples(self):
         """Test that the ``get_samples`` method works correctly."""
         with self.subTest("No loc"):
-            samples = self.pub_result.get_samples()
+            samples = self.pub_result.get_samples(loc=...)
             self.assertSequenceEqual(samples[0], self.samples_check[0])
             self.assertSequenceEqual(samples[1], self.samples_check[1])
 
