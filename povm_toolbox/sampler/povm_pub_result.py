@@ -82,7 +82,7 @@ class POVMPubResult(PubResult):
         )
 
     def get_samples(
-        self, *, loc: int | tuple[int, ...] | None = None
+        self, *, loc: int | tuple[int, ...] | EllipsisType | None = None
     ) -> np.ndarray | list[tuple[int, ...]]:
         """Get the individual POVM outcomes of the result.
 
