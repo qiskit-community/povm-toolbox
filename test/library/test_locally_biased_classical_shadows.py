@@ -29,8 +29,8 @@ class TestRandomizedPMs(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        basis_0 = np.array([1.0, 0], dtype=complex)
-        basis_1 = np.array([0, 1.0], dtype=complex)
+        basis_0 = np.asarray([1.0, 0], dtype=complex)
+        basis_1 = np.asarray([0, 1.0], dtype=complex)
         basis_plus = 1.0 / np.sqrt(2) * (basis_0 + basis_1)
         basis_minus = 1.0 / np.sqrt(2) * (basis_0 - basis_1)
         basis_plus_i = 1.0 / np.sqrt(2) * (basis_0 + 1.0j * basis_1)
@@ -54,7 +54,7 @@ class TestRandomizedPMs(TestCase):
         with self.subTest("Test uniform bias across qubits."):
             measurement = LocallyBiasedClassicalShadows(
                 num_qubits,
-                bias=np.array([0.2, 0.3, 0.5]),
+                bias=np.asarray([0.2, 0.3, 0.5]),
                 seed=self.SEED,
             )
             sampler = StatevectorSampler(seed=default_rng(self.SEED))
@@ -77,7 +77,30 @@ class TestRandomizedPMs(TestCase):
         with self.subTest("Test specific bias for each qubit."):
             measurement = LocallyBiasedClassicalShadows(
                 num_qubits,
-                bias=np.array([[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]]),
+                bias=np.asarray([[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]]),
+                seed=self.SEED,
+            )
+            sampler = StatevectorSampler(seed=default_rng(self.SEED))
+            povm_sampler = POVMSampler(sampler=sampler)
+
+            job = povm_sampler.run([qc], shots=32, povm=measurement)
+            pub_result = job.result()[0]
+
+            post_processor = POVMPostProcessor(pub_result)
+
+            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, 0.7291666666666665)
+            self.assertAlmostEqual(std, 0.24749529339140175)
+            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
+            exp_value, std = post_processor.get_expectation_value(observable)
+            self.assertAlmostEqual(exp_value, -0.78125)
+            self.assertAlmostEqual(std, 0.43626216977818505)
+
+        with self.subTest("Test `array_like` bias."):
+            measurement = LocallyBiasedClassicalShadows(
+                num_qubits,
+                bias=[[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]],
                 seed=self.SEED,
             )
             sampler = StatevectorSampler(seed=default_rng(self.SEED))
@@ -131,7 +154,7 @@ class TestRandomizedPMs(TestCase):
         num_qubits = qc.num_qubits
         measurement = LocallyBiasedClassicalShadows(
             num_qubits,
-            bias=np.array([[0.5, 0.5, 0.0], [0.2, 0.3, 0.5]]),
+            bias=np.asarray([[0.5, 0.5, 0.0], [0.2, 0.3, 0.5]]),
             seed=self.SEED,
         )
 
@@ -166,6 +189,6 @@ class TestRandomizedPMs(TestCase):
         lbcs_str = "LocallyBiasedClassicalShadows(num_qubits=1, bias=array([[0.2, 0.3, 0.5]]))"
         povm = LocallyBiasedClassicalShadows(
             1,
-            bias=np.array([0.2, 0.3, 0.5]),
+            bias=np.asarray([0.2, 0.3, 0.5]),
         )
         self.assertEqual(povm.__repr__(), lbcs_str)

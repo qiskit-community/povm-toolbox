@@ -38,7 +38,7 @@ class TestPOVMSampler(TestCase):
         qc_random2 = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=43)
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         lbcs_implementation = LocallyBiasedClassicalShadows(
-            num_qubits=num_qubits, bias=np.array([[0.2, 0.3, 0.5], [0.8, 0.1, 0.1]])
+            num_qubits=num_qubits, bias=np.asarray([[0.2, 0.3, 0.5], [0.8, 0.1, 0.1]])
         )
         cs_shots = 4096
         lbcs_shots = 2048

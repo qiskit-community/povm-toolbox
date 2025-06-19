@@ -60,7 +60,7 @@ class TestPostProcessor(TestCase):
             ValueError
         ):
             povm = LocallyBiasedClassicalShadows(
-                num_qubits=2, bias=np.array([0.8, 0.1, 0.1])
+                num_qubits=2, bias=np.asarray([0.8, 0.1, 0.1])
             ).definition()
             dual = ProductDual.build_dual_from_frame(povm)
             post_processor = POVMPostProcessor(self.pub_result, dual=dual)
@@ -85,7 +85,7 @@ class TestPostProcessor(TestCase):
         ) and self.assertRaises(ValueError):
             post_processor = POVMPostProcessor(self.pub_result)
             povm = LocallyBiasedClassicalShadows(
-                num_qubits=2, bias=np.array([0.8, 0.1, 0.1])
+                num_qubits=2, bias=np.asarray([0.8, 0.1, 0.1])
             ).definition()
             dual = ProductDual.build_dual_from_frame(povm)
             post_processor.dual = dual
@@ -143,7 +143,7 @@ class TestPostProcessor(TestCase):
             self.assertTrue(
                 np.allclose(
                     exp_val,
-                    np.array(
+                    np.asarray(
                         [
                             [-4.171875, 0.703125, -2.578125],
                             [-0.5625, -0.5625, -2.15625],
@@ -156,7 +156,7 @@ class TestPostProcessor(TestCase):
             self.assertTrue(
                 np.allclose(
                     std,
-                    np.array(
+                    np.asarray(
                         [
                             [1.59914439, 0.41510017, 0.8915795],
                             [1.46287216, 1.11232782, 1.04977856],

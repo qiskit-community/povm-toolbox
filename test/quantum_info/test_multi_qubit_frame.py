@@ -148,10 +148,10 @@ class TestMultiQubitFrame(TestCase):
         with self.subTest("Get all frame coefficients."):
             frame_coefficients = frame.analysis(operator)
             self.assertIsInstance(frame_coefficients, np.ndarray)
-            self.assertTrue(np.allclose(frame_coefficients, np.array([0.8, 0.2, 1.0, 0.6])))
+            self.assertTrue(np.allclose(frame_coefficients, np.asarray([0.8, 0.2, 1.0, 0.6])))
             frame_coefficients = frame_shaped.analysis(operator)
             self.assertIsInstance(frame_coefficients, np.ndarray)
-            self.assertTrue(np.allclose(frame_coefficients, np.array([0.8, 0.2, 1.0, 0.6])))
+            self.assertTrue(np.allclose(frame_coefficients, np.asarray([0.8, 0.2, 1.0, 0.6])))
         with self.subTest("Invalid value for ``frame_op_idx``.") and self.assertRaises(ValueError):
             _ = frame.analysis(operator, (0, 1))
         with self.subTest("Invalid type for ``frame_op_idx``.") and self.assertRaises(TypeError):

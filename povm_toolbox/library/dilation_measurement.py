@@ -22,6 +22,7 @@ else:
     from typing import override  # pragma: no cover
 
 import numpy as np
+import numpy.typing as npt
 from qiskit.circuit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin
 from qiskit.primitives.containers.bindings_array import BindingsArray
@@ -71,7 +72,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
        >>> from povm_toolbox.library import DilationMeasurements
        >>> povm = DilationMeasurements(
        ...     1,
-       ...     parameters=np.array(
+       ...     parameters=np.asarray(
        ...         [0.75, 0.30408673, 0.375, 0.40678524, 0.32509973, 0.25000035, 0.49999321, 0.83333313]
        ...     ),
        ... )
@@ -85,7 +86,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
     def __init__(
         self,
         num_qubits: int,
-        parameters: np.ndarray,
+        parameters: npt.ArrayLike,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         insert_barriers: bool = False,
@@ -110,6 +111,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
             num_qubits, measurement_layout=measurement_layout, insert_barriers=insert_barriers
         )
 
+        parameters = np.asarray(parameters)
         if parameters.shape[-1] != 8:
             raise ValueError(
                 "The last dimension of ``parameters`` is expected to be of length 8, but has"
@@ -125,7 +127,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
                 "``parameters`` is expected to have shape (8,) or (``num_qubits``, 8)"
                 f" but has shape {parameters.shape} instead."
             )
-        self._parameters = parameters
+        self._parameters: np.ndarray = parameters
 
         # NOTE: this public attribute inherits its docstring from the base class
         self.measurement_circuit = self._build_qc()

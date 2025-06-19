@@ -157,7 +157,7 @@ class TestPOVMSamplerJob(TestCase):
                 Path(filename).unlink(missing_ok=True)
 
     @pytest.mark.skipif(
-        os.getenv("QISKIT_IBM_TOKEN") is None, reason="Missing QiskitRuntimeService configuration."
+        not os.getenv("QISKIT_IBM_TOKEN"), reason="Missing QiskitRuntimeService configuration."
     )
     def test_recover_job_runtime(self):
         qc = QuantumCircuit(2)
@@ -165,13 +165,12 @@ class TestPOVMSamplerJob(TestCase):
         qc.cx(0, 1)
 
         instance = os.getenv("QISKIT_IBM_INSTANCE")
+        channel = os.getenv("QISKIT_IBM_CHANNEL")
         token = os.getenv("QISKIT_IBM_TOKEN")
-        url = os.getenv("QISKIT_IBM_URL")
         qpu = os.getenv("QISKIT_IBM_QPU")
-        if instance is None or token is None or url is None or qpu is None:
+        if instance is None or channel is None or token is None or qpu is None:
             pytest.skip("Missing QiskitRuntimeService configuration.")
-        channel = "ibm_quantum" if url.find("quantum-computing.ibm.com") >= 0 else "ibm_cloud"
-        service = QiskitRuntimeService(instance=instance, token=token, url=url, channel=channel)
+        service = QiskitRuntimeService(instance=instance, channel=channel, token=token)
 
         backend = service.backend(name=qpu)
         pm = generate_preset_pass_manager(

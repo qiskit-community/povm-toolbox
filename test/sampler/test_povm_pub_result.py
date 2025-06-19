@@ -62,7 +62,7 @@ class TestPostProcessor(TestCase):
             self.assertTrue(
                 np.all(
                     metadata.pvm_keys
-                    == np.array(
+                    == np.asarray(
                         [
                             [
                                 [2, 2],
