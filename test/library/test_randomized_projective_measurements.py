@@ -127,9 +127,11 @@ class TestRandomizedPMs(TestCase):
         """Test that the ``__repr__`` method works correctly."""
         mub_str = (
             "RandomizedProjectiveMeasurements(num_qubits=1, bias=array([[0.2, "
-            "0.8]]), angles=array([[[0, 1],\n        [2, 3]]]))"
+            "0.8]]), angles=array([[[0., 1.],\n        [2., 3.]]]))"
         )
-        povm = RandomizedProjectiveMeasurements(1, bias=np.array([0.2, 0.8]), angles=np.arange(4))
+        povm = RandomizedProjectiveMeasurements(
+            1, bias=np.array([0.2, 0.8]), angles=np.arange(4, dtype=float)
+        )
         self.assertEqual(povm.__repr__(), mub_str)
 
     def test_qc_build(self):
@@ -415,3 +417,27 @@ class TestRandomizedPMs(TestCase):
             exp_value, std = post_processor.get_expectation_value(observable)
             self.assertAlmostEqual(exp_value, 0.0)
             self.assertAlmostEqual(std, 0.0)
+
+    def test_array_like_arguments(self):
+        """Test the initialization of a RPM with array-like arguments ."""
+
+        qc = QuantumCircuit(1)
+        qc.u(0.4, -0.1, 0.1, qubit=0)
+
+        measurement = RandomizedProjectiveMeasurements(
+            num_qubits=1,
+            angles=[0.2, 0.4, 0.5, 0.4, 0.5, 1],
+            bias=[0.5, 0.2, 0.3],
+            seed=self.SEED,
+        )
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
+        povm_sampler = POVMSampler(sampler=sampler)
+
+        job = povm_sampler.run([qc], shots=32, povm=measurement)
+        pub_result = job.result()[0]
+
+        post_processor = POVMPostProcessor(pub_result)
+        observable = SparsePauliOp(["Z"], coeffs=[1.0])
+        exp_value, std = post_processor.get_expectation_value(observable)
+        self.assertAlmostEqual(exp_value, 2.22338143795974)
+        self.assertAlmostEqual(std, 0.3435308147247512)
