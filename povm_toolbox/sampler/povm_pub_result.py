@@ -12,8 +12,13 @@
 
 from __future__ import annotations
 
+import sys
 from collections import Counter
 
+if sys.version_info < (3, 10):
+    from typing import Any as EllipsisType  # pragma: no cover
+else:
+    from types import EllipsisType
 import numpy as np
 from qiskit.primitives.containers import DataBin, PubResult
 
@@ -50,7 +55,9 @@ class POVMPubResult(PubResult):
         """
         return self._metadata  # type:ignore
 
-    def get_counts(self, *, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
+    def get_counts(
+        self, *, loc: int | tuple[int, ...] | EllipsisType | None = None
+    ) -> np.ndarray | Counter:
         """Get the counter of outcomes from the result.
 
         This method will leverage :meth:`~.POVMImplementation.get_povm_counts_from_raw` from the
@@ -63,6 +70,7 @@ class POVMPubResult(PubResult):
                 contained circuit parameters, ``loc`` can be used to indicate the set of parameter
                 values for which to compute the counter. If ``loc`` is ``None``, the histogram
                 will be computed for all parameter values at once.
+                TODO : revisit the docstring
 
         Returns:
             Either a single or an array of histograms of the POVM outcomes. The shape depends on the

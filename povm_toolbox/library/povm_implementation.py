@@ -13,11 +13,17 @@
 from __future__ import annotations
 
 import logging
+import sys
 import time
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import copy
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
+
+if sys.version_info < (3, 10):
+    from typing import Any as EllipsisType  # pragma: no cover
+else:
+    from types import EllipsisType
 
 import numpy as np
 from qiskit.circuit import AncillaRegister, QuantumCircuit
@@ -300,7 +306,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         data: DataBin,
         povm_metadata: MetadataT,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: int | tuple[int, ...] | EllipsisType | None = None,
     ) -> np.ndarray | Counter:
         """Get the POVM counts.
 
@@ -314,34 +320,42 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """
         bit_array = self._get_bitarray(data)
 
-        if loc is not None:
-            # `loc` is `int` or `tuple[int, ...]`
-            if isinstance(loc, int):
-                loc = (loc,)
-            return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
+        if loc is None:
+            counter: Counter = Counter()
+            for idx in np.ndindex(bit_array.shape):
+                counter.update(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
+            return counter
 
-        # `loc` is `None`
-        if bit_array.ndim == 0:
-            loc = tuple()
-            return cast(
-                np.ndarray,
-                np.asarray(
-                    [Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))], dtype=object
-                ),
-            )
+        if loc == ...:
+            if bit_array.ndim == 0:
+                loc = tuple()
+                return cast(
+                    np.ndarray,
+                    np.asarray(
+                        [Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))],
+                        dtype=object,
+                    ),
+                )
 
-        shape = bit_array.shape
-        outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
-        for idx in np.ndindex(shape):
-            outcomes_array[idx] = Counter(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
-        return outcomes_array
+            shape = bit_array.shape
+
+            outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
+            for idx in np.ndindex(shape):
+                outcomes_array[idx] = Counter(
+                    self._povm_outcomes(bit_array, povm_metadata, loc=idx)
+                )
+            return outcomes_array
+
+        if isinstance(loc, int):
+            loc = (loc,)
+        return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
 
     def get_povm_outcomes_from_raw(
         self,
         data: DataBin,
         povm_metadata: MetadataT,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: int | tuple[int, ...] | EllipsisType | None = None,
     ) -> np.ndarray | list[tuple[int, ...]]:
         """Get the POVM bitstrings.
 
@@ -355,19 +369,27 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """
         bit_array = self._get_bitarray(data)
 
-        if loc is not None:
-            # `loc` is `int` or `tuple[int, ...]`
-            if isinstance(loc, int):
-                loc = (loc,)
-            return self._povm_outcomes(bit_array, povm_metadata, loc=loc)
+        if loc is None:
+            outcomes: list[tuple[int, ...]] = []
+            for idx in np.ndindex(bit_array.shape):
+                outcomes.extend(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
+            return outcomes
 
-        # `loc` is `None`
-        if bit_array.ndim == 0:
-            loc = tuple()
-            return self._povm_outcomes(bit_array, povm_metadata, loc=loc)
+        if loc == ...:
+            outcomes_array: np.ndarray
+            if bit_array.ndim == 0:
+                outcomes_array = np.ndarray(shape=(1,), dtype=object)
+                loc = tuple()
+                outcomes_array[0] = self._povm_outcomes(bit_array, povm_metadata, loc=loc)
+                return outcomes_array
 
-        shape = bit_array.shape
-        outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
-        for idx in np.ndindex(shape):
-            outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, loc=idx)
-        return outcomes_array
+            shape = bit_array.shape
+
+            outcomes_array = np.ndarray(shape=shape, dtype=object)
+            for idx in np.ndindex(shape):
+                outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, loc=idx)
+            return outcomes_array
+
+        if isinstance(loc, int):
+            loc = (loc,)
+        return self._povm_outcomes(bit_array, povm_metadata, loc=loc)
