@@ -72,9 +72,10 @@ class POVMPostProcessor:
                 :meth:`get_decomposition_weights`. When this is ``None``, the standard
                 "state-average" Dual frame will be constructed from the POVM stored in the
                 ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
-            combine_counts: indicates, when applicable, whether to combine the counts associated
-                with different parameter values that were submitted for a single parametrized
-                circuit.
+            combine_counts: indicates whether to combine the counts associated with different
+                parameter sets that were submitted in a single :attr:`.POVMSamplerPub`. By defaults,
+                the counts are not combined. Refer to this
+                `how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Raises:
             ValueError: If the provided ``dual`` is not a dual frame to the POVM stored in the
