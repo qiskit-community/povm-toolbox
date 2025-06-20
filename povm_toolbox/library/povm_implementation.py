@@ -317,7 +317,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 aggregates all counts from a single PUB. If `loc=...`, all counts from the PUB are
                 returned, but separately. If `loc` is a tuple of integers, it must define a single
                 parameter set. Refer to
-                `this how-to guide<../how_tos/combine_outcomes.ipynb>`_ for more information.
+                `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
             The POVM counts. If `loc=...`, an `np.ndarray` of counters is returned. Otherwise, a
@@ -354,7 +354,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 aggregates all outcomes from a single PUB. If `loc=...`, all outcomes from the PUB
                 are returned, but separately. If `loc` is a tuple of integers, it must define a
                 single parameter set. Refer to
-                `this how-to guide<../how_tos/combine_outcomes.ipynb>`_ for more information.
+                `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
             The list of POVM outcomes. If `loc=...`, an `np.ndarray` of outcome lists is returned.
