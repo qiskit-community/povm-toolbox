@@ -157,7 +157,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             circuit: The quantum circuit to be sampled from.
 
         Raises:
-            ValueError: if the number of qubits specified by `self.measurement_layout` does not
+            ValueError: if the number of qubits specified by ``self.measurement_layout`` does not
                 match the number of qubits on which this POVM implementation acts.
             CircuitError: if an error has occurred when adding the classic register, used to save
                 POVM results, to the input circuit.
@@ -287,15 +287,15 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Args:
             bit_array: The raw bitstrings.
             povm_metadata: The associated metadata.
-            loc: index of the element of the `bit_array` from which return the outcomes. More
-                precisely, `bit_array` has the shape of the array of parameter sets provided to this
-                `POVMSamplerPub` and `loc` must specify exactly one of the parameter set. Therefore,
-                we must have `len(loc)==len(bit_array.shape)`. Especially, if no parameter sets were
+            loc: index of the element of the ``bit_array`` from which return the outcomes. More
+                precisely, ``bit_array`` has the shape of the array of parameter sets provided to this
+                ``POVMSamplerPub`` and ``loc`` must specify exactly one of the parameter set. Therefore,
+                we must have ``len(loc)==len(bit_array.shape)``. Especially, if no parameter sets were
                 provided in the pub -- i.e., the quantum circuit was not parametrized or already
-                bound -- then `loc` must be an empty tuple `(,)`.
+                bound -- then ``loc`` must be an empty tuple ``(,)``.
 
         Raises:
-            ValueError: if `loc` is not compatible with the shape of `bit_array`.
+            ValueError: if ``loc`` is not compatible with the shape of ``bit_array``.
 
         Returns:
             The converted POVM outcomes.
@@ -313,14 +313,14 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Args:
             data: The raw sampled data.
             povm_metadata: The associated metadata.
-            loc: specifies the location of the counts to return. By default, `None` is used, which
-                aggregates all counts from a single PUB. If `loc=...`, all counts from the PUB are
-                returned, but separately. If `loc` is a tuple of integers, it must define a single
+            loc: specifies the location of the counts to return. By default, ``None`` is used, which
+                aggregates all counts from a single PUB. If ``loc=...``, all counts from the PUB are
+                returned, but separately. If ``loc`` is a tuple of integers, it must define a single
                 parameter set. Refer to
                 `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            The POVM counts. If `loc=...`, an `np.ndarray` of counters is returned. Otherwise, a
+            The POVM counts. If ``loc=...``, an ``np.ndarray`` of counters is returned. Otherwise, a
             single counter is returned.
         """
         samples = self.get_povm_outcomes_from_raw(data, povm_metadata, loc=loc)
@@ -350,14 +350,14 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         Args:
             data: The raw sampled data.
             povm_metadata: The associated metadata.
-            loc: specifies the location of the outcomes to return. By default, `None` is used, which
-                aggregates all outcomes from a single PUB. If `loc=...`, all outcomes from the PUB
-                are returned, but separately. If `loc` is a tuple of integers, it must define a
-                single parameter set. Refer to
+            loc: specifies the location of the outcomes to return. By default, ``None`` is used,
+                which aggregates all outcomes from a single PUB. If ``loc=...``, all outcomes from
+                the PUB are returned, but separately. If ``loc`` is a tuple of integers, it must
+                define a single parameter set. Refer to
                 `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            The list of POVM outcomes. If `loc=...`, an `np.ndarray` of outcome lists is returned.
+            The list of POVM outcomes. If ``loc=...``, an ``np.ndarray`` of outcome lists is returned.
             Otherwise, a single outcome list is returned.
         """
         bit_array = self._get_bitarray(data)

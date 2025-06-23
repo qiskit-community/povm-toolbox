@@ -65,14 +65,14 @@ class POVMPubResult(PubResult):
         counter of POVM outcomes.
 
         Args:
-            loc: specifies the location of the counts to return. By default, `None` is used, which
-                aggregates all counts from a single PUB. If `loc=...`, all counts from the PUB are
-                returned, but separately. If `loc` is a tuple of integers, it must define a single
+            loc: specifies the location of the counts to return. By default, ``None`` is used, which
+                aggregates all counts from a single PUB. If ``loc=...``, all counts from the PUB are
+                returned, but separately. If ``loc`` is a tuple of integers, it must define a single
                 parameter set. Refer to
                 `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            The POVM counts. If `loc=...`, an `np.ndarray` of counters is returned. Otherwise, a
+            The POVM counts. If ``loc=...``, an ``np.ndarray`` of counters is returned. Otherwise, a
             single counter is returned.
         """
         return self.metadata.povm_implementation.get_povm_counts_from_raw(
@@ -89,14 +89,14 @@ class POVMPubResult(PubResult):
         sampled POVM outcomes.
 
         Args:
-            loc: specifies the location of the outcomes to return. By default, `None` is used, which
-                aggregates all outcomes from a single PUB. If `loc=...`, all outcomes from the PUB
-                are returned, but separately. If `loc` is a tuple of integers, it must define a
+            loc: specifies the location of the outcomes to return. By default, ``None`` is used, which
+                aggregates all outcomes from a single PUB. If ``loc=...``, all outcomes from the PUB
+                are returned, but separately. If ``loc`` is a tuple of integers, it must define a
                 single parameter set. Refer to
                 `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            The list of POVM outcomes. If `loc=...`, an `np.ndarray` of outcome lists is returned.
+            The list of POVM outcomes. If ``loc=...``, an ``np.ndarray`` of outcome lists is returned.
             Otherwise, a single outcome list is returned.
         """
         return self.metadata.povm_implementation.get_povm_outcomes_from_raw(
