@@ -325,17 +325,13 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         """
         samples = self.get_povm_outcomes_from_raw(data, povm_metadata, loc=loc)
 
-        if loc == ...:
-            if not isinstance(samples, np.ndarray):
-                raise TypeError
+        if loc is Ellipsis:
             shape = samples.shape
             outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
             for idx in np.ndindex(shape):
                 outcomes_array[idx] = Counter(samples[idx])
             return outcomes_array
 
-        if not isinstance(samples, list):
-            raise TypeError
         return Counter(samples)
 
     def get_povm_outcomes_from_raw(
@@ -368,7 +364,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
                 outcomes.extend(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
             return outcomes
 
-        if loc == ...:
+        if loc is Ellipsis:
             outcomes_array: np.ndarray
             if bit_array.ndim == 0:
                 outcomes_array = np.ndarray(shape=(1,), dtype=object)

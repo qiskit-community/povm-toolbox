@@ -73,7 +73,7 @@ class POVMPostProcessor:
                 "state-average" Dual frame will be constructed from the POVM stored in the
                 ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
             combine_counts: indicates whether to combine the counts associated with different
-                parameter sets that were submitted in a single :attr:`.POVMSamplerPub`. By defaults,
+                parameter sets that were submitted in a single :attr:`.POVMSamplerPub`. By default,
                 the counts are not combined. Refer to this
                 `how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
