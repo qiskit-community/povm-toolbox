@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    Add an option for the post-processors to combine the counts associated with different parameter
+    values that were submitted in the same POVM sampler PUB. To learn more, read this
+    `how-to guide <https://qiskit-community.github.io/povm-toolbox/how_tos/combine_outcomes.html>`_.
+upgrade:
+  - |
+    The behavior of ``loc=None`` has changed. To revert to the old behavior, update your code to use
+    ``loc=...``.

@@ -387,7 +387,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         bit_array: BitArray,
         povm_metadata: RPMMetadata,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: tuple[int, ...],
     ) -> list[tuple[int, ...]]:
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")
@@ -397,7 +397,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         # loc is assumed to have a length of at most pv.ndim = len(pv.shape)
 
         try:
-            pvm_keys = povm_metadata.pvm_keys if loc is None else povm_metadata.pvm_keys[loc]
+            pvm_keys = povm_metadata.pvm_keys[loc]
         except AttributeError as exc:
             raise AttributeError(
                 "The metadata of povm sampler result associated with a "
@@ -533,7 +533,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             the index goes from :math:``0`` to :math:``2 * self.num_PVM - 1``.
         """
         return tuple(
-            (pvm_idx[i] % self._num_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._num_PVMs) % 2
+            int((pvm_idx[i] % self._num_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._num_PVMs) % 2)
             for i, bit in enumerate(bitstring_outcome[::-1])
         )
 

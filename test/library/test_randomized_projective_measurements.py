@@ -11,6 +11,7 @@
 """Tests for the RandomizedProjectiveMeasurements class."""
 
 import unittest
+from collections import Counter
 from unittest import TestCase
 
 import numpy as np
@@ -245,6 +246,760 @@ class TestRandomizedPMs(TestCase):
             )
         )
 
+    def test_get_counts(self):
+        num_qubits = 2
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.ry(theta=Parameter("theta"), qubit=0)
+        qc.rx(theta=Parameter("phi"), qubit=1)
+
+        measurement = RandomizedProjectiveMeasurements(
+            num_qubits,
+            bias=np.array([0.2, 0.4, 0.4]),
+            angles=np.array([0.0, 0.0, 0.8, 0.0, 0.8, 0.8]),
+            seed=self.SEED,
+        )
+
+        pv_shape = (5, 3)
+        pv = np.arange(np.prod(pv_shape) * qc.num_parameters).reshape(
+            (*pv_shape, qc.num_parameters)
+        )
+        shots = 64
+
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
+
+        job = povm_sampler.run(
+            [(qc.assign_parameters([1.2, -0.3])), (qc, pv[0]), (qc, pv)],
+            shots=shots,
+            povm=measurement,
+        )
+
+        pub_result = job.result()[0]
+        with self.subTest("loc: integer") and self.assertRaises(ValueError):
+            _ = pub_result.get_counts(loc=1)
+        with self.subTest("loc: tuple[int,...]") and self.assertRaises(ValueError):
+            _ = pub_result.get_counts(loc=(1,))
+        with self.subTest("loc: None"):
+            counts = pub_result.get_counts(loc=None)
+            self.assertIsInstance(counts, Counter)
+            self.assertEqual(
+                counts,
+                Counter(
+                    {
+                        (2, 2): 16,
+                        (4, 3): 9,
+                        (0, 4): 7,
+                        (0, 2): 6,
+                        (4, 5): 6,
+                        (2, 4): 5,
+                        (2, 5): 5,
+                        (2, 0): 3,
+                        (3, 4): 2,
+                        (5, 1): 2,
+                        (5, 3): 1,
+                        (4, 1): 1,
+                        (0, 0): 1,
+                    }
+                ),
+            )
+        with self.subTest("loc: Ellipsis"):
+            counts = pub_result.get_counts(loc=...)
+            self.assertIsInstance(counts, np.ndarray)
+            self.assertEqual(counts.shape, (1,))
+            self.assertTrue(
+                np.all(
+                    counts
+                    == np.asarray(
+                        [
+                            Counter(
+                                {
+                                    (2, 2): 16,
+                                    (4, 3): 9,
+                                    (0, 4): 7,
+                                    (0, 2): 6,
+                                    (4, 5): 6,
+                                    (2, 4): 5,
+                                    (2, 5): 5,
+                                    (2, 0): 3,
+                                    (3, 4): 2,
+                                    (5, 1): 2,
+                                    (5, 3): 1,
+                                    (4, 1): 1,
+                                    (0, 0): 1,
+                                }
+                            )
+                        ]
+                    )
+                )
+            )
+
+        pub_result = job.result()[1]
+        with self.subTest("loc: integer"):
+            counts = pub_result.get_counts(loc=1)
+            self.assertIsInstance(counts, Counter)
+            self.assertEqual(
+                counts,
+                Counter(
+                    {
+                        (3, 5): 11,
+                        (5, 5): 9,
+                        (3, 2): 7,
+                        (3, 3): 4,
+                        (1, 2): 4,
+                        (3, 1): 3,
+                        (5, 3): 3,
+                        (1, 3): 3,
+                        (5, 1): 3,
+                        (4, 3): 2,
+                        (1, 1): 2,
+                        (4, 5): 2,
+                        (2, 3): 2,
+                        (3, 0): 1,
+                        (3, 4): 1,
+                        (4, 2): 1,
+                        (5, 2): 1,
+                        (0, 5): 1,
+                        (0, 3): 1,
+                        (1, 4): 1,
+                        (1, 5): 1,
+                        (5, 0): 1,
+                    }
+                ),
+            )
+        with self.subTest("loc: tuple[int,...]"):
+            counts = pub_result.get_counts(loc=(1,))
+            self.assertIsInstance(counts, Counter)
+            self.assertEqual(
+                counts,
+                Counter(
+                    {
+                        (3, 5): 11,
+                        (5, 5): 9,
+                        (3, 2): 7,
+                        (3, 3): 4,
+                        (1, 2): 4,
+                        (3, 1): 3,
+                        (5, 3): 3,
+                        (1, 3): 3,
+                        (5, 1): 3,
+                        (4, 3): 2,
+                        (1, 1): 2,
+                        (4, 5): 2,
+                        (2, 3): 2,
+                        (3, 0): 1,
+                        (3, 4): 1,
+                        (4, 2): 1,
+                        (5, 2): 1,
+                        (0, 5): 1,
+                        (0, 3): 1,
+                        (1, 4): 1,
+                        (1, 5): 1,
+                        (5, 0): 1,
+                    }
+                ),
+            )
+        with self.subTest("loc: tuple[int,...]") and self.assertRaises(ValueError):
+            _ = pub_result.get_counts(loc=(1, 2))
+        with self.subTest("loc: None"):
+            counts = pub_result.get_counts(loc=None)
+            self.assertIsInstance(counts, Counter)
+            self.assertEqual(
+                counts,
+                Counter(
+                    {
+                        (3, 2): 17,
+                        (2, 3): 11,
+                        (3, 5): 11,
+                        (5, 5): 10,
+                        (1, 4): 9,
+                        (4, 3): 9,
+                        (3, 4): 8,
+                        (5, 2): 7,
+                        (4, 4): 7,
+                        (5, 3): 7,
+                        (2, 5): 7,
+                        (4, 2): 6,
+                        (4, 5): 6,
+                        (0, 3): 6,
+                        (2, 4): 6,
+                        (5, 4): 5,
+                        (5, 0): 5,
+                        (1, 2): 5,
+                        (2, 2): 5,
+                        (1, 3): 5,
+                        (3, 3): 5,
+                        (3, 0): 4,
+                        (4, 0): 4,
+                        (0, 5): 4,
+                        (0, 4): 3,
+                        (2, 0): 3,
+                        (3, 1): 3,
+                        (5, 1): 3,
+                        (2, 1): 3,
+                        (1, 1): 2,
+                        (4, 1): 2,
+                        (1, 0): 1,
+                        (1, 5): 1,
+                        (0, 1): 1,
+                        (0, 2): 1,
+                    }
+                ),
+            )
+        with self.subTest("loc: Ellipsis"):
+            counts = pub_result.get_counts(loc=...)
+            self.assertIsInstance(counts, np.ndarray)
+            self.assertEqual(counts.shape, (3,))
+            self.assertTrue(
+                np.all(
+                    counts
+                    == np.asarray(
+                        [
+                            Counter(
+                                {
+                                    (3, 2): 10,
+                                    (1, 4): 8,
+                                    (3, 4): 7,
+                                    (5, 2): 6,
+                                    (5, 4): 5,
+                                    (4, 4): 4,
+                                    (5, 0): 4,
+                                    (5, 3): 3,
+                                    (3, 0): 3,
+                                    (2, 2): 2,
+                                    (4, 2): 2,
+                                    (1, 3): 2,
+                                    (4, 0): 2,
+                                    (2, 0): 2,
+                                    (1, 2): 1,
+                                    (0, 4): 1,
+                                    (2, 3): 1,
+                                    (1, 0): 1,
+                                }
+                            ),
+                            Counter(
+                                {
+                                    (3, 5): 11,
+                                    (5, 5): 9,
+                                    (3, 2): 7,
+                                    (3, 3): 4,
+                                    (1, 2): 4,
+                                    (3, 1): 3,
+                                    (5, 3): 3,
+                                    (1, 3): 3,
+                                    (5, 1): 3,
+                                    (4, 3): 2,
+                                    (1, 1): 2,
+                                    (4, 5): 2,
+                                    (2, 3): 2,
+                                    (3, 0): 1,
+                                    (3, 4): 1,
+                                    (4, 2): 1,
+                                    (5, 2): 1,
+                                    (0, 5): 1,
+                                    (0, 3): 1,
+                                    (1, 4): 1,
+                                    (1, 5): 1,
+                                    (5, 0): 1,
+                                }
+                            ),
+                            Counter(
+                                {
+                                    (2, 3): 8,
+                                    (2, 5): 7,
+                                    (4, 3): 7,
+                                    (2, 4): 6,
+                                    (0, 3): 5,
+                                    (4, 5): 4,
+                                    (0, 5): 3,
+                                    (4, 4): 3,
+                                    (4, 2): 3,
+                                    (2, 1): 3,
+                                    (2, 2): 3,
+                                    (4, 1): 2,
+                                    (0, 4): 2,
+                                    (4, 0): 2,
+                                    (5, 3): 1,
+                                    (2, 0): 1,
+                                    (3, 3): 1,
+                                    (0, 1): 1,
+                                    (0, 2): 1,
+                                    (5, 5): 1,
+                                }
+                            ),
+                        ]
+                    )
+                )
+            )
+
+        pub_result = job.result()[2]
+        with self.subTest("loc: integer") and self.assertRaises(ValueError):
+            _ = pub_result.get_counts(loc=1)
+        with self.subTest("loc: tuple[int,...]"):
+            counts = pub_result.get_counts(loc=(1, 2))
+            self.assertIsInstance(counts, Counter)
+            self.assertEqual(
+                counts,
+                Counter(
+                    {
+                        (4, 3): 9,
+                        (4, 1): 9,
+                        (2, 5): 7,
+                        (4, 5): 6,
+                        (2, 3): 5,
+                        (4, 2): 5,
+                        (2, 1): 3,
+                        (5, 3): 3,
+                        (4, 4): 3,
+                        (0, 5): 3,
+                        (0, 4): 2,
+                        (0, 3): 2,
+                        (0, 1): 2,
+                        (2, 2): 1,
+                        (3, 1): 1,
+                        (2, 4): 1,
+                        (0, 2): 1,
+                        (5, 5): 1,
+                    }
+                ),
+            )
+        with self.subTest("loc: None"):
+            counts = pub_result.get_counts(loc=None)
+            self.assertIsInstance(counts, Counter)
+            print(counts)
+            self.assertEqual(
+                counts,
+                Counter(
+                    {
+                        (5, 2): 58,
+                        (4, 4): 49,
+                        (5, 5): 46,
+                        (3, 5): 45,
+                        (4, 3): 43,
+                        (2, 3): 42,
+                        (4, 5): 41,
+                        (5, 3): 39,
+                        (4, 2): 39,
+                        (3, 3): 39,
+                        (5, 4): 37,
+                        (2, 2): 33,
+                        (2, 4): 32,
+                        (3, 4): 29,
+                        (3, 2): 28,
+                        (2, 5): 28,
+                        (4, 1): 27,
+                        (2, 1): 26,
+                        (1, 4): 25,
+                        (5, 0): 23,
+                        (3, 0): 22,
+                        (0, 5): 22,
+                        (0, 3): 22,
+                        (1, 5): 21,
+                        (5, 1): 19,
+                        (1, 3): 18,
+                        (1, 2): 17,
+                        (3, 1): 17,
+                        (0, 2): 14,
+                        (1, 0): 13,
+                        (0, 1): 11,
+                        (0, 4): 10,
+                        (2, 0): 9,
+                        (4, 0): 6,
+                        (1, 1): 5,
+                        (0, 0): 5,
+                    }
+                ),
+            )
+        with self.subTest("loc: Ellipsis"):
+            counts = pub_result.get_counts(loc=...)
+            self.assertIsInstance(counts, np.ndarray)
+            self.assertEqual(counts.shape, (5, 3))
+            self.assertTrue(
+                np.all(
+                    counts
+                    == np.asarray(
+                        [
+                            [
+                                Counter(
+                                    {
+                                        (5, 4): 7,
+                                        (5, 2): 7,
+                                        (4, 4): 6,
+                                        (1, 4): 5,
+                                        (5, 0): 5,
+                                        (3, 4): 5,
+                                        (2, 4): 3,
+                                        (3, 0): 3,
+                                        (3, 2): 3,
+                                        (4, 2): 3,
+                                        (2, 2): 3,
+                                        (1, 0): 3,
+                                        (1, 2): 2,
+                                        (2, 0): 2,
+                                        (3, 5): 2,
+                                        (5, 3): 1,
+                                        (0, 2): 1,
+                                        (4, 0): 1,
+                                        (4, 3): 1,
+                                        (1, 5): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (5, 5): 12,
+                                        (3, 5): 7,
+                                        (3, 1): 6,
+                                        (3, 3): 5,
+                                        (5, 3): 4,
+                                        (0, 5): 3,
+                                        (1, 3): 3,
+                                        (4, 3): 2,
+                                        (5, 2): 2,
+                                        (1, 5): 2,
+                                        (3, 4): 2,
+                                        (0, 3): 2,
+                                        (3, 2): 2,
+                                        (2, 2): 2,
+                                        (5, 1): 1,
+                                        (2, 3): 1,
+                                        (3, 0): 1,
+                                        (1, 2): 1,
+                                        (1, 1): 1,
+                                        (4, 5): 1,
+                                        (4, 0): 1,
+                                        (5, 0): 1,
+                                        (2, 5): 1,
+                                        (0, 0): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (2, 1): 9,
+                                        (0, 3): 5,
+                                        (2, 5): 5,
+                                        (4, 3): 5,
+                                        (2, 4): 4,
+                                        (2, 3): 4,
+                                        (4, 1): 4,
+                                        (4, 5): 4,
+                                        (4, 2): 3,
+                                        (0, 4): 3,
+                                        (4, 4): 3,
+                                        (5, 2): 2,
+                                        (2, 2): 2,
+                                        (0, 5): 2,
+                                        (3, 3): 2,
+                                        (0, 1): 2,
+                                        (5, 3): 2,
+                                        (5, 4): 1,
+                                        (5, 5): 1,
+                                        (0, 0): 1,
+                                    }
+                                ),
+                            ],
+                            [
+                                Counter(
+                                    {
+                                        (4, 4): 10,
+                                        (5, 2): 8,
+                                        (1, 4): 6,
+                                        (2, 2): 5,
+                                        (2, 4): 4,
+                                        (4, 2): 4,
+                                        (5, 4): 4,
+                                        (4, 5): 3,
+                                        (3, 4): 3,
+                                        (5, 0): 3,
+                                        (1, 0): 2,
+                                        (4, 0): 2,
+                                        (1, 5): 2,
+                                        (3, 0): 2,
+                                        (1, 2): 2,
+                                        (5, 3): 1,
+                                        (0, 3): 1,
+                                        (3, 1): 1,
+                                        (3, 3): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (3, 5): 11,
+                                        (1, 3): 6,
+                                        (5, 5): 6,
+                                        (5, 3): 5,
+                                        (1, 5): 5,
+                                        (3, 3): 3,
+                                        (3, 2): 3,
+                                        (5, 2): 3,
+                                        (3, 4): 3,
+                                        (3, 1): 2,
+                                        (5, 4): 2,
+                                        (5, 1): 2,
+                                        (1, 2): 2,
+                                        (5, 0): 2,
+                                        (1, 1): 1,
+                                        (4, 1): 1,
+                                        (2, 3): 1,
+                                        (3, 0): 1,
+                                        (1, 4): 1,
+                                        (1, 0): 1,
+                                        (2, 5): 1,
+                                        (4, 3): 1,
+                                        (2, 4): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (4, 3): 9,
+                                        (4, 1): 9,
+                                        (2, 5): 7,
+                                        (4, 5): 6,
+                                        (2, 3): 5,
+                                        (4, 2): 5,
+                                        (2, 1): 3,
+                                        (5, 3): 3,
+                                        (4, 4): 3,
+                                        (0, 5): 3,
+                                        (0, 4): 2,
+                                        (0, 3): 2,
+                                        (0, 1): 2,
+                                        (2, 2): 1,
+                                        (3, 1): 1,
+                                        (2, 4): 1,
+                                        (0, 2): 1,
+                                        (5, 5): 1,
+                                    }
+                                ),
+                            ],
+                            [
+                                Counter(
+                                    {
+                                        (4, 2): 10,
+                                        (4, 4): 9,
+                                        (2, 4): 7,
+                                        (2, 2): 6,
+                                        (5, 2): 6,
+                                        (5, 0): 4,
+                                        (5, 4): 4,
+                                        (3, 2): 3,
+                                        (3, 0): 2,
+                                        (2, 3): 2,
+                                        (2, 0): 2,
+                                        (1, 0): 1,
+                                        (5, 1): 1,
+                                        (1, 2): 1,
+                                        (2, 5): 1,
+                                        (3, 4): 1,
+                                        (1, 4): 1,
+                                        (1, 1): 1,
+                                        (1, 3): 1,
+                                        (2, 1): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (5, 3): 8,
+                                        (3, 5): 7,
+                                        (3, 2): 7,
+                                        (5, 2): 6,
+                                        (3, 3): 6,
+                                        (1, 5): 5,
+                                        (5, 1): 5,
+                                        (3, 0): 4,
+                                        (5, 5): 3,
+                                        (5, 4): 3,
+                                        (1, 2): 2,
+                                        (3, 4): 2,
+                                        (3, 1): 2,
+                                        (4, 2): 1,
+                                        (1, 3): 1,
+                                        (0, 2): 1,
+                                        (1, 0): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (2, 3): 12,
+                                        (4, 5): 8,
+                                        (2, 1): 5,
+                                        (0, 1): 4,
+                                        (4, 3): 4,
+                                        (0, 2): 4,
+                                        (4, 1): 4,
+                                        (3, 3): 3,
+                                        (2, 5): 3,
+                                        (4, 2): 2,
+                                        (4, 4): 2,
+                                        (0, 5): 2,
+                                        (5, 1): 2,
+                                        (5, 3): 1,
+                                        (5, 5): 1,
+                                        (0, 4): 1,
+                                        (5, 4): 1,
+                                        (2, 4): 1,
+                                        (0, 3): 1,
+                                        (5, 2): 1,
+                                        (3, 5): 1,
+                                        (2, 2): 1,
+                                    }
+                                ),
+                            ],
+                            [
+                                Counter(
+                                    {
+                                        (4, 4): 7,
+                                        (2, 2): 7,
+                                        (1, 4): 6,
+                                        (5, 2): 5,
+                                        (2, 4): 4,
+                                        (5, 4): 4,
+                                        (4, 2): 3,
+                                        (5, 0): 3,
+                                        (4, 3): 3,
+                                        (0, 0): 3,
+                                        (3, 4): 2,
+                                        (3, 2): 2,
+                                        (1, 2): 2,
+                                        (3, 0): 2,
+                                        (2, 3): 2,
+                                        (5, 3): 1,
+                                        (1, 5): 1,
+                                        (4, 1): 1,
+                                        (4, 5): 1,
+                                        (2, 0): 1,
+                                        (0, 3): 1,
+                                        (2, 1): 1,
+                                        (1, 0): 1,
+                                        (3, 3): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (5, 5): 8,
+                                        (3, 5): 8,
+                                        (5, 2): 6,
+                                        (3, 0): 5,
+                                        (5, 3): 5,
+                                        (3, 4): 4,
+                                        (3, 3): 4,
+                                        (5, 4): 4,
+                                        (1, 3): 3,
+                                        (3, 2): 3,
+                                        (1, 1): 2,
+                                        (1, 5): 2,
+                                        (4, 5): 1,
+                                        (1, 0): 1,
+                                        (1, 4): 1,
+                                        (3, 1): 1,
+                                        (5, 1): 1,
+                                        (0, 3): 1,
+                                        (1, 2): 1,
+                                        (5, 0): 1,
+                                        (0, 5): 1,
+                                        (4, 2): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (0, 5): 9,
+                                        (2, 3): 7,
+                                        (4, 3): 6,
+                                        (4, 5): 6,
+                                        (5, 5): 4,
+                                        (2, 5): 4,
+                                        (3, 3): 3,
+                                        (0, 2): 3,
+                                        (5, 1): 3,
+                                        (4, 1): 3,
+                                        (0, 1): 3,
+                                        (5, 3): 3,
+                                        (0, 3): 2,
+                                        (4, 4): 2,
+                                        (3, 5): 2,
+                                        (2, 1): 1,
+                                        (5, 4): 1,
+                                        (3, 1): 1,
+                                        (5, 2): 1,
+                                    }
+                                ),
+                            ],
+                            [
+                                Counter(
+                                    {
+                                        (2, 4): 7,
+                                        (4, 4): 7,
+                                        (2, 2): 6,
+                                        (4, 3): 4,
+                                        (2, 0): 4,
+                                        (4, 2): 4,
+                                        (0, 4): 3,
+                                        (4, 5): 3,
+                                        (0, 3): 3,
+                                        (2, 1): 3,
+                                        (0, 2): 3,
+                                        (2, 3): 3,
+                                        (5, 2): 3,
+                                        (3, 4): 2,
+                                        (4, 0): 2,
+                                        (1, 4): 2,
+                                        (3, 3): 1,
+                                        (5, 0): 1,
+                                        (1, 3): 1,
+                                        (1, 0): 1,
+                                        (2, 5): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (5, 2): 8,
+                                        (5, 5): 8,
+                                        (5, 4): 6,
+                                        (3, 2): 5,
+                                        (3, 4): 5,
+                                        (1, 2): 4,
+                                        (5, 3): 3,
+                                        (1, 3): 3,
+                                        (5, 0): 3,
+                                        (3, 3): 3,
+                                        (1, 0): 2,
+                                        (1, 4): 2,
+                                        (3, 5): 2,
+                                        (4, 2): 2,
+                                        (4, 3): 2,
+                                        (3, 0): 2,
+                                        (1, 5): 1,
+                                        (0, 4): 1,
+                                        (4, 5): 1,
+                                        (3, 1): 1,
+                                    }
+                                ),
+                                Counter(
+                                    {
+                                        (3, 3): 7,
+                                        (4, 5): 7,
+                                        (4, 3): 6,
+                                        (2, 3): 5,
+                                        (4, 1): 5,
+                                        (2, 5): 5,
+                                        (3, 5): 5,
+                                        (0, 3): 4,
+                                        (5, 1): 4,
+                                        (2, 1): 3,
+                                        (5, 5): 2,
+                                        (3, 1): 2,
+                                        (0, 5): 2,
+                                        (5, 3): 2,
+                                        (1, 5): 2,
+                                        (1, 4): 1,
+                                        (0, 2): 1,
+                                        (4, 2): 1,
+                                    }
+                                ),
+                            ],
+                        ]
+                    )
+                )
+            )
+
     def test_twirling(self):
         """Test if the twirling option works correctly."""
         qc = QuantumCircuit(2)
@@ -290,7 +1045,7 @@ class TestRandomizedPMs(TestCase):
         job = povm_sampler.run([qc], shots=128, povm=measurement)
         pub_result = job.result()[0]
 
-        self.assertEqual(sum(pub_result.get_counts()[0].values()), 128 * 7)
+        self.assertEqual(sum(pub_result.get_counts(loc=...)[0].values()), 128 * 7)
         self.assertEqual(pub_result.data.povm_measurement_creg.num_shots, 128 * 7)
 
         post_processor = POVMPostProcessor(pub_result)
@@ -318,7 +1073,7 @@ class TestRandomizedPMs(TestCase):
         povm_metadata = pub_result.metadata
 
         with self.subTest("Sanity check"):
-            outcomes = measurement._povm_outcomes(bit_array, povm_metadata)
+            outcomes = measurement._povm_outcomes(bit_array, povm_metadata, loc=tuple())
             self.assertSequenceEqual(
                 outcomes,
                 [(0, 2), (2, 2), (5, 0), (5, 4), (0, 2), (4, 3), (0, 2), (0, 0), (0, 4), (2, 2)],
@@ -330,7 +1085,7 @@ class TestRandomizedPMs(TestCase):
             faulty_metadata = POVMMetadata(
                 povm_metadata.povm_implementation, povm_metadata.composed_circuit
             )
-            measurement._povm_outcomes(bit_array, faulty_metadata)
+            measurement._povm_outcomes(bit_array, faulty_metadata, loc=tuple())
 
         with self.subTest("Invalid ``loc`` argument.") and self.assertRaises(ValueError):
             measurement._povm_outcomes(bit_array, povm_metadata, loc=0)
