@@ -16,9 +16,14 @@ import sys
 from collections import Counter
 
 if sys.version_info < (3, 10):
-    from typing import Any as EllipsisType  # pragma: no cover
+    from typing import Any
+
+    # There is no way to support this type properly in python 3.9, which will be end of life in
+    # November 2025 anyways.
+    EllipsisType = Any
 else:
     from types import EllipsisType
+
 import numpy as np
 from qiskit.primitives.containers import DataBin, PubResult
 

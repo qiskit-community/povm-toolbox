@@ -18,10 +18,14 @@ import time
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import copy
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 if sys.version_info < (3, 10):
-    from typing import Any as EllipsisType  # pragma: no cover
+    from typing import Any
+
+    # There is no way to support this type properly in python 3.9, which will be end of life in
+    # November 2025 anyways.
+    EllipsisType = Any
 else:
     from types import EllipsisType
 
@@ -326,6 +330,8 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         samples = self.get_povm_outcomes_from_raw(data, povm_metadata, loc=loc)
 
         if loc is Ellipsis:
+            # When ``loc`` is an ``Ellipsis``, samples is guaranteed to be an ``np.ndarray``
+            samples = cast(np.ndarray, samples)
             shape = samples.shape
             outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
             for idx in np.ndindex(shape):
