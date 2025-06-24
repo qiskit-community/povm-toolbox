@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,21 +10,20 @@
 
 """Tests for the MultiQubitDual class."""
 
-from unittest import TestCase
-
 import numpy as np
+import pytest
 from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDual
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
 from povm_toolbox.quantum_info.product_povm import ProductPOVM
 from qiskit.quantum_info import Operator, random_hermitian
 
 
-class TestMultiQubitDual(TestCase):
+class TestMultiQubitDual:
     """Test that we can create valid dual frame and get warnings if invalid."""
 
-    def test_invalid_operators(self):
+    def test_invalid_operators(self, subtests):
         """Test that errors are correctly raised if invalid operators are supplied."""
-        with self.subTest("Non Hermitian operators") and self.assertRaises(ValueError):
+        with subtests.test("Non Hermitian operators") and pytest.raises(ValueError):
             ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(-1, 1, (6, 2, 2))
             while np.abs(ops[0, 0, 0].imag) < 1e-6:
                 ops = np.random.uniform(-1, 1, (6, 2, 2)) + 1.0j * np.random.uniform(
@@ -40,11 +39,11 @@ class TestMultiQubitDual(TestCase):
                 Operator.from_label("+"),
             ]
         )
-        self.assertEqual(dual.num_operators, 3)
-        self.assertEqual(dual.num_outcomes, 3)
-        self.assertEqual(len(dual), 3)
+        assert dual.num_operators == 3
+        assert dual.num_outcomes == 3
+        assert len(dual) == 3
 
-    def test_is_dual_to(self):
+    def test_is_dual_to(self, subtests):
         povm = MultiQubitPOVM(
             [
                 1.0 / 3 * Operator.from_label("0"),
@@ -55,7 +54,7 @@ class TestMultiQubitDual(TestCase):
                 1.0 / 3 * Operator.from_label("l"),
             ]
         )
-        with self.subTest("Test valid dual."):
+        with subtests.test("Test valid dual."):
             dual = MultiQubitDual(
                 [
                     Operator([[2.0 + 0.0j, 0.0 + 0.0j], [0.0 + 0.0j, -1.0 + 0.0j]]),
@@ -66,12 +65,12 @@ class TestMultiQubitDual(TestCase):
                     Operator([[0.5 + 0.0j, 0.0 + 1.5j], [0.0 - 1.5j, 0.5 + 0.0j]]),
                 ]
             )
-            self.assertTrue(dual.is_dual_to(povm))
-        with self.subTest("Test not implemented type for ``frame``.") and self.assertRaises(
+            assert dual.is_dual_to(povm)
+        with subtests.test("Test not implemented type for ``frame``.") and pytest.raises(
             NotImplementedError
         ):
-            self.assertFalse(dual.is_dual_to(ProductPOVM.from_list([povm])))
-        with self.subTest("Test invalid dual."):
+            assert not dual.is_dual_to(ProductPOVM.from_list([povm]))
+        with subtests.test("Test invalid dual."):
             dual = MultiQubitDual(
                 [
                     Operator.from_label("0"),
@@ -82,9 +81,9 @@ class TestMultiQubitDual(TestCase):
                     Operator.from_label("l"),
                 ]
             )
-            self.assertFalse(dual.is_dual_to(povm))
+            assert not dual.is_dual_to(povm)
 
-    def test_build_dual_from_frame(self):
+    def test_build_dual_from_frame(self, subtests):
         povm = MultiQubitPOVM(
             [
                 1.0 / 2 * Operator.from_label("0"),
@@ -95,26 +94,26 @@ class TestMultiQubitDual(TestCase):
                 1.0 / 6 * Operator.from_label("l"),
             ]
         )
-        with self.subTest("Default ``alphas``."):
+        with subtests.test("Default ``alphas``."):
             dual_1 = MultiQubitDual.build_dual_from_frame(povm)
-            self.assertTrue(dual_1.is_dual_to(povm))
-        with self.subTest("Specified ``alphas``."):
+            assert dual_1.is_dual_to(povm)
+        with subtests.test("Specified ``alphas``."):
             dual_2 = MultiQubitDual.build_dual_from_frame(
                 povm, alphas=(0.5, 0.5, 1 / 3, 1 / 3, 1 / 6, 1 / 6)
             )
-            self.assertTrue(dual_2.is_dual_to(povm))
+            assert dual_2.is_dual_to(povm)
             for k in range(dual_2.num_outcomes):
-                self.assertTrue(np.allclose(dual_1[k], dual_2[k]))
-        with self.subTest("Invalid ``alphas``.") and self.assertRaises(ValueError):
+                assert np.allclose(dual_1[k], dual_2[k])
+        with subtests.test("Invalid ``alphas``.") and pytest.raises(ValueError):
             _ = MultiQubitDual.build_dual_from_frame(povm, alphas=(0.5, 0.5, 1 / 3, 1 / 3))
-        with self.subTest("Not implemented type for ``frame``.") and self.assertRaises(
+        with subtests.test("Not implemented type for ``frame``.") and pytest.raises(
             NotImplementedError
         ):
             prod_povm = ProductPOVM.from_list([povm])
             _ = MultiQubitDual.build_dual_from_frame(prod_povm)
 
-    def test_get_omegas(self):
-        with self.subTest("Single-qubit case"):
+    def test_get_omegas(self, subtests):
+        with subtests.test("Single-qubit case"):
             povm = MultiQubitPOVM(
                 [
                     1.0 / 2 * Operator.from_label("0"),
@@ -131,4 +130,4 @@ class TestMultiQubitDual(TestCase):
             dec = np.zeros((2, 2), dtype=complex)
             for k in range(povm.num_outcomes):
                 dec += omegas[k] * povm[k].data
-            self.assertTrue(np.allclose(obs, dec))
+            assert np.allclose(obs, dec)

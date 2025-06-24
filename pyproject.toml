@@ -43,6 +43,7 @@ dev = [
 basetest = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
+    "pytest-subtests>=0.14",
 ]
 test = [
     "povm_toolbox[basetest]",
@@ -120,7 +121,6 @@ load-plugins = [
 disable = ["all"]
 enable = [
     "reimported",
-    "no-self-use",
     "no-else-raise",
     "redefined-argument-from-local",
     "redefined-builtin",

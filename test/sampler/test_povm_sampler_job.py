@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -12,8 +12,8 @@
 
 import os
 from pathlib import Path
-from unittest import TestCase
 
+import numpy as np
 import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
@@ -30,13 +30,13 @@ from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 
-class TestPOVMSamplerJob(TestCase):
+class TestPOVMSamplerJob:
     """Tests for the ``POVMSamplerJob`` class."""
 
     SEED = 10
 
+    @pytest.fixture(autouse=True)
     def setUp(self) -> None:
-        super().setUp()
         rng = default_rng(self.SEED)
         self.sampler = StatevectorSampler(seed=rng)
 
@@ -52,9 +52,9 @@ class TestPOVMSamplerJob(TestCase):
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
-        self.assertIsInstance(cs_job, POVMSamplerJob)
+        assert isinstance(cs_job, POVMSamplerJob)
 
-    def test_result(self):
+    def test_result(self, subtests):
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
         # Load the circuit that was obtained through:
@@ -65,30 +65,30 @@ class TestPOVMSamplerJob(TestCase):
             qc_random = qpy.load(file)[1]
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
         cs_shots = 32
-        with self.subTest("Result for a single PUB."):
+        with subtests.test("Result for a single PUB."):
             cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
             result = cs_job.result()
-            self.assertIsInstance(result, PrimitiveResult)
-            self.assertIsInstance(result[0], POVMPubResult)
-        with self.subTest("Result for multiple PUBs."):
+            assert isinstance(result, PrimitiveResult)
+            assert isinstance(result[0], POVMPubResult)
+        with subtests.test("Result for multiple PUBs."):
             cs_job = povm_sampler.run(
                 [qc_random, qc_random], shots=cs_shots, povm=cs_implementation
             )
             result = cs_job.result()
-            self.assertIsInstance(result, PrimitiveResult)
-            self.assertEqual(len(result), 2)
-            self.assertIsInstance(result[0], POVMPubResult)
-            self.assertIsInstance(result[1], POVMPubResult)
-        with self.subTest(
+            assert isinstance(result, PrimitiveResult)
+            assert len(result) == 2
+            assert isinstance(result[0], POVMPubResult)
+            assert isinstance(result[1], POVMPubResult)
+        with subtests.test(
             "Error raised if incompatible lengths of raw results and metadata."
-        ) and self.assertRaises(ValueError):
+        ) and pytest.raises(ValueError):
             cs_job = povm_sampler.run(
                 [qc_random, qc_random], shots=cs_shots, povm=cs_implementation
             )
             cs_job.metadata.pop()
             _ = cs_job.result()
 
-    def test_recover_job(self):
+    def test_recover_job(self, subtests):
         qc = QuantumCircuit(2)
         qc.h(0)
         qc.cx(0, 1)
@@ -107,45 +107,45 @@ class TestPOVMSamplerJob(TestCase):
         job = povm_sampler.run(pubs=[qc_isa], shots=128, povm=measurement)
         tmp = job.base_job
 
-        with self.subTest("Save job with specific filename."):
+        with subtests.test("Save job with specific filename."):
             filename = "saved_metadata.pkl"
             job.save_metadata(filename=filename)
             job_recovered = POVMSamplerJob.recover_job(filename=filename, base_job=tmp)
             try:
-                self.assertIsInstance(job_recovered, POVMSamplerJob)
+                assert isinstance(job_recovered, POVMSamplerJob)
                 result = job_recovered.result()
                 pub_result = result[0]
                 observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, 1, -1, 1])
                 post_processor = POVMPostProcessor(pub_result)
                 exp_value, std = post_processor.get_expectation_value(observable)
-                self.assertAlmostEqual(exp_value, 4.445312500000001)
-                self.assertAlmostEqual(std, 0.3881881421165156)
+                assert np.isclose(exp_value, 4.445312500000001)
+                assert np.isclose(std, 0.3881881421165156)
             except BaseException as exc:  # catch anything
                 raise exc
             finally:
                 Path(filename).unlink(missing_ok=True)
 
-        with self.subTest("Save job with default filename."):
+        with subtests.test("Save job with default filename."):
             job.save_metadata()
             filename = f"job_metadata_{job.base_job.job_id()}.pkl"
             job_recovered = POVMSamplerJob.recover_job(filename=filename, base_job=tmp)
             try:
-                self.assertIsInstance(job_recovered, POVMSamplerJob)
+                assert isinstance(job_recovered, POVMSamplerJob)
                 result = job_recovered.result()
                 pub_result = result[0]
                 observable = SparsePauliOp(["II", "XX", "YY", "ZZ"], coeffs=[1, -2, 1, 1])
                 post_processor = POVMPostProcessor(pub_result)
                 exp_value, std = post_processor.get_expectation_value(observable)
-                self.assertAlmostEqual(exp_value, -1.3906250000000009)
-                self.assertAlmostEqual(std, 0.6732583954195841)
+                assert np.isclose(exp_value, -1.3906250000000009)
+                assert np.isclose(std, 0.6732583954195841)
             except BaseException as exc:  # catch anything
                 raise exc
             finally:
                 Path(filename).unlink(missing_ok=True)
 
-        with self.subTest(
+        with subtests.test(
             "Error if id of ``base_job`` does not match the one stored in the metadata file."
-        ) and self.assertRaises(ValueError):
+        ) and pytest.raises(ValueError):
             filename = f"job_metadata_{job.base_job.job_id()}.pkl"
             job.save_metadata(filename=filename)
             try:
@@ -188,14 +188,14 @@ class TestPOVMSamplerJob(TestCase):
             job.save_metadata()
             filename = f"job_metadata_{job.base_job.job_id()}.pkl"
             job_recovered = POVMSamplerJob.recover_job(filename=filename, service=service)
-            self.assertIsInstance(job_recovered, POVMSamplerJob)
+            assert isinstance(job_recovered, POVMSamplerJob)
             result = job_recovered.result()
             pub_result = result[0]
-            self.assertIsInstance(result, PrimitiveResult)
-            self.assertIsInstance(pub_result, POVMPubResult)
-            self.assertIsInstance(pub_result.metadata, POVMMetadata)
-            self.assertEqual(pub_result.data.povm_measurement_creg.num_bits, 2)
-            self.assertEqual(pub_result.data.povm_measurement_creg.num_shots, 128)
+            assert isinstance(result, PrimitiveResult)
+            assert isinstance(pub_result, POVMPubResult)
+            assert isinstance(pub_result.metadata, POVMMetadata)
+            assert pub_result.data.povm_measurement_creg.num_bits == 2
+            assert pub_result.data.povm_measurement_creg.num_shots == 128
         except BaseException as exc:  # catch anything
             raise exc
         finally:
@@ -221,16 +221,16 @@ class TestPOVMSamplerJob(TestCase):
             cs_job.in_final_state(),
         )
         if job_status == JobStatus.RUNNING:
-            self.assertFalse(is_done)
-            self.assertTrue(is_running)
-            self.assertFalse(is_cancelled)
-            self.assertFalse(in_final)
+            assert not is_done
+            assert is_running
+            assert not is_cancelled
+            assert not in_final
 
         _ = cs_job.result()
-        self.assertEqual(cs_job.status(), JobStatus.DONE)
-        self.assertTrue(cs_job.done())
-        self.assertFalse(cs_job.running())
-        self.assertFalse(cs_job.cancelled())
-        self.assertTrue(cs_job.in_final_state())
+        assert cs_job.status() == JobStatus.DONE
+        assert cs_job.done()
+        assert not cs_job.running()
+        assert not cs_job.cancelled()
+        assert cs_job.in_final_state()
         cs_job.cancel()
-        self.assertFalse(cs_job.cancelled())
+        assert not cs_job.cancelled()

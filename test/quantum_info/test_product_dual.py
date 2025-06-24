@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,9 +10,8 @@
 
 """Tests for the ProductPOVM class."""
 
-from unittest import TestCase
-
 import numpy as np
+import pytest
 from numpy.random import default_rng
 from povm_toolbox.quantum_info.multi_qubit_dual import MultiQubitDual
 from povm_toolbox.quantum_info.multi_qubit_povm import MultiQubitPOVM
@@ -22,12 +21,12 @@ from povm_toolbox.quantum_info.single_qubit_povm import SingleQubitPOVM
 from qiskit.quantum_info import Operator
 
 
-class TestProductPOVM(TestCase):
+class TestProductPOVM:
     """Test that we can create valid product POVM and get warnings if invalid."""
 
     SEED = 12
 
-    def test_is_dual_to(self):
+    def test_is_dual_to(self, subtests):
         sq_povm = SingleQubitPOVM(
             [
                 1.0 / 3 * Operator.from_label("0"),
@@ -52,16 +51,16 @@ class TestProductPOVM(TestCase):
 
         povm = ProductPOVM.from_list([sq_povm])
 
-        with self.subTest("Test valid dual."):
+        with subtests.test("Test valid dual."):
             dual = ProductDual.from_list([sq_dual])
-            self.assertTrue(dual.is_dual_to(povm))
+            assert dual.is_dual_to(povm)
 
-        with self.subTest("Test not implemented type for ``frame``.") and self.assertRaises(
+        with subtests.test("Test not implemented type for ``frame``.") and pytest.raises(
             NotImplementedError
         ):
-            self.assertFalse(dual.is_dual_to(sq_povm))
+            assert not dual.is_dual_to(sq_povm)
 
-        with self.subTest("Test invalid dual."):
+        with subtests.test("Test invalid dual."):
             invalid_dual = ProductDual.from_list(
                 [
                     MultiQubitDual(
@@ -76,9 +75,9 @@ class TestProductPOVM(TestCase):
                     )
                 ]
             )
-            self.assertFalse(invalid_dual.is_dual_to(povm))
+            assert not invalid_dual.is_dual_to(povm)
 
-    def test_build_dual(self):
+    def test_build_dual(self, subtests):
         num_qubits = 3
         rng = default_rng(self.SEED)
         q = rng.uniform(0, 5, size=3 * num_qubits).reshape((num_qubits, 3))
@@ -100,10 +99,10 @@ class TestProductPOVM(TestCase):
             )
         prod_povm = ProductPOVM.from_list(povm_list)
 
-        with self.subTest("Default ``alphas``."):
+        with subtests.test("Default ``alphas``."):
             dual_1 = ProductDual.build_dual_from_frame(prod_povm)
-            self.assertTrue(dual_1.is_dual_to(prod_povm))
-        with self.subTest("Specified ``alphas``."):
+            assert dual_1.is_dual_to(prod_povm)
+        with subtests.test("Specified ``alphas``."):
             dual_2 = ProductDual.build_dual_from_frame(
                 prod_povm,
                 alphas=tuple(
@@ -111,15 +110,15 @@ class TestProductPOVM(TestCase):
                     for i in range(num_qubits)
                 ),
             )
-            self.assertTrue(dual_2.is_dual_to(prod_povm))
+            assert dual_2.is_dual_to(prod_povm)
             for i in range(num_qubits):
                 for k in range(dual_2[(i,)].num_outcomes):
-                    self.assertTrue(np.allclose(dual_1[(i,)][k], dual_2[(i,)][k]))
-        with self.subTest("Invalid ``alphas``.") and self.assertRaises(ValueError):
+                    assert np.allclose(dual_1[(i,)][k], dual_2[(i,)][k])
+        with subtests.test("Invalid ``alphas``.") and pytest.raises(ValueError):
             _ = ProductDual.build_dual_from_frame(
                 prod_povm, alphas=((1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1))
             )
-        with self.subTest("Not implemented type for ``frame``.") and self.assertRaises(
+        with subtests.test("Not implemented type for ``frame``.") and pytest.raises(
             NotImplementedError
         ):
             multi_qubit_povm = MultiQubitPOVM(
@@ -139,15 +138,11 @@ class TestProductPOVM(TestCase):
         dual_1 = MultiQubitDual([Operator.from_label("0"), Operator.from_label("1")])
         dual_2 = MultiQubitDual([Operator.from_label("0"), Operator.from_label("1")])
         prod_dual = ProductDual.from_list([dual_1])
-        self.assertEqual(
-            prod_dual.__repr__(),
-            (f"ProductDual(num_subsystems=1)<2>:\n   (0,): MultiQubitDual<2> at {hex(id(dual_1))}"),
+        assert prod_dual.__repr__() == (
+            f"ProductDual(num_subsystems=1)<2>:\n   (0,): MultiQubitDual<2> at {hex(id(dual_1))}"
         )
         prod_dual = ProductDual.from_list([dual_1, dual_2])
-        self.assertEqual(
-            prod_dual.__repr__(),
-            (
-                "ProductDual(num_subsystems=2)<2,2>:\n   (0,): MultiQubitDual<2> at "
-                f"{hex(id(dual_1))}\n   (1,): MultiQubitDual<2> at {hex(id(dual_2))}"
-            ),
+        assert prod_dual.__repr__() == (
+            "ProductDual(num_subsystems=2)<2,2>:\n   (0,): MultiQubitDual<2> at "
+            f"{hex(id(dual_1))}\n   (1,): MultiQubitDual<2> at {hex(id(dual_2))}"
         )

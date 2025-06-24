@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -11,14 +11,13 @@
 """Tests for the POVMMetadata class."""
 
 import platform
-from unittest import TestCase
 
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.library.metadata import POVMMetadata
 from qiskit import QuantumCircuit
 
 
-class TestPOVMMetadata(TestCase):
+class TestPOVMMetadata:
     def test_init(self):
         """Test the POVMMetadata class initialization."""
         num_qubits = 2
@@ -30,12 +29,12 @@ class TestPOVMMetadata(TestCase):
         qc_composed = measurement.compose_circuits(qc)
 
         povm_metadata = POVMMetadata(measurement, qc_composed)
-        self.assertIs(povm_metadata.povm_implementation, measurement)
-        self.assertIs(povm_metadata.composed_circuit, qc_composed)
+        assert povm_metadata.povm_implementation is measurement
+        assert povm_metadata.composed_circuit is qc_composed
 
         povm_metadata = POVMMetadata(composed_circuit=qc_composed, povm_implementation=measurement)
-        self.assertIs(povm_metadata.povm_implementation, measurement)
-        self.assertIs(povm_metadata.composed_circuit, qc_composed)
+        assert povm_metadata.povm_implementation is measurement
+        assert povm_metadata.composed_circuit is qc_composed
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
@@ -51,8 +50,7 @@ class TestPOVMMetadata(TestCase):
         qc_hex_id = f"0x{qc_id:{encoding}}"
 
         povm_metadata = POVMMetadata(measurement, qc_composed)
-        self.assertEqual(
-            f"{povm_metadata}",
+        assert f"{povm_metadata}" == (
             "POVMMetadata(povm_implementation=ClassicalShadows(num_qubits=2), composed_circuit="
-            f"<qiskit.circuit.quantumcircuit.QuantumCircuit object at {qc_hex_id}>)",
+            f"<qiskit.circuit.quantumcircuit.QuantumCircuit object at {qc_hex_id}>)"
         )

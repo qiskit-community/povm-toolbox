@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -11,9 +11,9 @@
 """Tests for the `dual_from_empirical_frequencies` function."""
 
 from copy import deepcopy
-from unittest import TestCase
 
 import numpy as np
+import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import (
     ClassicalShadows,
@@ -35,13 +35,13 @@ from qiskit.quantum_info import (
 )
 
 
-class TestDualFromEmpiricalFrequencies(TestCase):
+class TestDualFromEmpiricalFrequencies:
     """Test that we can construct optimal dual of a POVM from empirical frequencies."""
 
     SEED = 30
 
+    @pytest.fixture(autouse=True)
     def setUp(self) -> None:
-        super().setUp()
         # Load the circuit that was obtained through:
         #   from qiskit.circuit.random import random_circuit
         #   qc = random_circuit(num_qubits=2, depth=1, measure=False, seed=30)
@@ -65,24 +65,24 @@ class TestDualFromEmpiricalFrequencies(TestCase):
         pub_result = job.result()[0]
         self.post_processor = POVMPostProcessor(pub_result)
 
-    def test_empirical_dual(self):
+    def test_empirical_dual(self, subtests):
         """Test that the method constructs a valid dual."""
         observable = SparsePauliOp(["XI", "YI", 2 * "Y", 2 * "Z"], coeffs=[1.3, 1.2, -1, 1.4])
 
-        with self.subTest("Test canonical dual."):
+        with subtests.test("Test canonical dual."):
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.7168743782790395)
-            self.assertAlmostEqual(std, 0.4724232310929573)
+            assert np.isclose(exp_value, 0.7168743782790395)
+            assert np.isclose(std, 0.4724232310929573)
 
-        with self.subTest("Test empirical dual with default arguments."):
+        with subtests.test("Test empirical dual with default arguments."):
             self.post_processor.dual = dual_from_empirical_frequencies(
                 povm_post_processor=self.post_processor
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.10431839053361033)
-            self.assertAlmostEqual(std, 0.3117383078877236)
+            assert np.isclose(exp_value, 0.10431839053361033)
+            assert np.isclose(std, 0.3117383078877236)
 
-        with self.subTest("Test empirical dual with lists arguments."):
+        with subtests.test("Test empirical dual with lists arguments."):
             self.post_processor.dual = dual_from_empirical_frequencies(
                 povm_post_processor=self.post_processor,
                 loc=0,
@@ -93,10 +93,10 @@ class TestDualFromEmpiricalFrequencies(TestCase):
                 ],
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.1106660978854775)
-            self.assertAlmostEqual(std, 0.3118348520393772)
+            assert np.isclose(exp_value, 0.1106660978854775)
+            assert np.isclose(std, 0.3118348520393772)
 
-        with self.subTest(
+        with subtests.test(
             "Test empirical dual with `bias` and `ansatz` arguments repeated for all qubits."
         ):
             self.post_processor.dual = dual_from_empirical_frequencies(
@@ -106,31 +106,27 @@ class TestDualFromEmpiricalFrequencies(TestCase):
                 ansatz=SparsePauliOp(["I"], coeffs=np.asarray([0.5])),
             )
             exp_value, std = self.post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, 0.14024741778087743)
-            self.assertAlmostEqual(std, 0.3148832990774694)
+            assert np.isclose(exp_value, 0.14024741778087743)
+            assert np.isclose(std, 0.3148832990774694)
 
-    def test_errors_raised(self):
+    def test_errors_raised(self, subtests):
         """Test that the method raises the appropriate errors when suitable."""
-        with self.subTest("Error if ``povm`` is not a ``ProductPOVM`.") and self.assertRaises(
+        with subtests.test("Error if ``povm`` is not a ``ProductPOVM`.") and pytest.raises(
             NotImplementedError
         ):
             post_processor_2 = deepcopy(self.post_processor)
             post_processor_2._povm = MultiQubitPOVM([Operator(np.eye(4))])
             _ = dual_from_empirical_frequencies(post_processor_2)
 
-        with self.subTest("Error if length of `bias` is invalid.") and self.assertRaises(
-            ValueError
-        ):
+        with subtests.test("Error if length of `bias` is invalid.") and pytest.raises(ValueError):
             _ = dual_from_empirical_frequencies(self.post_processor, bias=[1.0])
 
-        with self.subTest("Error if length of `ansatz` is invalid.") and self.assertRaises(
-            ValueError
-        ):
+        with subtests.test("Error if length of `ansatz` is invalid.") and pytest.raises(ValueError):
             _ = dual_from_empirical_frequencies(
                 self.post_processor, ansatz=[DensityMatrix(np.eye(2) / 2)]
             )
 
-        with self.subTest("Error if default ``loc`` is not applicable.") and self.assertRaises(
+        with subtests.test("Error if default ``loc`` is not applicable.") and pytest.raises(
             ValueError
         ):
             qc = QuantumCircuit(2)

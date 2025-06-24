@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,9 +10,8 @@
 
 """Tests for the POVMSampler class."""
 
-from unittest import TestCase
-
 import numpy as np
+import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows, LocallyBiasedClassicalShadows
 from povm_toolbox.sampler import POVMSampler, POVMSamplerJob
@@ -20,16 +19,17 @@ from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BaseSamplerV2, StatevectorSampler
 
 
-class TestPOVMSampler(TestCase):
+class TestPOVMSampler:
     """Tests for the ``POVMSampler`` class."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self) -> None:
         rng = default_rng(12465)
         self.sampler = StatevectorSampler(seed=rng)
 
     def test_initialization(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
-        self.assertIsInstance(povm_sampler.sampler, BaseSamplerV2)
+        assert isinstance(povm_sampler.sampler, BaseSamplerV2)
 
     def test_run(self):
         povm_sampler = POVMSampler(sampler=self.sampler)
@@ -49,10 +49,10 @@ class TestPOVMSampler(TestCase):
             ],
             shots=cs_shots,
         )
-        self.assertIsInstance(cs_job1, POVMSamplerJob)
+        assert isinstance(cs_job1, POVMSamplerJob)
         cs_job2 = povm_sampler.run(
             [qc_random1, (qc_random2, None, lbcs_shots, lbcs_implementation)],
             povm=cs_implementation,
             shots=cs_shots,
         )
-        self.assertIsInstance(cs_job2, POVMSamplerJob)
+        assert isinstance(cs_job2, POVMSamplerJob)
