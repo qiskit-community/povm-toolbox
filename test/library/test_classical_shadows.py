@@ -41,7 +41,14 @@ class TestClassicalShadows:
         self.Y0 = np.outer(basis_plus_i, basis_plus_i.conj())
         self.Y1 = np.outer(basis_minus_i, basis_minus_i.conj())
 
-    def test_init(self):
+    @pytest.mark.parametrize(
+        ["pauli", "expected_exp_val", "expected_std"],
+        [
+            ("ZI", 0.84375, 0.24225659134146815),
+            ("ZY", -0.8437500000000002, 0.47116314336043985),
+        ],
+    )
+    def test_init(self, pauli: str, expected_exp_val: float, expected_std: float):
         """Test the implementation of classical shadow POVMs."""
 
         qc = QuantumCircuit(2)
@@ -61,14 +68,10 @@ class TestClassicalShadows:
 
         post_processor = POVMPostProcessor(pub_result)
 
-        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        observable = SparsePauliOp([pauli], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 0.84375)
-        assert np.isclose(std, 0.24225659134146815)
-        observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, -0.8437500000000002)
-        assert np.isclose(std, 0.47116314336043985)
+        assert np.isclose(exp_value, expected_exp_val)
+        assert np.isclose(std, expected_std)
 
     def test_qc_build(self):
         """Test if we can build a standard Classical Shadow POVM from the generic class"""

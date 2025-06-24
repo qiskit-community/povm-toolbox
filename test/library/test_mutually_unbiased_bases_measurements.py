@@ -11,6 +11,7 @@
 """Tests for the MutuallyUnbiasedBasesMeasurements class."""
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import MutuallyUnbiasedBasesMeasurements
@@ -25,84 +26,66 @@ from qiskit.quantum_info import Operator, SparsePauliOp, Statevector
 class TestMutuallyUnbiasedBasesMeasurements:
     SEED = 17863
 
-    def test_init(self, subtests):
+    @pytest.mark.parametrize(
+        ["bias", "angles", "expected_outcomes"],
+        [
+            (
+                np.ones(3) / 3,
+                np.asarray([0.75, -np.pi / 3, 0.2]),
+                {
+                    "ZI": (0.6518233926221875, 0.11921601584589436),
+                    "ZY": (-1.0553339936080581, 0.2102928553415571),
+                },
+            ),
+            (
+                np.ones(3) / 3,
+                np.asarray([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
+                {
+                    "ZI": (0.7504820624371005, 0.11019654428864213),
+                    "ZY": (-0.8423974419138216, 0.23586993121676594),
+                },
+            ),
+            (
+                [1 / 3, 1 / 3, 1 / 3],
+                [[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]],
+                {
+                    "ZI": (0.7504820624371005, 0.11019654428864213),
+                    "ZY": (-0.8423974419138216, 0.23586993121676594),
+                },
+            ),
+        ],
+    )
+    def test_init(
+        self,
+        bias: npt.ArrayLike,
+        angles: npt.ArrayLike,
+        expected_outcomes: dict[str, tuple[float, float]],
+    ):
         """Test the implementation of mutually-unbiased-bases POVMs."""
         qc = QuantumCircuit(2)
         qc.h(0)
 
         num_qubits = qc.num_qubits
 
-        with subtests.test("Test uniform angles across qubits."):
-            measurement = MutuallyUnbiasedBasesMeasurements(
-                num_qubits,
-                bias=np.ones(3) / 3,
-                angles=np.asarray([0.75, -np.pi / 3, 0.2]),
-                seed=self.SEED,
-            )
-            sampler = StatevectorSampler(seed=default_rng(self.SEED))
-            povm_sampler = POVMSampler(sampler=sampler)
+        measurement = MutuallyUnbiasedBasesMeasurements(
+            num_qubits,
+            bias=bias,
+            angles=angles,
+            seed=self.SEED,
+        )
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
+        povm_sampler = POVMSampler(sampler=sampler)
 
-            job = povm_sampler.run([qc], shots=128, povm=measurement)
-            pub_result = job.result()[0]
+        job = povm_sampler.run([qc], shots=128, povm=measurement)
+        pub_result = job.result()[0]
 
-            post_processor = POVMPostProcessor(pub_result)
+        post_processor = POVMPostProcessor(pub_result)
 
-            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        for pauli, (expected_exp_val, expected_std) in expected_outcomes.items():
+            observable = SparsePauliOp([pauli], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.6518233926221875)
-            assert np.isclose(std, 0.11921601584589436)
-            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, -1.0553339936080581)
-            assert np.isclose(std, 0.2102928553415571)
-
-        with subtests.test("Test specific angles for each qubit."):
-            measurement = MutuallyUnbiasedBasesMeasurements(
-                num_qubits,
-                bias=np.ones(3) / 3,
-                angles=np.asarray([[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]]),
-                seed=self.SEED,
-            )
-            sampler = StatevectorSampler(seed=default_rng(self.SEED))
-            povm_sampler = POVMSampler(sampler=sampler)
-
-            job = povm_sampler.run([qc], shots=128, povm=measurement)
-            pub_result = job.result()[0]
-
-            post_processor = POVMPostProcessor(pub_result)
-
-            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.7504820624371005)
-            assert np.isclose(std, 0.11019654428864213)
-            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, -0.8423974419138216)
-            assert np.isclose(std, 0.23586993121676594)
-
-        with subtests.test("Test `array_like` bias and angles."):
-            measurement = MutuallyUnbiasedBasesMeasurements(
-                num_qubits,
-                bias=[1 / 3, 1 / 3, 1 / 3],
-                angles=[[1.2, 0.0, 0.4], [3.5, -0.4, 0.8]],
-                seed=self.SEED,
-            )
-            sampler = StatevectorSampler(seed=default_rng(self.SEED))
-            povm_sampler = POVMSampler(sampler=sampler)
-
-            job = povm_sampler.run([qc], shots=128, povm=measurement)
-            pub_result = job.result()[0]
-
-            post_processor = POVMPostProcessor(pub_result)
-
-            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.7504820624371005)
-            assert np.isclose(std, 0.11019654428864213)
-            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, -0.8423974419138216)
-            assert np.isclose(std, 0.23586993121676594)
+            assert np.isclose(exp_value, expected_exp_val)
+            assert np.isclose(std, expected_std)
 
     def test_init_errors(self, subtests):
         """Test that the ``__init__`` method raises errors correctly."""

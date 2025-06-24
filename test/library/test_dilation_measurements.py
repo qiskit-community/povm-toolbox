@@ -56,7 +56,15 @@ class TestDilationMeasurements:
         povm = DilationMeasurements(1, parameters=0.1 * np.arange(8))
         assert povm.__repr__() == mub_str
 
-    def test_to_sampler_pub(self):
+    @pytest.mark.parametrize(
+        ["pauli", "expected_exp_val", "expected_std"],
+        [
+            ("ZI", -0.18749595202757485, 0.1428020261876306),
+            ("IZ", -0.18749696469140917, 0.14280207155875035),
+            ("XI", 0.8949297904387811, 0.16958103337866423),
+        ],
+    )
+    def test_to_sampler_pub(self, pauli: str, expected_exp_val: float, expected_std: float):
         """Test that the ``to_sampler_pub`` method works correctly."""
         num_qubits = 2
         qc = QuantumCircuit(2)
@@ -92,18 +100,10 @@ class TestDilationMeasurements:
 
         post_processor = POVMPostProcessor(pub_result)
 
-        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        observable = SparsePauliOp([pauli], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, -0.18749595202757485)
-        assert np.isclose(std, 0.1428020261876306)
-        observable = SparsePauliOp(["IZ"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, -0.18749696469140917)
-        assert np.isclose(std, 0.14280207155875035)
-        observable = SparsePauliOp(["XI"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 0.8949297904387811)
-        assert np.isclose(std, 0.16958103337866423)
+        assert np.isclose(exp_value, expected_exp_val)
+        assert np.isclose(std, expected_std)
 
     def test_definition(self, subtests):
         """Test that the ``definition`` method works correctly."""
@@ -163,7 +163,7 @@ class TestDilationMeasurements:
             assert np.allclose(povm.get_bloch_vectors(), bloch_vectors_check)
 
     @pytest.mark.parametrize("num_qubits", [2, 3, 4, 5])
-    def test_compose_circuit(self, subtests, num_qubits: int):
+    def test_compose_circuit(self, num_qubits: int):
         """Test that the ``compose_circuit`` method works correctly."""
         sampler = StatevectorSampler(seed=default_rng(self.SEED))
         povm_sampler = POVMSampler(sampler)

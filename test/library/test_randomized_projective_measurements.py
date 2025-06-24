@@ -104,7 +104,7 @@ class TestRandomizedPMs:
                 1, bias=np.asarray([0.5, 0.5]), angles=np.asarray([0.0, 0.0, 0.5, 0.0]), seed=1.2
             )
 
-    def test_init(self, subtests):
+    def test_init(self):
         """Test options in the ``__init__`` method."""
         num_qubits = 2
 
@@ -112,19 +112,18 @@ class TestRandomizedPMs:
         qc.h(0)
         qc.cx(0, 1)
 
-        with subtests.test("Initialization with ``seed`` of type ``Generator``."):
-            rng = default_rng(self.SEED)
-            measurement = ClassicalShadows(num_qubits, seed=rng)
+        rng = default_rng(self.SEED)
+        measurement = ClassicalShadows(num_qubits, seed=rng)
 
-            povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
-            job = povm_sampler.run([qc], shots=128, povm=measurement)
-            pub_result = job.result()[0]
-            post_processor = POVMPostProcessor(pub_result)
+        povm_sampler = POVMSampler(sampler=StatevectorSampler(seed=default_rng(self.SEED)))
+        job = povm_sampler.run([qc], shots=128, povm=measurement)
+        pub_result = job.result()[0]
+        post_processor = POVMPostProcessor(pub_result)
 
-            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.09374999999999983)
-            assert np.isclose(std, 0.15226210145459726)
+        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        exp_value, std = post_processor.get_expectation_value(observable)
+        assert np.isclose(exp_value, 0.09374999999999983)
+        assert np.isclose(std, 0.15226210145459726)
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
@@ -967,7 +966,16 @@ class TestRandomizedPMs:
                 )
             )
 
-    def test_twirling(self):
+    @pytest.mark.parametrize(
+        ["pauli", "expected_exp_val", "expected_std"],
+        [
+            ("ZI", 1.0078125000000002, 0.1257341109337995),
+            ("IZ", 0.2343749999999999, 0.15468582228868283),
+            ("ZY", 0.42187499999999994, 0.24164416287543897),
+            ("IX", 1.1718749999999998, 0.12987983496490826),
+        ],
+    )
+    def test_twirling(self, pauli: str, expected_exp_val: float, expected_std: float):
         """Test if the twirling option works correctly."""
         qc = QuantumCircuit(2)
         qc.h(0)
@@ -982,22 +990,10 @@ class TestRandomizedPMs:
 
         post_processor = POVMPostProcessor(pub_result)
 
-        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        observable = SparsePauliOp([pauli], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 1.0078125000000002)
-        assert np.isclose(std, 0.1257341109337995)
-        observable = SparsePauliOp(["IZ"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 0.2343749999999999)
-        assert np.isclose(std, 0.15468582228868283)
-        observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 0.42187499999999994)
-        assert np.isclose(std, 0.24164416287543897)
-        observable = SparsePauliOp(["IX"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 1.1718749999999998)
-        assert np.isclose(std, 0.12987983496490826)
+        assert np.isclose(exp_value, expected_exp_val)
+        assert np.isclose(std, expected_std)
 
     def test_shot_repetitions(self):
         """Test if the twirling option works correctly."""
