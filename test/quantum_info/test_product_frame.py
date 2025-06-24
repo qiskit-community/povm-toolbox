@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,15 +10,14 @@
 
 """Tests for the ProductFrame class."""
 
-from unittest import TestCase
-
 import numpy as np
+import pytest
 from povm_toolbox.quantum_info.multi_qubit_frame import MultiQubitFrame
 from povm_toolbox.quantum_info.product_frame import ProductFrame
 from qiskit.quantum_info import Operator, SparsePauliOp
 
 
-class TestProductFrame(TestCase):
+class TestProductFrame:
     """Tests for the ``ProductFrame`` class."""
 
     def test_analysis(self):
@@ -48,8 +47,8 @@ class TestProductFrame(TestCase):
                 ).flatten()
                 check = np.zeros(len(product_paulis))
                 check[i] = 2**num_qubit
-                self.assertTrue(np.allclose(decomposition_weights_n_qubit, check))
-                self.assertTrue(np.allclose(decomposition_weights_product, check))
+                assert np.allclose(decomposition_weights_n_qubit, check)
+                assert np.allclose(decomposition_weights_product, check)
 
             decomposition_weights_n_qubit = frame_n_qubit.analysis(
                 SparsePauliOp(
@@ -64,10 +63,10 @@ class TestProductFrame(TestCase):
                 )
             ).flatten()
             check = np.ones(len(product_paulis)) * 2**num_qubit
-            self.assertTrue(np.allclose(decomposition_weights_n_qubit, check))
-            self.assertTrue(np.allclose(decomposition_weights_product, check))
+            assert np.allclose(decomposition_weights_n_qubit, check)
+            assert np.allclose(decomposition_weights_product, check)
 
-    def test_shape(self):
+    def test_shape(self, subtests):
         """Test that the ``shape`` property works correctly."""
         paulis = ["I", "X", "Y", "Z"]
 
@@ -75,16 +74,16 @@ class TestProductFrame(TestCase):
         frame_1 = MultiQubitFrame([Operator.from_label(label) for label in paulis])
         prod_frame = ProductFrame.from_list([frame_0, frame_1])
 
-        with self.subTest("Test shape."):
-            self.assertEqual(prod_frame.shape, (2, 2, 4))
-            self.assertEqual(prod_frame._sub_shapes, ((2, 2), (4,)))
+        with subtests.test("Test shape."):
+            assert prod_frame.shape == (2, 2, 4)
+            assert prod_frame._sub_shapes == ((2, 2), (4,))
 
-        with self.subTest("Test reshape."):
+        with subtests.test("Test reshape."):
             prod_frame[(1,)].shape = (1, 2, 2)
-            self.assertEqual(prod_frame.shape, (2, 2, 1, 2, 2))
-            self.assertEqual(prod_frame._sub_shapes, ((2, 2), (1, 2, 2)))
+            assert prod_frame.shape == (2, 2, 1, 2, 2)
+            assert prod_frame._sub_shapes == ((2, 2), (1, 2, 2))
 
-    def test_custom_shape_and_analysis(self):
+    def test_custom_shape_and_analysis(self, subtests):
         """Test that the ``analysis`` method works correctly when the frame has a custom shape."""
         paulis = ["I", "X", "Y", "Z"]
 
@@ -92,97 +91,95 @@ class TestProductFrame(TestCase):
         frame_1 = MultiQubitFrame([Operator.from_label(label) for label in paulis])
         prod_frame = ProductFrame.from_list([frame_0, frame_1])
 
-        with self.subTest("Test analysis method with specific index."):
+        with subtests.test("Test analysis method with specific index."):
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0, 0)
             )
-            self.assertAlmostEqual(val, 4.0)
+            assert np.allclose(val, 4.0)
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0, 1)
             )
-            self.assertAlmostEqual(val, 0.0)
+            assert np.allclose(val, 0.0)
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("XI"), frame_op_idx=(0, 0, 1)
             )
-            self.assertAlmostEqual(val, 4.0)
+            assert np.allclose(val, 4.0)
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("II"), frame_op_idx=(1, 0, 1)
             )
-            self.assertAlmostEqual(val, 0.0)
+            assert np.allclose(val, 0.0)
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("XY"), frame_op_idx=(1, 0, 1)
             )
-            self.assertAlmostEqual(val, 4.0)
+            assert np.isclose(val, 4.0)
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("ZZ"), frame_op_idx=(1, 1, 3)
             )
-            self.assertAlmostEqual(val, 4.0)
+            assert np.isclose(val, 4.0)
 
-        with self.subTest("Test index out of bounds.") and self.assertRaises(ValueError):
+        with subtests.test("Test index out of bounds.") and pytest.raises(ValueError):
             prod_frame.analysis(hermitian_op=Operator.from_label("II"), frame_op_idx=(2, 0, 0))
 
-        with self.subTest("Test index too short.") and self.assertRaises(ValueError):
+        with subtests.test("Test index too short.") and pytest.raises(ValueError):
             prod_frame.analysis(hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0))
 
-        with self.subTest("Test index too long.") and self.assertRaises(ValueError):
+        with subtests.test("Test index too long.") and pytest.raises(ValueError):
             prod_frame.analysis(hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 0, 0, 0))
 
-        with self.subTest("Test analysis method with set of indices.") and self.assertRaises(
-            KeyError
-        ):
+        with subtests.test("Test analysis method with set of indices.") and pytest.raises(KeyError):
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("II"), frame_op_idx={(0, 0, 0), (0, 1, 2)}
             )
-            self.assertIsInstance(val, dict)
-            self.assertAlmostEqual(val[0, 0, 0], 4.0)
-            self.assertAlmostEqual(val[0, 1, 2], 0.0)
+            assert isinstance(val, dict)
+            assert np.isclose(val[0, 0, 0], 4.0)
+            assert np.isclose(val[0, 1, 2], 0.0)
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("YZ"), frame_op_idx={(0, 0, 0), (1, 1, 2)}
             )
-            self.assertAlmostEqual(val[0, 0, 0], 0.0)
-            self.assertAlmostEqual(val[1, 1, 2], 4.0)
+            assert np.isclose(val[0, 0, 0], 0.0)
+            assert np.isclose(val[1, 1, 2], 4.0)
             val[0, 1, 2]
 
-        with self.subTest("Test analysis method with all indices."):
+        with subtests.test("Test analysis method with all indices."):
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("XZ") + Operator.from_label("II"),
                 frame_op_idx=None,
             )
-            self.assertIsInstance(val, np.ndarray)
-            self.assertEqual(val.shape, (2, 2, 4))
+            assert isinstance(val, np.ndarray)
+            assert val.shape == (2, 2, 4)
             expected_val = np.zeros(shape=(2, 2, 4))
             expected_val[0, 0, 0] = expected_val[1, 1, 1] = 4.0
-            self.assertTrue(np.allclose(val, expected_val))
+            assert np.allclose(val, expected_val)
 
         frame_2 = MultiQubitFrame([Operator.from_label(label) for label in paulis], shape=(1, 2, 2))
         prod_frame = ProductFrame.from_list([frame_0, frame_2])
-        with self.subTest("Test analysis method with special shape."):
+        with subtests.test("Test analysis method with special shape."):
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("II"), frame_op_idx=(0, 1, 0, 1, 0)
             )
-            self.assertAlmostEqual(val, 0.0)
+            assert np.isclose(val, 0.0)
             val = prod_frame.analysis(
                 hermitian_op=Operator.from_label("YX"), frame_op_idx=(0, 1, 0, 1, 0)
             )
-            self.assertAlmostEqual(val, 4.0)
+            assert np.isclose(val, 4.0)
 
-    def test_get_operator(self):
+    def test_get_operator(self, subtests):
         """Test that the ``get_operator`` method works correctly."""
         frame_0 = MultiQubitFrame([Operator.from_label(label) for label in ["I", "X", "Y", "Z"]])
         frame_1 = MultiQubitFrame([Operator.from_label(label) for label in ["0", "1"]])
         frame_product = ProductFrame.from_list(frames=[frame_0, frame_1])
 
-        with self.subTest("Test method works correctly"):
+        with subtests.test("Test method works correctly"):
             frame_op_idx = (0, 1)
             expected_snapshot = {(0,): Operator.from_label("I"), (1,): Operator.from_label("1")}
             snapshot = frame_product.get_operator(frame_op_idx)
-            self.assertDictEqual(snapshot, expected_snapshot)
+            assert snapshot == expected_snapshot
 
             frame_op_idx = (2, 0)
             expected_snapshot = {(0,): Operator.from_label("Y"), (1,): Operator.from_label("0")}
             snapshot = frame_product.get_operator(frame_op_idx)
-            self.assertDictEqual(snapshot, expected_snapshot)
+            assert snapshot == expected_snapshot
 
-        with self.subTest("invalid frame_op_idx") and self.assertRaises(IndexError):
+        with subtests.test("invalid frame_op_idx") and pytest.raises(IndexError):
             frame_op_idx = (10, 20)
             frame_product.get_operator(frame_op_idx)
