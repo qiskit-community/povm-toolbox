@@ -16,11 +16,11 @@ import sys
 from collections import Counter
 
 if sys.version_info < (3, 10):
-    from typing import Any
+    from typing import Any  # pragma: no cover
 
     # There is no way to support this type properly in python 3.9, which will be end of life in
     # November 2025 anyways.
-    EllipsisType = Any
+    EllipsisType = Any  # pragma: no cover
 else:
     from types import EllipsisType
 

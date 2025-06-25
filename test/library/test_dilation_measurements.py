@@ -56,7 +56,15 @@ class TestDilationMeasurements:
         povm = DilationMeasurements(1, parameters=0.1 * np.arange(8))
         assert povm.__repr__() == mub_str
 
-    def test_to_sampler_pub(self):
+    @pytest.mark.parametrize(
+        ["pauli", "expected_exp_val", "expected_std"],
+        [
+            ("ZI", -0.18749595202757485, 0.1428020261876306),
+            ("IZ", -0.18749696469140917, 0.14280207155875035),
+            ("XI", 0.8949297904387811, 0.16958103337866423),
+        ],
+    )
+    def test_to_sampler_pub(self, pauli: str, expected_exp_val: float, expected_std: float):
         """Test that the ``to_sampler_pub`` method works correctly."""
         num_qubits = 2
         qc = QuantumCircuit(2)
@@ -92,18 +100,10 @@ class TestDilationMeasurements:
 
         post_processor = POVMPostProcessor(pub_result)
 
-        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        observable = SparsePauliOp([pauli], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, -0.18749595202757485)
-        assert np.isclose(std, 0.1428020261876306)
-        observable = SparsePauliOp(["IZ"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, -0.18749696469140917)
-        assert np.isclose(std, 0.14280207155875035)
-        observable = SparsePauliOp(["XI"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 0.8949297904387811)
-        assert np.isclose(std, 0.16958103337866423)
+        assert np.isclose(exp_value, expected_exp_val)
+        assert np.isclose(std, expected_std)
 
     def test_definition(self, subtests):
         """Test that the ``definition`` method works correctly."""
@@ -162,7 +162,8 @@ class TestDilationMeasurements:
             )
             assert np.allclose(povm.get_bloch_vectors(), bloch_vectors_check)
 
-    def test_compose_circuit(self, subtests):
+    @pytest.mark.parametrize("num_qubits", [2, 3, 4, 5])
+    def test_compose_circuit(self, num_qubits: int):
         """Test that the ``compose_circuit`` method works correctly."""
         sampler = StatevectorSampler(seed=default_rng(self.SEED))
         povm_sampler = POVMSampler(sampler)
@@ -181,58 +182,16 @@ class TestDilationMeasurements:
                 ]
             ),
         )
-        with subtests.test("No idle qubits in input circuit."):
-            qc = QuantumCircuit(2)
-            qc.h(0)
-            qc.cx(0, 1)
-            job = povm_sampler.run([qc], shots=32, povm=measurement)
-            pub_result = job.result()[0]
-            assert pub_result.metadata.composed_circuit.num_qubits == 4
-            assert pub_result.metadata.composed_circuit.num_ancillas == 2
-            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
-            post_processor = POVMPostProcessor(pub_result)
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 2.051760590702834)
-            assert np.isclose(std, 1.115878952074859)
-        with subtests.test("Not enough idle qubits in input circuit."):
-            qc = QuantumCircuit(3)
-            qc.h(0)
-            qc.cx(0, 1)
-            measurement.measurement_layout = [0, 1]
-            job = povm_sampler.run([qc], shots=32, povm=measurement)
-            pub_result = job.result()[0]
-            assert pub_result.metadata.composed_circuit.num_qubits == 4
-            assert pub_result.metadata.composed_circuit.num_ancillas == 1
-            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
-            post_processor = POVMPostProcessor(pub_result)
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 2.6629118614521414)
-            assert np.isclose(std, 0.8490992540168614)
-        with subtests.test("Exactly enough idle qubits in input circuit."):
-            qc = QuantumCircuit(4)
-            qc.h(0)
-            qc.cx(0, 1)
-            measurement.measurement_layout = [0, 1]
-            job = povm_sampler.run([qc], shots=32, povm=measurement)
-            pub_result = job.result()[0]
-            assert pub_result.metadata.composed_circuit.num_qubits == 4
-            assert pub_result.metadata.composed_circuit.num_ancillas == 0
-            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
-            post_processor = POVMPostProcessor(pub_result)
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 1.1767743787146197)
-            assert np.isclose(std, 1.0595301460920068)
-        with subtests.test("Too many idle qubits in input circuit."):
-            qc = QuantumCircuit(5)
-            qc.h(0)
-            qc.cx(0, 1)
-            measurement.measurement_layout = [0, 1]
-            job = povm_sampler.run([qc], shots=32, povm=measurement)
-            pub_result = job.result()[0]
-            assert pub_result.metadata.composed_circuit.num_qubits == 5
-            assert pub_result.metadata.composed_circuit.num_ancillas == 0
-            observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
-            post_processor = POVMPostProcessor(pub_result)
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.7866208373769082)
-            assert np.isclose(std, 1.0328018649968345)
+        qc = QuantumCircuit(num_qubits)
+        qc.h(0)
+        qc.cx(0, 1)
+        measurement.measurement_layout = [0, 1]
+        job = povm_sampler.run([qc], shots=32, povm=measurement)
+        pub_result = job.result()[0]
+        assert pub_result.metadata.composed_circuit.num_qubits == max(4, num_qubits)
+        assert pub_result.metadata.composed_circuit.num_ancillas == max(4 - num_qubits, 0)
+        observable = SparsePauliOp(["XI", "XX", "YY", "ZX"], coeffs=[1, 1, -1, 1])
+        post_processor = POVMPostProcessor(pub_result)
+        exp_value, std = post_processor.get_expectation_value(observable)
+        assert np.isclose(exp_value, 2.051760590702834)
+        assert np.isclose(std, 1.115878952074859)

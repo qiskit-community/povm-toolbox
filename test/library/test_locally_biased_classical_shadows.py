@@ -11,6 +11,7 @@
 """Tests for the LocallyBiasedClassicalShadows class."""
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import LocallyBiasedClassicalShadows
@@ -41,7 +42,37 @@ class TestRandomizedPMs:
         self.Y0 = np.outer(basis_plus_i, basis_plus_i.conj())
         self.Y1 = np.outer(basis_minus_i, basis_minus_i.conj())
 
-    def test_init(self, subtests):
+    @pytest.mark.parametrize(
+        ["bias", "expected_outcomes"],
+        [
+            (
+                np.asarray([0.2, 0.3, 0.5]),
+                {
+                    "ZI": (0.9374999999999998, 0.3505108598934214),
+                    "ZY": (-1.2499999999999993, 0.593988704139364),
+                },
+            ),
+            (
+                np.asarray([[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]]),
+                {
+                    "ZI": (0.7291666666666665, 0.24749529339140175),
+                    "ZY": (-0.78125, 0.43626216977818505),
+                },
+            ),
+            (
+                [[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]],
+                {
+                    "ZI": (0.7291666666666665, 0.24749529339140175),
+                    "ZY": (-0.78125, 0.43626216977818505),
+                },
+            ),
+        ],
+    )
+    def test_init(
+        self,
+        bias: npt.ArrayLike,
+        expected_outcomes: dict[str, tuple[float, float]],
+    ):
         """Test the implementation of locally-biased classical shadows."""
 
         qc = QuantumCircuit(2)
@@ -49,74 +80,24 @@ class TestRandomizedPMs:
 
         num_qubits = qc.num_qubits
 
-        with subtests.test("Test uniform bias across qubits."):
-            measurement = LocallyBiasedClassicalShadows(
-                num_qubits,
-                bias=np.asarray([0.2, 0.3, 0.5]),
-                seed=self.SEED,
-            )
-            sampler = StatevectorSampler(seed=default_rng(self.SEED))
-            povm_sampler = POVMSampler(sampler=sampler)
+        measurement = LocallyBiasedClassicalShadows(
+            num_qubits,
+            bias=bias,
+            seed=self.SEED,
+        )
+        sampler = StatevectorSampler(seed=default_rng(self.SEED))
+        povm_sampler = POVMSampler(sampler=sampler)
 
-            job = povm_sampler.run([qc], shots=32, povm=measurement)
-            pub_result = job.result()[0]
+        job = povm_sampler.run([qc], shots=32, povm=measurement)
+        pub_result = job.result()[0]
 
-            post_processor = POVMPostProcessor(pub_result)
+        post_processor = POVMPostProcessor(pub_result)
 
-            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        for pauli, (expected_exp_val, expected_std) in expected_outcomes.items():
+            observable = SparsePauliOp([pauli], coeffs=[1.0])
             exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.9374999999999998)
-            assert np.isclose(std, 0.3505108598934214)
-            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, -1.2499999999999993)
-            assert np.isclose(std, 0.593988704139364)
-
-        with subtests.test("Test specific bias for each qubit."):
-            measurement = LocallyBiasedClassicalShadows(
-                num_qubits,
-                bias=np.asarray([[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]]),
-                seed=self.SEED,
-            )
-            sampler = StatevectorSampler(seed=default_rng(self.SEED))
-            povm_sampler = POVMSampler(sampler=sampler)
-
-            job = povm_sampler.run([qc], shots=32, povm=measurement)
-            pub_result = job.result()[0]
-
-            post_processor = POVMPostProcessor(pub_result)
-
-            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.7291666666666665)
-            assert np.isclose(std, 0.24749529339140175)
-            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, -0.78125)
-            assert np.isclose(std, 0.43626216977818505)
-
-        with subtests.test("Test `array_like` bias."):
-            measurement = LocallyBiasedClassicalShadows(
-                num_qubits,
-                bias=[[0.5, 0.1, 0.4], [0.3, 0.4, 0.3]],
-                seed=self.SEED,
-            )
-            sampler = StatevectorSampler(seed=default_rng(self.SEED))
-            povm_sampler = POVMSampler(sampler=sampler)
-
-            job = povm_sampler.run([qc], shots=32, povm=measurement)
-            pub_result = job.result()[0]
-
-            post_processor = POVMPostProcessor(pub_result)
-
-            observable = SparsePauliOp(["ZI"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, 0.7291666666666665)
-            assert np.isclose(std, 0.24749529339140175)
-            observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-            exp_value, std = post_processor.get_expectation_value(observable)
-            assert np.isclose(exp_value, -0.78125)
-            assert np.isclose(std, 0.43626216977818505)
+            assert np.isclose(exp_value, expected_exp_val)
+            assert np.isclose(std, expected_std)
 
     def test_qc_build(self):
         """Test if we can build a LB Classical Shadow POVM from the generic class"""

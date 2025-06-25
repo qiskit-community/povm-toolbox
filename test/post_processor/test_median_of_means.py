@@ -10,6 +10,10 @@
 
 """Tests for the MedianOfMeans class."""
 
+from __future__ import annotations
+
+from typing import Any
+
 import numpy as np
 import pytest
 from numpy.random import default_rng
@@ -51,44 +55,62 @@ class TestMedianOfMeans:
         with subtests.test("Invalid type for ``seed``.") and pytest.raises(TypeError):
             MedianOfMeans(self.pub_result, seed=1.2)
 
-    def test_get_expectation_value(self, subtests):
+    @pytest.mark.parametrize(
+        [
+            "kwargs",
+            "expected_num_batches",
+            "expected_delta",
+            "expected_exp_val",
+            "expected_eps",
+        ],
+        [
+            (
+                {"seed": 3433},
+                8,
+                0.03663127777746836,
+                1.125,
+                2.9154759474226504,
+            ),
+            (
+                {"seed": 3433, "upper_delta_confidence": 0.1},
+                6,
+                0.09957413673572789,
+                -0.75,
+                2.6076809620810595,
+            ),
+            (
+                {"seed": 3433, "num_batches": 4},
+                4,
+                0.2706705664732254,
+                0.0,
+                2.0615528128088303,
+            ),
+            (
+                {"num_batches": 8},
+                8,
+                0.03663127777746836,
+                None,  # cannot assert the expectational value with a random seed
+                2.9154759474226504,
+            ),
+        ],
+    )
+    def test_get_expectation_value(
+        self,
+        kwargs: dict[str, Any],
+        expected_num_batches: int,
+        expected_delta: float,
+        expected_exp_val: float | None,
+        expected_eps: float,
+    ):
         """Test that the ``get_expectation_value`` method works correctly."""
-        with subtests.test("Test with default ``delta_confidence`` argument."):
-            post_processor = MedianOfMeans(self.pub_result, seed=self.SEED)
-            observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
-            exp_val, epsilon_coef = post_processor.get_expectation_value(observable)
-            assert post_processor.num_batches == 8
-            assert np.isclose(post_processor.delta_confidence, 0.03663127777746836)
-            assert np.isclose(exp_val, 1.125)
-            assert np.isclose(epsilon_coef, 2.9154759474226504)
-
-        with subtests.test("Test with specified ``delta_confidence`` argument."):
-            post_processor = MedianOfMeans(
-                self.pub_result, upper_delta_confidence=0.1, seed=self.SEED
-            )
-            observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
-            exp_val, epsilon_coef = post_processor.get_expectation_value(observable)
-            assert post_processor.num_batches == 6
-            assert np.isclose(post_processor.delta_confidence, 0.09957413673572789)
-            assert np.isclose(exp_val, -0.7500000000000003)
-            assert np.isclose(epsilon_coef, 2.6076809620810595)
-
-        with subtests.test("Test with specified ``num_batches`` argument."):
-            post_processor = MedianOfMeans(self.pub_result, num_batches=4, seed=self.SEED)
-            observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
-            exp_val, epsilon_coef = post_processor.get_expectation_value(observable)
-            assert post_processor.num_batches == 4
-            assert np.isclose(post_processor.delta_confidence, 0.2706705664732254)
-            assert np.isclose(exp_val, -4.440892098500626e-16)
-            assert np.isclose(epsilon_coef, 2.0615528128088303)
-
-        with subtests.test("Test with random ``seed`` argument."):
-            post_processor = MedianOfMeans(self.pub_result, num_batches=8)
-            assert post_processor.num_batches == 8
-            assert np.isclose(post_processor.delta_confidence, 0.03663127777746836)
-            observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
-            _, epsilon_coef = post_processor.get_expectation_value(observable)
-            assert np.isclose(epsilon_coef, 2.9154759474226504)
+        post_processor = MedianOfMeans(self.pub_result, **kwargs)
+        observable = SparsePauliOp(["ZZ", "XX", "YY"], coeffs=[1, 2, 3])
+        exp_val, epsilon_coef = post_processor.get_expectation_value(observable)
+        assert post_processor.num_batches == expected_num_batches
+        assert np.isclose(post_processor.delta_confidence, expected_delta)
+        if expected_exp_val is not None:
+            assert np.isclose(exp_val, expected_exp_val)
+        assert np.isclose(epsilon_coef, expected_eps)
 
     def test_delta_confidence(self):
         """Test that the ``delta_confidence`` property and setter work correctly."""
