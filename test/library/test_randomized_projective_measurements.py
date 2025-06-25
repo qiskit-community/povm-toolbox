@@ -14,7 +14,6 @@ from collections import Counter
 
 import numpy as np
 import pytest
-import qiskit
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasurements
 from povm_toolbox.library.metadata import POVMMetadata
@@ -152,11 +151,15 @@ class TestRandomizedPMs:
 
             assert qc.num_qubits == num_qubits
 
-    @pytest.mark.skipif(
-        not qiskit.__version__.startswith("1"),
-        reason="https://github.com/qiskit-community/povm-toolbox/issues/109",
+    @pytest.mark.parametrize(
+        ["pauli", "expected_exp_val", "expected_std"],
+        [
+            ("ZI", 1.0156250000000002, 0.1785027593993689),
+            ("IZ", 0.1171875000000002, 0.17940912620515942),
+            ("XI", 0.04822534966686553, 0.2793620349223184),
+        ],
     )
-    def test_to_sampler_pub(self):
+    def test_to_sampler_pub(self, pauli: str, expected_exp_val: float, expected_std: float):
         """Test that the ``to_sampler_pub`` method works correctly."""
         num_qubits = 2
         qc = QuantumCircuit(2)
@@ -167,7 +170,12 @@ class TestRandomizedPMs:
             sampler=Sampler(backend=backend, options={"seed_simulator": self.SEED})
         )
 
-        pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
+        pm = generate_preset_pass_manager(
+            optimization_level=0,
+            initial_layout=[0, 1],
+            backend=backend,
+            seed_transpiler=self.SEED,
+        )
 
         measurement = RandomizedProjectiveMeasurements(
             num_qubits,
@@ -181,18 +189,10 @@ class TestRandomizedPMs:
 
         post_processor = POVMPostProcessor(pub_result)
 
-        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        observable = SparsePauliOp([pauli], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 1.015624999999999)
-        assert np.isclose(std, 0.17850275939936872)
-        observable = SparsePauliOp(["IZ"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 0.8203124999999986)
-        assert np.isclose(std, 0.16430837874418103)
-        observable = SparsePauliOp(["XI"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        assert np.isclose(exp_value, 0.48385279322581587)
-        assert np.isclose(std, 0.27607615877584807)
+        assert np.isclose(exp_value, expected_exp_val)
+        assert np.isclose(std, expected_std)
 
     def test_binding_parameters(self):
         num_qubits = 2

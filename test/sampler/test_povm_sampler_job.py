@@ -96,7 +96,10 @@ class TestPOVMSamplerJob:
         backend = FakeManilaV2()
         backend.set_options(seed_simulator=self.SEED)
         pm = generate_preset_pass_manager(
-            optimization_level=2, backend=backend, seed_transpiler=self.SEED
+            optimization_level=0,
+            initial_layout=[0, 1],
+            backend=backend,
+            seed_transpiler=self.SEED,
         )
 
         qc_isa = pm.run(qc)
@@ -174,7 +177,10 @@ class TestPOVMSamplerJob:
 
         backend = service.backend(name=qpu)
         pm = generate_preset_pass_manager(
-            optimization_level=2, backend=backend, seed_transpiler=self.SEED
+            optimization_level=0,
+            initial_layout=[0, 1],
+            backend=backend,
+            seed_transpiler=self.SEED,
         )
 
         qc_isa = pm.run(qc)
