@@ -14,6 +14,7 @@ from collections import Counter
 
 import numpy as np
 import pytest
+import qiskit
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows, RandomizedProjectiveMeasurements
 from povm_toolbox.library.metadata import POVMMetadata
@@ -155,8 +156,16 @@ class TestRandomizedPMs:
         ["pauli", "expected_exp_val", "expected_std"],
         [
             ("ZI", 1.0156250000000002, 0.1785027593993689),
-            ("IZ", 0.1171875000000002, 0.17940912620515942),
-            ("XI", 0.04822534966686553, 0.2793620349223184),
+            (
+                "IZ",
+                0.1171875000000002 if qiskit.__version__.startswith("2") else 0.8203125000000001,
+                0.17940912620515942,
+            ),
+            (
+                "XI",
+                0.04822534966686553 if qiskit.__version__.startswith("2") else 0.48385279322581426,
+                0.2793620349223184,
+            ),
         ],
     )
     def test_to_sampler_pub(self, pauli: str, expected_exp_val: float, expected_std: float):
