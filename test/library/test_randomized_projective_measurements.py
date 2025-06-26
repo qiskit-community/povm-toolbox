@@ -156,6 +156,12 @@ class TestRandomizedPMs:
         ["pauli", "expected_exp_val", "expected_std"],
         [
             ("ZI", 1.0156250000000002, 0.1785027593993689),
+            # NOTE: the seemingly random differentiation based on the Qiskit version below are a
+            # simple artifact of a change in simulator seed handling. This results in vastly
+            # different samples being generated for this circuit which in turn results in vastly
+            # different expectation values (since we have a very small number of shots to being
+            # with). It is a pure coincidence that this only shows up for the following two test
+            # cases and not anywhere else.
             (
                 "IZ",
                 0.1171875000000002 if qiskit.__version__.startswith("2") else 0.8203125000000001,
