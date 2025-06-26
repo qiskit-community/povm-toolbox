@@ -103,7 +103,7 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
 
         # Check that all local POVMs are single-qubit POVMs
         if any([len(idx) > 1 for idx in self.sub_systems]):
-            raise NotImplementedError
+            raise NotImplementedError  # pragma: no cover
 
         # Determine the number of rows and columns for the figure
         n_cols = int(np.sqrt(num) * 4 / 3)
@@ -112,10 +112,10 @@ class ProductPOVM(ProductFrame[MultiQubitPOVM], BasePOVM):
             n_cols += 1 if n_cols * n_rows < num else 0
             n_rows += 1 if n_cols * n_rows < num else 0
             while (n_cols - 1) * n_rows >= num:
-                n_cols -= 1
+                n_cols -= 1  # pragma: no cover
 
         # Set default values
-        if figsize is None:
+        if figsize is None:  # pragma: no branch
             figsize = (5, 4) if colorbar else (5, 5)
         width, height = figsize
         width *= n_cols

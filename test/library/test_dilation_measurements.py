@@ -59,9 +59,9 @@ class TestDilationMeasurements:
     @pytest.mark.parametrize(
         ["pauli", "expected_exp_val", "expected_std"],
         [
-            ("ZI", -0.18749595202757485, 0.1428020261876306),
-            ("IZ", -0.18749696469140917, 0.14280207155875035),
-            ("XI", 0.8949297904387811, 0.16958103337866423),
+            ("ZI", -0.18749696469140853, 0.1428020715587502),
+            ("IZ", -0.18750068585105134, 0.1428022382724095),
+            ("XI", 0.8949297904387798, 0.16958103337866398),
         ],
     )
     def test_to_sampler_pub(self, pauli: str, expected_exp_val: float, expected_std: float):
@@ -76,7 +76,10 @@ class TestDilationMeasurements:
         )
 
         pm = generate_preset_pass_manager(
-            optimization_level=2, backend=backend, seed_transpiler=self.SEED
+            optimization_level=0,
+            initial_layout=[0, 1, 2, 3],
+            backend=backend,
+            seed_transpiler=self.SEED,
         )
 
         measurement = DilationMeasurements(

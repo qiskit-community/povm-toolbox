@@ -175,6 +175,10 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
                 service = QiskitRuntimeService()  # pragma: no cover
             # Load the ``BasePrimitiveJob`` object:
             base_job = service.job(job_id)
+            # NOTE: if your local coverage test failed because the above line is not covered, that
+            # is to be expected because your local development environment likely does not have the
+            # right authentications saved to run the corresponding test. This is covered in CI, so
+            # if that passes, all is good.
         elif base_job.job_id() != job_id:
             raise ValueError(
                 f"The ID of the supplied job ({base_job.job_id()}) does not match the ID stored in "
