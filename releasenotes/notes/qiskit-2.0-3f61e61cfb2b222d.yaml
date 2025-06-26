@@ -1,4 +1,0 @@
----
-upgrade:
-  - |
-    This package is now compatible with Qiskit SDK 2.0.
