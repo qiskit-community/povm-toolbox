@@ -24,14 +24,39 @@ from povm_toolbox.quantum_info.base import BaseDual
 
 
 class SparseArray:
-    def __init__(self, shape: tuple[int, ...]):
-        self._array = dict()
+    """_summary_."""
+
+    def __init__(self, shape: tuple[int, ...]) -> None:
+        """_summary_.
+
+        Args:
+            shape: _description_
+        """
+        self._array: dict[tuple[int, ...], float] = dict()
         self._shape = shape
 
-    def __getitem__(self, key: tuple[int, ...]):
+    def __getitem__(self, key: tuple[int, ...]) -> float:
+        """_summary_.
+
+        Args:
+            key: _description_
+
+        Returns:
+            _description_
+        """
         return self._array.get(key, 0.0)
 
-    def __setitem__(self, key: tuple[int, ...], value: float):
+    def __setitem__(self, key: tuple[int, ...], value: float) -> None:
+        """_summary_.
+
+        Args:
+            key: _description_
+            value: _description_
+
+        Raises:
+            KeyError: _description_
+            KeyError: _description_
+        """
         if len(key) != len(self._shape):
             raise KeyError(
                 f"Index length ({len(key)}) does not match the dimension ({len(self._shape)}) of the array"
@@ -42,58 +67,121 @@ class SparseArray:
         self._array[key] = value
 
     def __repr__(self) -> str:
+        """_summary_.
+
+        Returns:
+            _description_
+        """
         return self._array.__repr__()
 
 
 class MutualInformationOptimizer:
-    def __init__(self, outcome_counts, outcome_dims, subsystem_sizes):
+    """_summary_."""
+
+    def __init__(
+        self,
+        outcome_counts: dict[tuple[int, ...], int],
+        outcome_dims: np.ndarray,
+        subsystem_sizes: list[int],
+    ) -> None:
+        """_summary_.
+
+        Args:
+            outcome_counts: _description_
+            outcome_dims: _description_
+            subsystem_sizes: _description_
+        """
         self.counts = outcome_counts
         self._outcome_dims = outcome_dims
         self._subsystem_sizes = subsystem_sizes
 
-    def mutual_info(self, subset):
-        mask = np.asarray(
-            [idx in subset for idx in range(len(self._outcome_dims))],
-            dtype=np.bool,
-        )
+    def mutual_info(self, subset: set) -> float:
+        """_summary_.
 
+        Args:
+            subset: _description_
+
+        Returns:
+            _description_
+        """
         shots = sum(self.counts.values())
-        marginals = [SparseArray(self._outcome_dims[mask]), SparseArray(self._outcome_dims[~mask])]
+
+        # Ensure subset is a set for fast lookup
+        subset = set(subset)
+        subset_complement = set(range(len(self._outcome_dims))) - subset
+
+        # Precompute included and excluded dimensions
+        included_dims: list[int] = []
+        excluded_dims: list[int] = []
+        for idx, dim in enumerate(self._outcome_dims):
+            (included_dims if idx in subset else excluded_dims).append(dim)
+
+        # Initialize marginals
+        marginals = [SparseArray(tuple(included_dims)), SparseArray(tuple(excluded_dims))]
+
+        # Precompute marginals and cache outcome arrays
+        outcome_arrays = {}
         for outcome, count in self.counts.items():
             outcome_arr = np.asarray(outcome)
-            marginals[0][tuple(outcome_arr[mask])] += count / shots
-            marginals[1][tuple(outcome_arr[~mask])] += count / shots
+            outcome_arrays[outcome] = outcome_arr
 
+            included_outcome = tuple(outcome_arr[idx] for idx in subset)
+            excluded_outcome = tuple(outcome_arr[idx] for idx in subset_complement)
+
+            marginals[0][included_outcome] += count / shots
+            marginals[1][excluded_outcome] += count / shots
+
+        # Compute mutual information
         mut_info = 0.0
         for outcome, count in self.counts.items():
-            outcome_arr = np.asarray(outcome)
-            mut_info += (
-                count
-                / shots
-                * np.log(
-                    count
-                    / shots
-                    / (
-                        marginals[0][tuple(outcome_arr[mask])]
-                        * marginals[1][tuple(outcome_arr[~mask])]
-                    )
-                )
-            )
+            outcome_arr = outcome_arrays[outcome]
+            included_outcome = tuple(outcome_arr[idx] for idx in subset)
+            excluded_outcome = tuple(outcome_arr[idx] for idx in subset_complement)
+
+            joint_prob = count / shots
+            marginal_prob = marginals[0][included_outcome] * marginals[1][excluded_outcome]
+            mut_info += joint_prob * np.log(joint_prob / marginal_prob)
+
         return mut_info
 
-    def total_mi(self, partition):
+    def total_mi(self, partition: list[set]) -> float:
+        """_summary_.
+
+        Args:
+            partition: _description_
+
+        Returns:
+            _description_
+        """
         total_mi = 0.0
         for subset in partition:
             total_mi += self.mutual_info(subset)
         return total_mi
 
-    def subsystem_size(self, subset):
+    def subsystem_size(self, subset: set) -> int:
+        """_summary_.
+
+        Args:
+            subset: _description_
+
+        Returns:
+            _description_
+        """
         k = 0
         for i in subset:
             k += self._subsystem_sizes[i]
         return k
 
-    def greedy_combine(self, partition, k_max):
+    def greedy_combine(self, partition: list[set], k_max: int) -> list[set] | None:
+        """_summary_.
+
+        Args:
+            partition: _description_
+            k_max: _description_
+
+        Returns:
+            _description_
+        """
         argmin = None
         min_value = self.total_mi(partition)
         for i in range(len(partition)):
@@ -109,9 +197,17 @@ class MutualInformationOptimizer:
                         argmin = test_partition
         return argmin
 
-    def greedy_search(self, k_max):
+    def greedy_search(self, k_max: int) -> list[set]:
+        """_summary_.
+
+        Args:
+            k_max: _description_
+
+        Returns:
+            _description_
+        """
         partition = [{i} for i in range(len(self._outcome_dims))]
-        argmin = partition
+        argmin: list[set] | None = partition
         while argmin is not None:
             argmin = self.greedy_combine(partition, k_max)
             partition = argmin if argmin is not None else partition
@@ -125,11 +221,14 @@ def dual_from_k_local_empirical_frequencies(
     bias: int | None = None,
     k_max: int = 1,
 ) -> BaseDual:
-    """TODO (Return the k-local Dual frame of ``povm`` based on the frequencies of the sampled outcomes.)
+    """TODO.
+
+    (Return the k-local Dual frame of ``povm`` based on the frequencies of the sampled outcomes.)
     Given outcomes sampled from a :class:`.ProductPOVM`, each local Dual frame is parametrized with
     the alpha-parameters set as the marginal outcome frequencies. For stability, the (local)
     empirical frequencies can be biased towards the (marginal) outcome probabilities of an
     ``ansatz`` state.
+
     Args:
         povm_post_processor: the :class:`.POVMPostProcessor` object from which to extract the
             :attr:`.POVMPostProcessor.povm` and the empirical frequencies to build the Dual frame.
@@ -137,13 +236,16 @@ def dual_from_k_local_empirical_frequencies(
             supplied to the sampler in the same Pub. If ``None``, it is assumed that the supplied
             circuit was not parametrized or that a unique set of parameter values was supplied. In
             this case, ``loc`` is trivially set to 0.
+        bias: TODO.
         k_max: TODO.
+
     Raises:
         NotImplementedError: if :attr:`.POVMPostProcessor.povm` is not a :class:`.ProductPOVM`
             instance.
         ValueError: if ``loc`` is ``None`` and :attr:`.POVMPostProcessor.counts` stores more than a
             single counter (i.e., multiple sets of parameter values were supplied to the sampler in
             a single Pub).
+
     Returns:
         TODO (The Dual frame based on the empirical outcome frequencies from the post-processed result.)
     """
@@ -167,18 +269,27 @@ def dual_from_k_local_empirical_frequencies(
     povm_dims = [list(povm._frames.values())[i].num_subsystems for i in range(len(povm._frames))]
     optimizer = MutualInformationOptimizer(counts, povm_shape, subsystem_sizes=povm_dims)
     partition = optimizer.greedy_search(k_max)
-    partition = [list(subset) for subset in partition]
-    povm_grouped = povm.group(partition)
+    partition_as_list = [list(subset) for subset in partition]
+    povm_grouped = povm.group(partition_as_list)
 
-    marginals = [np.zeros(np.prod(povm_shape[np.asarray(sub_system)])) for sub_system in partition]
+    marginals = [
+        np.zeros(np.prod(povm_shape[np.asarray(sub_system)])) for sub_system in partition_as_list
+    ]
 
     # Computing marginals
     shots = sum(counts.values())
     for outcome, count in counts.items():
         outcome_arr = np.asarray(outcome)
-        for i, subset in enumerate(partition):
-            mask = np.asarray([idx in subset for idx in range(len(povm_shape))], dtype=np.bool)
-            sub_outcome = np.ravel_multi_index(outcome_arr[mask], povm_shape[mask])
+        for i, subset in enumerate(partition_as_list):
+            # mask = np.asarray([idx in subset for idx in range(len(povm_shape))], dtype=np.bool)
+            # sub_outcome = np.ravel_multi_index(outcome_arr[mask], povm_shape[mask])
+            outcome_and_shape = [
+                (outcome_arr[idx], povm_shape[idx])
+                for idx in range(len(povm_shape))
+                if idx in subset
+            ]
+            outcome_subarr, povm_subshape = list(zip(*outcome_and_shape))
+            sub_outcome = np.ravel_multi_index(outcome_subarr, povm_subshape)
             marginals[i][sub_outcome] += count / shots
 
     alphas = []
