@@ -13,11 +13,21 @@
 from __future__ import annotations
 
 import logging
+import sys
 import time
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import copy
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
+
+if sys.version_info < (3, 10):
+    from typing import Any  # pragma: no cover
+
+    # There is no way to support this type properly in python 3.9, which will be end of life in
+    # November 2025 anyways.
+    EllipsisType = Any  # pragma: no cover
+else:
+    from types import EllipsisType
 
 import numpy as np
 from qiskit.circuit import AncillaRegister, QuantumCircuit
@@ -151,7 +161,7 @@ class POVMImplementation(ABC, Generic[MetadataT]):
             circuit: The quantum circuit to be sampled from.
 
         Raises:
-            ValueError: if the number of qubits specified by `self.measurement_layout` does not
+            ValueError: if the number of qubits specified by ``self.measurement_layout`` does not
                 match the number of qubits on which this POVM implementation acts.
             CircuitError: if an error has occurred when adding the classic register, used to save
                 POVM results, to the input circuit.
@@ -274,14 +284,22 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         bit_array: BitArray,
         povm_metadata: MetadataT,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: tuple[int, ...],
     ) -> list[tuple[int, ...]]:
         """Convert the raw bitstrings into POVM outcomes based on the associated metadata.
 
         Args:
             bit_array: The raw bitstrings.
             povm_metadata: The associated metadata.
-            loc: an optional location to slice the bitstrings.
+            loc: index of the element of the ``bit_array`` from which return the outcomes. More
+                precisely, ``bit_array`` has the shape of the array of parameter sets provided to this
+                ``POVMSamplerPub`` and ``loc`` must specify exactly one of the parameter set. Therefore,
+                we must have ``len(loc)==len(bit_array.shape)``. Especially, if no parameter sets were
+                provided in the pub -- i.e., the quantum circuit was not parametrized or already
+                bound -- then ``loc`` must be an empty tuple ``(,)``.
+
+        Raises:
+            ValueError: if ``loc`` is not compatible with the shape of ``bit_array``.
 
         Returns:
             The converted POVM outcomes.
@@ -292,59 +310,81 @@ class POVMImplementation(ABC, Generic[MetadataT]):
         data: DataBin,
         povm_metadata: MetadataT,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: int | tuple[int, ...] | EllipsisType | None = None,
     ) -> np.ndarray | Counter:
         """Get the POVM counts.
 
         Args:
             data: The raw sampled data.
             povm_metadata: The associated metadata.
-            loc: an optional location to slice the bitstrings.
+            loc: specifies the location of the counts to return. By default, ``None`` is used, which
+                aggregates all counts from a single PUB. If ``loc=...``, all counts from the PUB are
+                returned, but separately. If ``loc`` is a tuple of integers, it must define a single
+                parameter set. Refer to
+                `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            The POVM counts.
+            The POVM counts. If ``loc=...``, an ``np.ndarray`` of counters is returned. Otherwise, a
+            single counter is returned.
         """
-        bit_array = self._get_bitarray(data)
+        samples = self.get_povm_outcomes_from_raw(data, povm_metadata, loc=loc)
 
-        if loc is not None:
-            return Counter(self._povm_outcomes(bit_array, povm_metadata, loc=loc))
+        if loc is Ellipsis:
+            # When ``loc`` is an ``Ellipsis``, samples is guaranteed to be an ``np.ndarray``
+            samples = cast(np.ndarray, samples)
+            shape = samples.shape
+            outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
+            for idx in np.ndindex(shape):
+                outcomes_array[idx] = Counter(samples[idx])
+            return outcomes_array
 
-        if bit_array.ndim == 0:
-            return cast(
-                np.ndarray,
-                np.array([Counter(self._povm_outcomes(bit_array, povm_metadata))], dtype=object),
-            )
-
-        shape = bit_array.shape
-        outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
-        for idx in np.ndindex(shape):
-            outcomes_array[idx] = Counter(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
-        return outcomes_array
+        return Counter(samples)
 
     def get_povm_outcomes_from_raw(
         self,
         data: DataBin,
         povm_metadata: MetadataT,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: int | tuple[int, ...] | EllipsisType | None = None,
     ) -> np.ndarray | list[tuple[int, ...]]:
-        """Get the POVM bitstrings.
+        """Get the POVM outcomes.
 
         Args:
             data: The raw sampled data.
             povm_metadata: The associated metadata.
-            loc: an optional location to slice the bitstrings.
+            loc: specifies the location of the outcomes to return. By default, ``None`` is used,
+                which aggregates all outcomes from a single PUB. If ``loc=...``, all outcomes from
+                the PUB are returned, but separately. If ``loc`` is a tuple of integers, it must
+                define a single parameter set. Refer to
+                `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            The POVM bitstrings.
+            The list of POVM outcomes. If ``loc=...``, an ``np.ndarray`` of outcome lists is returned.
+            Otherwise, a single outcome list is returned.
         """
         bit_array = self._get_bitarray(data)
 
-        if loc is not None or bit_array.ndim == 0:
-            return self._povm_outcomes(bit_array, povm_metadata, loc=loc)
+        if loc is None:
+            outcomes: list[tuple[int, ...]] = []
+            for idx in np.ndindex(bit_array.shape):
+                outcomes.extend(self._povm_outcomes(bit_array, povm_metadata, loc=idx))
+            return outcomes
 
-        shape = bit_array.shape
-        outcomes_array: np.ndarray = np.ndarray(shape=shape, dtype=object)
-        for idx in np.ndindex(shape):
-            outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, loc=idx)
-        return outcomes_array
+        if loc is Ellipsis:
+            outcomes_array: np.ndarray
+            if bit_array.ndim == 0:
+                outcomes_array = np.ndarray(shape=(1,), dtype=object)
+                loc = tuple()
+                outcomes_array[0] = self._povm_outcomes(bit_array, povm_metadata, loc=loc)
+                return outcomes_array
+
+            shape = bit_array.shape
+
+            outcomes_array = np.ndarray(shape=shape, dtype=object)
+            for idx in np.ndindex(shape):
+                outcomes_array[idx] = self._povm_outcomes(bit_array, povm_metadata, loc=idx)
+            return outcomes_array
+
+        if isinstance(loc, int):
+            loc = (loc,)
+        return self._povm_outcomes(bit_array, povm_metadata, loc=loc)

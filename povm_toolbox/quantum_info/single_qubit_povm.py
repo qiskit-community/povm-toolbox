@@ -33,7 +33,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
     >>> import cmath
     >>> import numpy as np
     >>> from povm_toolbox.quantum_info import SingleQubitPOVM
-    >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+    >>> vecs = np.sqrt(1.0 / 2.0) * np.asarray(
     ...     [
     ...         [1, 0],
     ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
@@ -78,7 +78,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
         >>> import cmath
         >>> import numpy as np
         >>> from povm_toolbox.quantum_info import SingleQubitPOVM
-        >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+        >>> vecs = np.sqrt(1.0 / 2.0) * np.asarray(
         ...     [
         ...         [1, 0],
         ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
@@ -132,7 +132,7 @@ class SingleQubitPOVM(MultiQubitPOVM):
            >>> import cmath
            >>> import numpy as np
            >>> from povm_toolbox.quantum_info import SingleQubitPOVM
-           >>> vecs = np.sqrt(1.0 / 2.0) * np.array(
+           >>> vecs = np.sqrt(1.0 / 2.0) * np.asarray(
            ...     [
            ...         [1, 0],
            ...         [np.sqrt(1.0 / 3.0), np.sqrt(2.0 / 3.0)],
@@ -168,11 +168,11 @@ class SingleQubitPOVM(MultiQubitPOVM):
 
         if colorbar:
             # Keep track of vector norms through colorbar
-            cmap = mpl.colormaps["viridis"]
-            B.vector_color = [cmap(np.linalg.norm(vec)) for vec in vectors]
+            cmap = mpl.colormaps["viridis"]  # pragma: no cover
+            B.vector_color = [cmap(np.linalg.norm(vec)) for vec in vectors]  # pragma: no cover
             # Normalize
-            for i in range(len(vectors)):
-                vectors[i] /= np.linalg.norm(vectors[i])
+            for i in range(len(vectors)):  # pragma: no cover
+                vectors[i] /= np.linalg.norm(vectors[i])  # pragma: no cover
 
         B.add_vectors(vectors)
         B.render(title=title)
@@ -185,6 +185,8 @@ class SingleQubitPOVM(MultiQubitPOVM):
             matplotlib_close_if_inline(figure)
 
         if colorbar:
-            figure.colorbar(mpl.cm.ScalarMappable(cmap=cmap), ax=axes, label="weight")
+            figure.colorbar(  # pragma: no cover
+                mpl.cm.ScalarMappable(cmap=cmap), ax=axes, label="weight"
+            )
 
         return figure

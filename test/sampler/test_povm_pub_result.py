@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -11,9 +11,9 @@
 """Tests for the POVMPostProcessor class."""
 
 from collections import Counter
-from unittest import TestCase
 
 import numpy as np
+import pytest
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.sampler import POVMSampler
 from qiskit import QuantumCircuit, qpy
@@ -21,14 +21,13 @@ from qiskit.circuit import Parameter
 from qiskit.primitives import StatevectorSampler as Sampler
 
 
-class TestPostProcessor(TestCase):
+class TestPostProcessor:
     """Test the methods and attributes of the :class:`.POVMPostProcessor class`."""
 
     SEED = 42
 
+    @pytest.fixture(autouse=True)
     def setUp(self) -> None:
-        super().setUp()
-
         # Load the circuit that was obtained through:
         #   from qiskit.circuit.random import random_circuit
         #   qc = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=10)
@@ -51,66 +50,66 @@ class TestPostProcessor(TestCase):
             [(3, 5), (4, 5), (2, 1), (4, 3), (2, 3), (0, 1), (2, 1), (1, 3), (4, 1), (3, 5)],
         ]
 
-    def test_metadata(self):
+    def test_metadata(self, subtests):
         """Test that ``metadata`` property works correctly."""
         metadata = self.pub_result.metadata
-        with self.subTest("Test `composed_circuit`."):
-            self.assertIsInstance(metadata.composed_circuit, QuantumCircuit)
-        with self.subTest("Test `povm_implementation`."):
-            self.assertIs(metadata.povm_implementation, self.measurement)
-        with self.subTest("Test `pvm_keys`."):
-            self.assertTrue(
-                np.all(
-                    metadata.pvm_keys
-                    == np.array(
+        with subtests.test("Test `composed_circuit`."):
+            assert isinstance(metadata.composed_circuit, QuantumCircuit)
+
+        with subtests.test("Test `povm_implementation`."):
+            assert metadata.povm_implementation is self.measurement
+
+        with subtests.test("Test `pvm_keys`."):
+            assert np.all(
+                metadata.pvm_keys
+                == np.asarray(
+                    [
                         [
-                            [
-                                [2, 2],
-                                [1, 1],
-                                [2, 2],
-                                [2, 2],
-                                [0, 2],
-                                [2, 0],
-                                [2, 1],
-                                [2, 0],
-                                [0, 0],
-                                [1, 2],
-                            ],
-                            [
-                                [1, 2],
-                                [2, 2],
-                                [1, 0],
-                                [2, 1],
-                                [1, 1],
-                                [0, 0],
-                                [1, 0],
-                                [0, 1],
-                                [2, 0],
-                                [1, 2],
-                            ],
-                        ]
-                    )
+                            [2, 2],
+                            [1, 1],
+                            [2, 2],
+                            [2, 2],
+                            [0, 2],
+                            [2, 0],
+                            [2, 1],
+                            [2, 0],
+                            [0, 0],
+                            [1, 2],
+                        ],
+                        [
+                            [1, 2],
+                            [2, 2],
+                            [1, 0],
+                            [2, 1],
+                            [1, 1],
+                            [0, 0],
+                            [1, 0],
+                            [0, 1],
+                            [2, 0],
+                            [1, 2],
+                        ],
+                    ]
                 )
             )
 
-    def test_get_counts(self):
+    def test_get_counts(self, subtests):
         """Test that the ``get_counts`` method works correctly."""
-        with self.subTest("No loc"):
-            counts = self.pub_result.get_counts()
-            self.assertEqual(counts[0], Counter(self.samples_check[0]))
-            self.assertEqual(counts[1], Counter(self.samples_check[1]))
+        with subtests.test("No loc"):
+            counts = self.pub_result.get_counts(loc=...)
+            assert counts[0] == Counter(self.samples_check[0])
+            assert counts[1] == Counter(self.samples_check[1])
 
-        with self.subTest("With loc"):
+        with subtests.test("With loc"):
             counts = self.pub_result.get_counts(loc=1)
-            self.assertEqual(counts, Counter(self.samples_check[1]))
+            assert counts == Counter(self.samples_check[1])
 
-    def test_get_samples(self):
+    def test_get_samples(self, subtests):
         """Test that the ``get_samples`` method works correctly."""
-        with self.subTest("No loc"):
-            samples = self.pub_result.get_samples()
-            self.assertSequenceEqual(samples[0], self.samples_check[0])
-            self.assertSequenceEqual(samples[1], self.samples_check[1])
+        with subtests.test("No loc"):
+            samples = self.pub_result.get_samples(loc=...)
+            assert samples[0] == self.samples_check[0]
+            assert samples[1] == self.samples_check[1]
 
-        with self.subTest("With loc"):
+        with subtests.test("With loc"):
             samples = self.pub_result.get_samples(loc=1)
-            self.assertSequenceEqual(samples, self.samples_check[1])
+            assert samples == self.samples_check[1]

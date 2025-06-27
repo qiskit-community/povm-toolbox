@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
+import numpy.typing as npt
 from numpy.random import Generator
 from scipy.spatial.transform import Rotation
 
@@ -41,8 +42,8 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
        >>> from povm_toolbox.library import MutuallyUnbiasedBasesMeasurements
        >>> povm = MutuallyUnbiasedBasesMeasurements(
        ...     2,
-       ...     bias=np.array([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
-       ...     angles=np.array([[np.pi/4, np.pi/4, np.pi/4], [np.pi/3, np.pi/6, np.pi/3]]),
+       ...     bias=np.asarray([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
+       ...     angles=np.asarray([[np.pi/4, np.pi/4, np.pi/4], [np.pi/3, np.pi/6, np.pi/3]]),
        ... )
        >>> print(povm)
        MutuallyUnbiasedBasesMeasurements(num_qubits=2, bias=array([[0.1 , 0.6 , 0.3 ], [0.5 , 0.25, 0.25]]),
@@ -54,8 +55,8 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
     def __init__(
         self,
         num_qubits: int,
-        bias: np.ndarray,
-        angles: np.ndarray,
+        bias: npt.ArrayLike,
+        angles: npt.ArrayLike,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
@@ -105,6 +106,9 @@ class MutuallyUnbiasedBasesMeasurements(RandomizedProjectiveMeasurements):
             ValueError: if the shape of ``bias`` is not valid.
             ValueError: if the shape of ``angles`` is not valid.
         """
+        bias = np.asarray(bias, dtype=float)
+        angles = np.asarray(angles, dtype=float)
+
         if bias.shape[-1] != 3:
             raise ValueError(
                 "The last dimension of ``bias`` is expected to be of length 3, but has"

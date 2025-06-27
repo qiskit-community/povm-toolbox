@@ -23,6 +23,7 @@ else:
     from typing import override  # pragma: no cover
 
 import numpy as np
+import numpy.typing as npt
 from numpy.random import Generator, default_rng
 from qiskit.circuit import ClassicalRegister, ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.primitives.containers import DataBin, make_data_bin
@@ -52,8 +53,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
        >>> from povm_toolbox.library import RandomizedProjectiveMeasurements
        >>> povm = RandomizedProjectiveMeasurements(
        ...     2,
-       ...     bias=np.array([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
-       ...     angles=np.array([
+       ...     bias=np.asarray([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]),
+       ...     angles=np.asarray([
        ...         [np.pi/6, 5*np.pi/6, -np.pi/4, -np.pi/2, -np.pi/2, np.pi/4],
        ...         [np.pi/3, np.pi/3, -np.pi/3, np.pi/3, np.pi/3, -np.pi/3],
        ...     ]),
@@ -73,8 +74,8 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
     def __init__(
         self,
         num_qubits: int,
-        bias: np.ndarray,
-        angles: np.ndarray,
+        bias: npt.ArrayLike,
+        angles: npt.ArrayLike,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
@@ -135,6 +136,9 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             num_qubits, measurement_layout=measurement_layout, insert_barriers=insert_barriers
         )
 
+        bias = np.asarray(bias, dtype=float)
+        angles = np.asarray(angles, dtype=float)
+
         if 2 * bias.shape[-1] != angles.shape[-1]:
             raise ValueError(
                 f"The shape of ``bias`` ({bias.shape}) is not compatible with the shape"
@@ -156,7 +160,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         if not np.allclose(np.sum(bias, axis=-1), 1.0):
             raise ValueError("The probability distribution parameters should sum up to one.")
 
-        self.bias = bias
+        self.bias: np.ndarray = bias
         """The sampling bias for each PVM per qubit."""
 
         if angles.ndim == 1:
@@ -166,7 +170,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
                 f"The shape of ``angles`` ({angles.shape}) is not compatible with"
                 f" ``num_qubits`` ({num_qubits})."
             )
-        self.angles = angles.reshape((self.num_qubits, self._num_PVMs, 2))
+        self.angles: np.ndarray = angles.reshape((self.num_qubits, self._num_PVMs, 2))
         """The angles defining each PVM. These are stored as pairs of ``(theta, phi)`` and
         correspond to the parameters of the :class:`~.qiskit.circuit.library.UGate` instance used to
         rotate the canonical Z-measurement into an arbitrary projective measurement."""
@@ -383,7 +387,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         bit_array: BitArray,
         povm_metadata: RPMMetadata,
         *,
-        loc: int | tuple[int, ...] | None = None,
+        loc: tuple[int, ...],
     ) -> list[tuple[int, ...]]:
         t1 = time.time()
         LOGGER.info("Creating POVM outcomes")
@@ -393,7 +397,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
         # loc is assumed to have a length of at most pv.ndim = len(pv.shape)
 
         try:
-            pvm_keys = povm_metadata.pvm_keys if loc is None else povm_metadata.pvm_keys[loc]
+            pvm_keys = povm_metadata.pvm_keys[loc]
         except AttributeError as exc:
             raise AttributeError(
                 "The metadata of povm sampler result associated with a "
@@ -529,7 +533,7 @@ class RandomizedProjectiveMeasurements(POVMImplementation[RPMMetadata]):
             the index goes from :math:``0`` to :math:``2 * self.num_PVM - 1``.
         """
         return tuple(
-            (pvm_idx[i] % self._num_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._num_PVMs) % 2
+            int((pvm_idx[i] % self._num_PVMs) * 2 + (int(bit) + pvm_idx[i] // self._num_PVMs) % 2)
             for i, bit in enumerate(bitstring_outcome[::-1])
         )
 

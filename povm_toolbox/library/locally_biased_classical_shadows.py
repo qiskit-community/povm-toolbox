@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from numpy.random import Generator
 
 from .mutually_unbiased_bases_measurements import MutuallyUnbiasedBasesMeasurements
@@ -33,7 +34,7 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
 
        >>> import numpy as np
        >>> from povm_toolbox.library import LocallyBiasedClassicalShadows
-       >>> povm = LocallyBiasedClassicalShadows(2, bias=np.array([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]))
+       >>> povm = LocallyBiasedClassicalShadows(2, bias=np.asarray([[0.1, 0.6, 0.3], [0.5, 0.25, 0.25]]))
        >>> print(povm)
        LocallyBiasedClassicalShadows(num_qubits=2, bias=array([[0.1 , 0.6 , 0.3 ], [0.5 , 0.25, 0.25]]))
        >>> povm.definition().draw_bloch()
@@ -43,7 +44,7 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
     def __init__(
         self,
         num_qubits: int,
-        bias: np.ndarray,
+        bias: npt.ArrayLike,
         *,
         measurement_layout: list[int] | None = None,  # TODO: add | Layout
         measurement_twirl: bool = False,
@@ -81,7 +82,8 @@ class LocallyBiasedClassicalShadows(MutuallyUnbiasedBasesMeasurements):
                 specified by ``bias``. The user can also directly provide a random generator. If
                 ``None``, a random seed will be used.
         """
-        angles = np.array([0.0, 0.0, 0.0])
+        bias = np.asarray(bias, dtype=float)
+        angles = np.asarray([0.0, 0.0, 0.0])
         assert bias.shape[-1] == 3
         super().__init__(
             num_qubits=num_qubits,

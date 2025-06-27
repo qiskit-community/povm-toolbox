@@ -60,6 +60,8 @@ class POVMPostProcessor:
         self,
         povm_sample: POVMPubResult,
         dual: BaseDual | None = None,
+        *,
+        combine_counts: bool = False,
     ) -> None:
         """Initialize the POVM post-processor.
 
@@ -70,6 +72,10 @@ class POVMPostProcessor:
                 :meth:`get_decomposition_weights`. When this is ``None``, the standard
                 "state-average" Dual frame will be constructed from the POVM stored in the
                 ``povm_sample``'s :attr:`.POVMPubResult.metadata`.
+            combine_counts: indicates whether to combine the counts associated with different
+                parameter sets that were submitted in a single :attr:`.POVMSamplerPub`. By default,
+                the counts are not combined. Refer to this
+                `how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Raises:
             ValueError: If the provided ``dual`` is not a dual frame to the POVM stored in the
@@ -77,7 +83,11 @@ class POVMPostProcessor:
         """
         self._povm = povm_sample.metadata.povm_implementation.definition()
 
-        self._counts = cast(np.ndarray, povm_sample.get_counts())
+        self._counts: np.ndarray
+        if combine_counts:
+            self._counts = np.asarray([povm_sample.get_counts(loc=None)], dtype=object)
+        else:
+            self._counts = cast(np.ndarray, povm_sample.get_counts(loc=...))
 
         if (dual is not None) and (not dual.is_dual_to(self._povm)):
             raise ValueError(

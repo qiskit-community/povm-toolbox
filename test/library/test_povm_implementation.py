@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,8 +10,7 @@
 
 """Tests for the RandomizedProjectiveMeasurements class."""
 
-from unittest import TestCase
-
+import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
 from qiskit.circuit import ClassicalRegister, QuantumCircuit
@@ -24,9 +23,10 @@ from qiskit.transpiler.passes import ApplyLayout, RemoveBarriers, SetLayout
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 
-class TestPOVMImplementation(TestCase):
+class TestPOVMImplementation:
     SEED = 42
 
+    @pytest.fixture(autouse=True)
     def setUp(self) -> None:
         self.num_qubits = 3
         self.povm = ClassicalShadows(num_qubits=self.num_qubits)
@@ -38,59 +38,59 @@ class TestPOVMImplementation(TestCase):
 
         self.composed_circuit = self.povm.compose_circuits(self.circuit)
 
-    def test_appended_classical_registers(self):
+    def test_appended_classical_registers(self, subtests):
         """Test that the classical registers are correctly composed."""
 
-        with self.subTest("Test removing final measurements."):
+        with subtests.test("Test removing final measurements."):
             qc2 = self.circuit.copy()
             qc2.measure_all()
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, self.num_qubits)
-            self.assertEqual(self.composed_circuit.clbits, composed_qc2.clbits)
+            assert composed_qc2.num_clbits == self.num_qubits
+            assert self.composed_circuit.clbits == composed_qc2.clbits
 
             qc2 = self.circuit.copy()
             qc2.measure_active()
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, self.num_qubits)
-            self.assertEqual(self.composed_circuit.clbits, composed_qc2.clbits)
+            assert composed_qc2.num_clbits == self.num_qubits
+            assert self.composed_circuit.clbits == composed_qc2.clbits
 
-        with self.subTest("Test adding classical register."):
+        with subtests.test("Test adding classical register."):
             qc2 = self.circuit.copy()
             qc2.add_register(ClassicalRegister(5, "creg"))
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, 5 + self.num_qubits)
+            assert composed_qc2.num_clbits == 5 + self.num_qubits
 
             qc2 = self.circuit.copy()
             cr = ClassicalRegister(3, "creg")
             qc2.add_register(cr)
             qc2.measure(list(range(self.num_qubits)), cr)
             composed_qc2 = self.povm.compose_circuits(qc2)
-            self.assertEqual(composed_qc2.num_clbits, self.num_qubits)
+            assert composed_qc2.num_clbits == self.num_qubits
 
-    def test_errors_raised(self):
+    def test_errors_raised(self, subtests):
         """Test that the proper errors are raised in specific situations."""
 
-        with self.subTest(
+        with subtests.test(
             "Error when adding already existing classical register."
-        ) and self.assertRaises(CircuitError):
+        ) and pytest.raises(CircuitError):
             qc2 = self.circuit.copy()
             qc2.add_register(ClassicalRegister(self.num_qubits, self.povm.classical_register_name))
             self.povm.compose_circuits(qc2)
 
-        with self.subTest("Error when number of qubits is not matching."):
-            with self.assertRaises(ValueError):
+        with subtests.test("Error when number of qubits is not matching."):
+            with pytest.raises(ValueError):
                 povm2 = ClassicalShadows(num_qubits=2)
                 povm2.compose_circuits(self.circuit)
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 povm2 = ClassicalShadows(num_qubits=4)
                 povm2.compose_circuits(self.circuit)
 
-    def test_composed_circuits(self):
+    def test_composed_circuits(self, subtests):
         """Test the composition of the input circuit with the measurement circuit."""
 
         sampler = StatevectorSampler(seed=default_rng(self.SEED))
 
-        with self.subTest("Composed circuit."):
+        with subtests.test("Composed circuit."):
             pvm = ClassicalShadows(3, seed=self.SEED)
 
             # compose circuits
@@ -106,9 +106,9 @@ class TestPOVMImplementation(TestCase):
 
             # validate outcome
             expected = {"000": 25, "001": 15, "010": 7, "100": 34, "101": 17, "110": 15, "111": 15}
-            self.assertEqual(result.get_counts(), expected)
+            assert result.get_counts() == expected
 
-        with self.subTest("Composed after transpilation of input circuit."):
+        with subtests.test("Composed after transpilation of input circuit."):
             pm = generate_preset_pass_manager(optimization_level=0, initial_layout=[2, 0, 1])
             routed_circuit = pm.run(self.circuit)
 
@@ -136,9 +136,9 @@ class TestPOVMImplementation(TestCase):
                 "110": 21,
                 "111": 14,
             }
-            self.assertEqual(result.get_counts(), expected)
+            assert result.get_counts() == expected
 
-        with self.subTest("With a TranspileLayout present"):
+        with subtests.test("With a TranspileLayout present"):
             layout = [2, 0, 1]
             pm = PassManager(
                 [
@@ -163,9 +163,9 @@ class TestPOVMImplementation(TestCase):
 
             # validate outcome
             expected = {"001": 15, "010": 4, "011": 5, "100": 62, "101": 17, "110": 17, "111": 8}
-            self.assertEqual(result.get_counts(), expected)
+            assert result.get_counts() == expected
 
-        with self.subTest("Using measurement_layout"):
+        with subtests.test("Using measurement_layout"):
             measurement_layout = [0, 2]
             pvm = ClassicalShadows(2, seed=self.SEED, measurement_layout=measurement_layout)
 
@@ -175,7 +175,7 @@ class TestPOVMImplementation(TestCase):
             # due to our chosen measurement_layout, we know that for this circuit, qubit at index 1
             # remains idle
             dag = circuit_to_dag(composed_circuit)
-            self.assertEqual(list(dag.idle_wires()), [composed_circuit.qubits[1]])
+            assert list(dag.idle_wires()) == [composed_circuit.qubits[1]]
 
             # obtain measurement parameter values
             pvm_idx = pvm._sample_pvm_idxs(BindingsArray(), shots=128)
@@ -187,9 +187,9 @@ class TestPOVMImplementation(TestCase):
 
             # validate outcome
             expected = {"10": 67, "11": 27, "00": 20, "01": 14}
-            self.assertEqual(result.get_counts(), expected)
+            assert result.get_counts() == expected
 
-        with self.subTest("Test the insert_barriers option"):
+        with subtests.test("Test the insert_barriers option"):
             pvm = ClassicalShadows(3, seed=self.SEED)
             composed_circuit = pvm.compose_circuits(self.circuit)
             composed_circuit.assign_parameters([0, 0, 0, 0, 0, 0], inplace=True)
@@ -200,4 +200,4 @@ class TestPOVMImplementation(TestCase):
 
             pm = PassManager([RemoveBarriers()])
 
-            self.assertEqual(composed_circuit, pm.run(composed_circuit_with_barrier))
+            assert composed_circuit == pm.run(composed_circuit_with_barrier)

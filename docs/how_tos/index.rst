@@ -11,6 +11,7 @@ This page will summarize the available how-to guides.
    non_ic_measurements
    visualization
    layout
+   combine_outcomes
    job_recovery
    dual_optimizer
    dilation_measurements

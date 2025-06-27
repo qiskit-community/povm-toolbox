@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,9 +10,8 @@
 
 """Tests for the `dual_from_marginal_probabilities` function."""
 
-from unittest import TestCase
-
 import numpy as np
+import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import (
     RandomizedProjectiveMeasurements,
@@ -33,13 +32,13 @@ from qiskit.quantum_info import (
 )
 
 
-class TestDualFromMarginalProbabilities(TestCase):
+class TestDualFromMarginalProbabilities:
     """Test that we can construct optimal dual of a POVM from marginal probabilities."""
 
     SEED = 29
 
+    @pytest.fixture(autouse=True)
     def setUp(self) -> None:
-        super().setUp()
         self.povm = MultiQubitPOVM(
             [
                 0.3 * Operator.from_label("0"),
@@ -55,7 +54,7 @@ class TestDualFromMarginalProbabilities(TestCase):
         """Test that errors are correctly raised."""
         joint_povm: MultiQubitPOVM | SingleQubitPOVM = self.povm
         state = random_density_matrix(2, seed=self.SEED)
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             _ = dual_from_marginal_probabilities(joint_povm, state)
 
     def test_implemented(self):
@@ -63,9 +62,9 @@ class TestDualFromMarginalProbabilities(TestCase):
         prod_povm: ProductPOVM = ProductPOVM.from_list([self.povm, self.povm])
         state = random_density_matrix(4, seed=self.SEED)
         dual = dual_from_marginal_probabilities(prod_povm, state)
-        self.assertTrue(dual.is_dual_to(prod_povm))
+        assert dual.is_dual_to(prod_povm)
 
-    def test_marginal_dual(self):
+    def test_marginal_dual(self, subtests):
         """Test that the method constructs a valid dual."""
         # Load the circuit that was obtained through:
         #   from qiskit.circuit.random import random_circuit
@@ -74,8 +73,8 @@ class TestDualFromMarginalProbabilities(TestCase):
         with open("test/post_processor/random_circuit_qubits=2_depth=1_seed=30.qpy", "rb") as file:
             qc = qpy.load(file)[0]
         num_qubits = qc.num_qubits
-        bias = np.array([0.5, 0.25, 0.25])
-        angles = np.array(
+        bias = np.asarray([0.5, 0.25, 0.25])
+        angles = np.asarray(
             [
                 [2.01757238, -1.85001671, 2.52155716, 0.45636669, 1.17175533, -0.48263278],
                 [0.0, 0.0, 1.57079633, -2.35619449, 1.57079633, -0.78539816],
@@ -96,22 +95,22 @@ class TestDualFromMarginalProbabilities(TestCase):
 
         post_processor = POVMPostProcessor(pub_result)
 
-        with self.subTest("Test canonical dual."):
+        with subtests.test("Test canonical dual."):
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -1.125222785367572)
-            self.assertAlmostEqual(std, 0.5305722525114711)
+            assert np.isclose(exp_value, -1.125222785367572)
+            assert np.isclose(std, 0.5305722525114711)
 
-        with self.subTest("Test marginal dual."):
+        with subtests.test("Test marginal dual."):
             post_processor.dual = dual_from_marginal_probabilities(
                 povm=post_processor.povm, state=Statevector(qc)
             )
             exp_value, std = post_processor.get_expectation_value(observable)
-            self.assertAlmostEqual(exp_value, -1.4247893013196669)
-            self.assertAlmostEqual(std, 0.4097543480314448)
+            assert np.isclose(exp_value, -1.4247893013196669)
+            assert np.isclose(std, 0.4097543480314448)
 
-        with self.subTest("Test threshold on marginal dual."):
+        with subtests.test("Test threshold on marginal dual."):
             post_processor.dual = dual_from_marginal_probabilities(
                 povm=post_processor.povm, state=Statevector(qc), threshold=1.0
             )
-            self.assertAlmostEqual(exp_value, -1.4247893013196669)
-            self.assertAlmostEqual(std, 0.4097543480314448)
+            assert np.isclose(exp_value, -1.4247893013196669)
+            assert np.isclose(std, 0.4097543480314448)

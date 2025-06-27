@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -11,7 +11,6 @@
 """Tests for the RPMMetadata class."""
 
 import platform
-from unittest import TestCase
 
 import numpy as np
 from povm_toolbox.library import ClassicalShadows
@@ -19,7 +18,7 @@ from povm_toolbox.library.metadata import RPMMetadata
 from qiskit import QuantumCircuit
 
 
-class TestRPMMetadata(TestCase):
+class TestRPMMetadata:
     def test_init(self):
         """Test the POVMMetadata class initialization."""
         num_qubits = 2
@@ -34,16 +33,16 @@ class TestRPMMetadata(TestCase):
         pvm_keys = np.arange(np.prod(shape)).reshape(shape)
 
         rpm_metadata = RPMMetadata(measurement, qc_composed, pvm_keys)
-        self.assertIs(rpm_metadata.povm_implementation, measurement)
-        self.assertIs(rpm_metadata.composed_circuit, qc_composed)
-        self.assertIs(rpm_metadata.pvm_keys, pvm_keys)
+        assert rpm_metadata.povm_implementation is measurement
+        assert rpm_metadata.composed_circuit is qc_composed
+        assert rpm_metadata.pvm_keys is pvm_keys
 
         rpm_metadata = RPMMetadata(
             composed_circuit=qc_composed, pvm_keys=pvm_keys, povm_implementation=measurement
         )
-        self.assertIs(rpm_metadata.povm_implementation, measurement)
-        self.assertIs(rpm_metadata.composed_circuit, qc_composed)
-        self.assertIs(rpm_metadata.pvm_keys, pvm_keys)
+        assert rpm_metadata.povm_implementation is measurement
+        assert rpm_metadata.composed_circuit is qc_composed
+        assert rpm_metadata.pvm_keys is pvm_keys
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
@@ -62,9 +61,8 @@ class TestRPMMetadata(TestCase):
         pvm_keys = np.arange(np.prod(shape)).reshape(shape)
 
         rpm_metadata = RPMMetadata(measurement, qc_composed, pvm_keys)
-        self.assertEqual(
-            f"{rpm_metadata}",
+        assert f"{rpm_metadata}" == (
             "RPMMetadata(povm_implementation=ClassicalShadows(num_qubits=2), composed_circuit="
             f"<qiskit.circuit.quantumcircuit.QuantumCircuit object at {qc_hex_id}>,"
-            f" pvm_keys=np.ndarray<4,5,3,{num_qubits}>)",
+            f" pvm_keys=np.ndarray<4,5,3,{num_qubits}>)"
         )

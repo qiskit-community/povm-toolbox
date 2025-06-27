@@ -1,4 +1,4 @@
-# (C) Copyright IBM 2024.
+# (C) Copyright IBM 2024, 2025.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,9 +10,8 @@
 
 """Tests for the ClassicalShadows class."""
 
-from unittest import TestCase
-
 import numpy as np
+import pytest
 from numpy.random import default_rng
 from povm_toolbox.library import ClassicalShadows
 from povm_toolbox.post_processor import POVMPostProcessor
@@ -23,14 +22,13 @@ from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import Operator, SparsePauliOp
 
 
-class TestClassicalShadows(TestCase):
+class TestClassicalShadows:
     SEED = 147234
 
+    @pytest.fixture(autouse=True)
     def setUp(self) -> None:
-        super().setUp()
-
-        basis_0 = np.array([1.0, 0], dtype=complex)
-        basis_1 = np.array([0, 1.0], dtype=complex)
+        basis_0 = np.asarray([1.0, 0], dtype=complex)
+        basis_1 = np.asarray([0, 1.0], dtype=complex)
         basis_plus = 1.0 / np.sqrt(2) * (basis_0 + basis_1)
         basis_minus = 1.0 / np.sqrt(2) * (basis_0 - basis_1)
         basis_plus_i = 1.0 / np.sqrt(2) * (basis_0 + 1.0j * basis_1)
@@ -43,7 +41,14 @@ class TestClassicalShadows(TestCase):
         self.Y0 = np.outer(basis_plus_i, basis_plus_i.conj())
         self.Y1 = np.outer(basis_minus_i, basis_minus_i.conj())
 
-    def test_init(self):
+    @pytest.mark.parametrize(
+        ["pauli", "expected_exp_val", "expected_std"],
+        [
+            ("ZI", 0.84375, 0.24225659134146815),
+            ("ZY", -0.8437500000000002, 0.47116314336043985),
+        ],
+    )
+    def test_init(self, pauli: str, expected_exp_val: float, expected_std: float):
         """Test the implementation of classical shadow POVMs."""
 
         qc = QuantumCircuit(2)
@@ -63,14 +68,10 @@ class TestClassicalShadows(TestCase):
 
         post_processor = POVMPostProcessor(pub_result)
 
-        observable = SparsePauliOp(["ZI"], coeffs=[1.0])
+        observable = SparsePauliOp([pauli], coeffs=[1.0])
         exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, 0.84375)
-        self.assertAlmostEqual(std, 0.24225659134146815)
-        observable = SparsePauliOp(["ZY"], coeffs=[1.0])
-        exp_value, std = post_processor.get_expectation_value(observable)
-        self.assertAlmostEqual(exp_value, -0.8437500000000002)
-        self.assertAlmostEqual(std, 0.47116314336043985)
+        assert np.isclose(exp_value, expected_exp_val)
+        assert np.isclose(std, expected_std)
 
     def test_qc_build(self):
         """Test if we can build a standard Classical Shadow POVM from the generic class"""
@@ -89,12 +90,12 @@ class TestClassicalShadows(TestCase):
 
         for num_qubits in range(1, 11):
             cs_implementation = ClassicalShadows(num_qubits=num_qubits)
-            self.assertEqual(num_qubits, cs_implementation.num_qubits)
+            assert num_qubits == cs_implementation.num_qubits
             cs_povm = cs_implementation.definition()
             for i in range(num_qubits):
-                self.assertEqual(cs_povm._frames[(i,)].num_outcomes, sqpovm.num_outcomes)
+                assert cs_povm._frames[(i,)].num_outcomes == sqpovm.num_outcomes
                 for k in range(sqpovm.num_outcomes):
-                    self.assertAlmostEqual(cs_povm._frames[(i,)][k], sqpovm[k])
+                    assert np.allclose(cs_povm._frames[(i,)][k], sqpovm[k])
 
     def test_repr(self):
         """Test that the ``__repr__`` method works correctly."""
@@ -102,4 +103,4 @@ class TestClassicalShadows(TestCase):
         povm = ClassicalShadows(
             1,
         )
-        self.assertEqual(povm.__repr__(), cs_str)
+        assert povm.__repr__() == cs_str

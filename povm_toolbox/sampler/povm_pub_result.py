@@ -12,7 +12,17 @@
 
 from __future__ import annotations
 
+import sys
 from collections import Counter
+
+if sys.version_info < (3, 10):
+    from typing import Any  # pragma: no cover
+
+    # There is no way to support this type properly in python 3.9, which will be end of life in
+    # November 2025 anyways.
+    EllipsisType = Any  # pragma: no cover
+else:
+    from types import EllipsisType
 
 import numpy as np
 from qiskit.primitives.containers import DataBin, PubResult
@@ -50,31 +60,32 @@ class POVMPubResult(PubResult):
         """
         return self._metadata  # type:ignore
 
-    def get_counts(self, *, loc: int | tuple[int, ...] | None = None) -> np.ndarray | Counter:
-        """Get the histogram data of the result.
+    def get_counts(
+        self, *, loc: int | tuple[int, ...] | EllipsisType | None = None
+    ) -> np.ndarray | Counter:
+        """Get the counter of outcomes from the result.
 
         This method will leverage :meth:`~.POVMImplementation.get_povm_counts_from_raw` from the
         :class:`.POVMImplementation` instance stored inside the :attr:`metadata` to construct a
-        histogram of POVM outcomes.
+        counter of POVM outcomes.
 
         Args:
-            loc: Which entry of the :class:`~qiskit.primitives.containers.bit_array.BitArray` to
-                return a histogram for. If the Pub that was submitted to :meth:`.POVMSampler.run`
-                contained circuit parameters, ``loc`` can be used to indicate the set of parameter
-                values for which to compute the histogram. If ``loc is None``, the histogram will be
-                computed for all parameter values at once.
+            loc: specifies the location of the counts to return. By default, ``None`` is used, which
+                aggregates all counts from a single PUB. If ``loc=...``, all counts from the PUB are
+                returned, but separately. If ``loc`` is a tuple of integers, it must define a single
+                parameter set. Refer to
+                `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            Either a single or an array of histograms of the POVM outcomes. The shape depends on the
-            value of ``loc`` and the number of parameters that were submitted in the Pub to
-            :meth:`.POVMSampler.run`.
+            The POVM counts. If ``loc=...``, an ``np.ndarray`` of counters is returned. Otherwise, a
+            single counter is returned.
         """
         return self.metadata.povm_implementation.get_povm_counts_from_raw(
             self.data, self.metadata, loc=loc
         )
 
     def get_samples(
-        self, *, loc: int | tuple[int, ...] | None = None
+        self, *, loc: int | tuple[int, ...] | EllipsisType | None = None
     ) -> np.ndarray | list[tuple[int, ...]]:
         """Get the individual POVM outcomes of the result.
 
@@ -83,15 +94,15 @@ class POVMPubResult(PubResult):
         sampled POVM outcomes.
 
         Args:
-            loc: Which entry of the :class:`~qiskit.primitives.containers.bit_array.BitArray` to
-                return the samples for. If the Pub that was submitted to :meth:`.POVMSampler.run`
-                contained circuit parameters, ``loc`` can be used to indicate the set of parameter
-                values for which to obtain the samples. If ``loc is None``, the samples will be
-                obtained for all parameter values at once.
+            loc: specifies the location of the outcomes to return. By default, ``None`` is used, which
+                aggregates all outcomes from a single PUB. If ``loc=...``, all outcomes from the PUB
+                are returned, but separately. If ``loc`` is a tuple of integers, it must define a
+                single parameter set. Refer to
+                `this how-to guide <../how_tos/combine_outcomes.ipynb>`_ for more information.
 
         Returns:
-            Either a single or an array of POVM outcomes. The shape depends on the value of ``loc``
-            and the number of parameters that were submitted in the Pub to :meth:`.POVMSampler.run`.
+            The list of POVM outcomes. If ``loc=...``, an ``np.ndarray`` of outcome lists is returned.
+            Otherwise, a single outcome list is returned.
         """
         return self.metadata.povm_implementation.get_povm_outcomes_from_raw(
             self.data, self.metadata, loc=loc
