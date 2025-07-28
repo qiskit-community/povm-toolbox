@@ -52,7 +52,7 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
         cls,
         frame_supplied: BaseFrame,
         alphas: tuple[tuple[float, ...] | None, ...] | None = None,
-        indices_grouping: list[list[tuple[int, ...]]] | None = None,
+        indices_grouping: list[list[int]] | None = None,
     ) -> ProductDual:
         dual_operators = {}
         if isinstance(frame_supplied, ProductFrame):

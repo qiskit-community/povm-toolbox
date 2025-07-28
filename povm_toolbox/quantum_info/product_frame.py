@@ -16,7 +16,7 @@ import math
 import sys
 import warnings
 from collections.abc import Sequence
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, cast
 
 if sys.version_info < (3, 11):
     from typing_extensions import Self
@@ -34,9 +34,12 @@ from qiskit.quantum_info import Operator, SparsePauliOp
 
 from .base import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
-from .multi_qubit_povm import MultiQubitPOVM
 
 T = TypeVar("T", bound=MultiQubitFrame)
+U = TypeVar("U", bound=MultiQubitFrame)
+
+
+SelfT = TypeVar("SelfT", bound="ProductFrame")
 
 
 class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
@@ -192,7 +195,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
     @property
     def sub_systems(self) -> list[tuple[int, ...]]:
-        """Give the number of operators per sub-system."""
+        """Give the list of subsystem indices on which local frames act."""
         return list(self._frames.keys())
 
     def _check_validity(self) -> None:
@@ -371,21 +374,23 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         subset = list(idx for subsystem_label in indices for idx in subsystem_label)
         joint_operators = np.empty(shape, dtype=object)
         for outcome in np.ndindex(shape):
-            operator = self[indices[0]][outcome[0]]
+            tensor_operator = cast(Operator, self[indices[0]][outcome[0]])
             for i in range(1, len(outcome)):
-                operator = Operator(np.kron(operator.data, self[indices[i]][outcome[i]].data))
-            joint_operators[outcome] = operator
-        return tuple(subset), joint_operators.flatten(order="C")
+                operator_i = cast(Operator, self[indices[i]][outcome[i]])
+                tensor_operator = Operator(np.kron(tensor_operator.data, operator_i.data))
+            joint_operators[outcome] = tensor_operator
+        return tuple(subset), (joint_operators.flatten(order="C")).tolist()
 
-    def group(self, partition: list[list[tuple[int, ...]]]) -> ProductFrame:
+    def group(self: SelfT, partition: list[list[int]]) -> SelfT:
         """Group some local frames together into a single multi-qubit frame representation.
 
         Args:
             partition: partition of product frame, where all local frames are grouped into different
-                subsets. Each such subset is specified as a list of integer tuples, each of which
-                specifies a local frame. All local frames in a given subset are grouped together and
-                then represented by a single multi-qubit frame (we lose track of the product
-                structure within the set).
+                subsets. Each such subset is specified as a list of integers, each of which
+                specifies a local frame (the integer is the position of the local frame in the
+                dictionary storing all local frames). All local frames in a given subset are grouped
+                together and then represented by a single multi-qubit frame (we lose track of the
+                product structure within the set).
 
         Returns:
             A new ``ProductFrame`` instance representing ``self`` as specified by ``partition``.
@@ -395,8 +400,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             ValueError: if an index is in two different subsets.
             ValueError: if ``partition`` does not exactly cover all subsystems.
         """
-        keys = list(self._frames.keys())
-        key_partition = [[keys[i] for i in subset] for subset in partition]
+        keys = self.sub_systems  # list[tuple[int, ...]]
+        key_partition = [
+            [keys[i] for i in subset] for subset in partition
+        ]  # `subset` is list[int], `i` is int
         # Check that ``partition`` is indeed a partition:
         subsystem_indices = set()
         for subset in key_partition:
@@ -418,11 +425,31 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             )
 
         frames = {}
+        local_frames_class = next(iter(self._frames.values())).__class__
         for set_indices in key_partition:
             idx, joint_operators = self._tensor_product(set_indices)
             shape = tuple(s for subsystem_label in set_indices for s in self[subsystem_label].shape)
-            frames[idx] = MultiQubitPOVM(joint_operators, shape=shape)
-        return type(self)(frames=frames)
+            frames[idx] = local_frames_class(joint_operators, shape=shape)
+        grouped_frame = self.__class__.from_other_type(frames)
+        return cast(SelfT, grouped_frame)
+
+    @classmethod
+    def from_other_type(
+        cls: type[ProductFrame[U]], frames: dict[tuple[int, ...], U]
+    ) -> ProductFrame[U]:
+        """Create a new instance of the class with a specified type parameter.
+
+        This method is useful when you want to construct a new instance of a generic class with a
+        different type than the current one. It preserves subclassing, so calling this from a
+        subclass will return an instance of that subclass.
+
+        Args:
+            frames: The local frames to initialize the new instance with.
+
+        Returns:
+            A new instance of the class with type parameter U.
+        """
+        return cls(frames)
 
     def group_all(self) -> MultiQubitFrame:
         """Group all local frames together into a single multi-qubit frame representation.
@@ -431,4 +458,4 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             A new ``MultiQubitFrame`` instance representing ``self``.
         """
         grouped_frame = self.group(partition=[list(range(len(self._frames)))])
-        return grouped_frame[grouped_frame.sub_systems[0]]
+        return cast(MultiQubitFrame, grouped_frame[grouped_frame.sub_systems[0]])
