@@ -40,7 +40,7 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
         #   1) the subsystems are not the same, e.g. ``self`` acts on (0,) and (1,) but ``frame``
         #      acts on (0,) and (2,). Then we should raise an ValueError
         #   2) the subsystems are the same but differently allocated, e.g. ``self`` acts on (0,) and
-        #      (1,2) but ``frame`` on (0,1) and (2,). ``self`` could still be a valid dual frame but
+        #      (1) but ``frame`` on (0,1). ``self`` could still be a valid dual frame but
         #      we have not implemented the check for this. Then we should raise an
         #      NotImplementedError.
         raise NotImplementedError
