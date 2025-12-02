@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from numbers import Integral
-from typing import Union, cast
+from typing import TypeAlias, cast
 
 from qiskit.circuit import QuantumCircuit
 from qiskit.primitives.containers import BindingsArrayLike
@@ -26,15 +26,14 @@ from qiskit.transpiler import StagedPassManager
 from povm_toolbox.library.metadata import POVMMetadata
 from povm_toolbox.library.povm_implementation import POVMImplementation
 
-POVMSamplerPubLike = Union[
-    QuantumCircuit,
-    tuple[QuantumCircuit],
-    tuple[QuantumCircuit, BindingsArrayLike],
-    tuple[QuantumCircuit, BindingsArrayLike, Union[Integral, None]],
-    tuple[
-        QuantumCircuit, BindingsArrayLike, Union[Integral, None], Union[POVMImplementation, None]
-    ],
-]
+POVMSamplerPubLike: TypeAlias = (
+    QuantumCircuit
+    | tuple[QuantumCircuit]
+    | tuple[QuantumCircuit, BindingsArrayLike]
+    | tuple[QuantumCircuit, BindingsArrayLike, Integral | None]
+    | tuple[QuantumCircuit, BindingsArrayLike, Integral | None, POVMImplementation | None]
+)
+
 """The type defining the Pub (Primitive Unified Bloc) structure for :meth:`.POVMSampler.run`."""
 
 

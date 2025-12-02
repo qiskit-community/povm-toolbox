@@ -286,6 +286,7 @@ class DilationMeasurements(POVMImplementation[POVMMetadata]):
             for bit_q, bit_a in zip(
                 bitstring_outcome[: self.num_qubits - 1 : -1],
                 bitstring_outcome[self.num_qubits - 1 :: -1],
+                strict=True,
             )
         )
 
