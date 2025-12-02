@@ -21,14 +21,14 @@ jobs:
       max-parallel: 4
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         include:
           - os: macos-latest
             python-version: "3.13"
           - os: windows-latest
             python-version: "3.13"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
@@ -40,6 +40,7 @@ jobs:
       - name: Test using tox environment
         shell: bash
         env:
+          MPLBACKEND: Agg
           QISKIT_IBM_QPU: ${{ secrets.QISKIT_IBM_QPU }}
           QISKIT_IBM_TOKEN: ${{ secrets.QISKIT_IBM_TOKEN }}
           QISKIT_IBM_CHANNEL: ${{ secrets.QISKIT_IBM_CHANNEL }}

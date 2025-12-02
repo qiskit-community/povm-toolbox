@@ -80,7 +80,7 @@ class POVMSamplerJob(BasePrimitiveJob[POVMPubResult, JobStatus]):
 
         povm_pub_results = []
 
-        for pub_result, povm_metadata in zip(raw_results, self.metadata):
+        for pub_result, povm_metadata in zip(raw_results, self.metadata, strict=True):
             povm_pub_results.append(
                 POVMPubResult(
                     data=povm_metadata.povm_implementation.reshape_data_bin(pub_result.data),

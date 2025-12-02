@@ -59,7 +59,7 @@ class ProductDual(ProductFrame[MultiQubitDual], BaseDual):
                     f"The number of sets of alpha-parameters ({len(alphas)}) does not match"
                     f" the number of sub-systems ({len(frame.sub_systems)})."
                 )
-            for sub_system, sub_alphas in zip(frame.sub_systems, alphas):
+            for sub_system, sub_alphas in zip(frame.sub_systems, alphas, strict=True):
                 dual_operators[sub_system] = MultiQubitDual.build_dual_from_frame(
                     frame[sub_system], sub_alphas
                 )
