@@ -17,7 +17,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -25,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
     "numpy>=1.23",
@@ -150,7 +149,7 @@ testpaths = ["./povm_toolbox/", "./test/"]
 [tool.ruff]
 line-length = 100
 src = ["povm_toolbox", "test"]
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [

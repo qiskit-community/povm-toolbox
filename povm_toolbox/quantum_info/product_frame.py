@@ -263,7 +263,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             corresponding local frame operators forming the product frame operator.
         """
         product_operator = {}
-        for local_idx, (subsystem, povm) in zip(frame_op_idx, self._frames.items()):
+        for local_idx, (subsystem, povm) in zip(frame_op_idx, self._frames.items(), strict=True):
             product_operator[subsystem] = povm.operators[local_idx]
         return product_operator
 

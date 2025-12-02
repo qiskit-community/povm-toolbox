@@ -13,21 +13,12 @@
 from __future__ import annotations
 
 import logging
-import sys
 import time
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import copy
+from types import EllipsisType
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
-
-if sys.version_info < (3, 10):
-    from typing import Any  # pragma: no cover
-
-    # There is no way to support this type properly in python 3.9, which will be end of life in
-    # November 2025 anyways.
-    EllipsisType = Any  # pragma: no cover
-else:
-    from types import EllipsisType
 
 import numpy as np
 from qiskit.circuit import AncillaRegister, QuantumCircuit
