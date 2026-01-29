@@ -114,7 +114,9 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.ProductFrame` instance."""
-        f_repr = "\n   " + "\n   ".join(f"{name}: {value}" for name, value in self._frames.items())
+        f_repr = "\n   " + "\n   ".join(
+            f"{name}: {value}" for name, value in self._frames.items()
+        )
         return (
             f"{self.__class__.__name__}(num_subsystems={self.num_subsystems})"
             f"<{','.join(map(str, self.shape))}>:{f_repr}"
@@ -260,7 +262,9 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         """Return the number of outcomes of the product frame."""
         return self.num_operators
 
-    def get_operator(self, frame_op_idx: tuple[int, ...]) -> dict[tuple[int, ...], Operator]:
+    def get_operator(
+        self, frame_op_idx: tuple[int, ...]
+    ) -> dict[tuple[int, ...], Operator]:
         """Return a product frame operator in a product form.
 
         Args:
@@ -273,11 +277,15 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             corresponding local frame operators forming the product frame operator.
         """
         product_operator = {}
-        for local_idx, (subsystem, povm) in zip(frame_op_idx, self._frames.items(), strict=True):
+        for local_idx, (subsystem, povm) in zip(
+            frame_op_idx, self._frames.items(), strict=True
+        ):
             product_operator[subsystem] = povm.operators[local_idx]
         return product_operator
 
-    def _trace_of_prod(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
+    def _trace_of_prod(
+        self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]
+    ) -> float:
         """Return the trace of the product of a Hermitian operator with a specific frame operator.
 
         Args:
@@ -323,9 +331,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         if abs(p_idx.imag) > operator.atol:
             warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
         return float(p_idx.real)
-    
 
-    def _trace_of_prod_single_qubit(self, operator: SparsePauliOp, frame_op_idx: set[tuple[int, ...]]) -> dict[tuple[int, ...], np.ndarray]:
+    def _trace_of_prod_single_qubit(
+        self, operator: SparsePauliOp, frame_op_idx: set[tuple[int, ...]]
+    ) -> dict[tuple[int, ...], np.ndarray]:
         """Return the traces of the product of a Hermitian operator with a specific set of frame operators
         that are a tensor of single-qubit operators.
 
@@ -345,19 +354,24 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         conversion = {"I": 0, "X": 1, "Y": 2, "Z": 3}
         omega_init = np.zeros(n_samples)
         op_labels = np.array(
-            [[conversion[term] for term in label] for label in operator.paulis.to_labels()], dtype="int8"
+            [
+                [conversion[term] for term in label]
+                for label in operator.paulis.to_labels()
+            ],
+            dtype="int8",
         )
         op_coeffs = np.real(operator.coeffs)
         duals_pauli_decomp = np.zeros((n_qubits, n_outcomes, 4))
         for i, (_, sq_povm) in enumerate(self._frames.items()):
             for j, spop in enumerate(sq_povm.pauli_operators):
                 for key, val in conversion.items():
-                    duals_pauli_decomp[i, j][val] = np.real_if_close(spop.get(key, 0.))
+                    duals_pauli_decomp[-(i+1), j][val] = np.real_if_close(spop.get(key, 0.0))
+
+        print(duals_pauli_decomp)
         omegas = jit_get_omega_samples(
             op_labels, op_coeffs, duals_pauli_decomp, samples, omega_init
         )
         return dict(zip(frame_op_idx, omegas))
-    
 
     @override
     def analysis(
