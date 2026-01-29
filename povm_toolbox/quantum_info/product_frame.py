@@ -313,6 +313,31 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         if abs(p_idx.imag) > operator.atol:
             warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
         return float(p_idx.real)
+    
+
+    def _trace_of_prod_single_qubit(self, operator: SparsePauliOp, frame_op_idx: tuple[int, ...]) -> float:
+        """Return the trace of the product of a Hermitian operator with a specific frame operator which is a tensor of single-qubit operators.
+
+        Args:
+            operator: the input operator to multiply with a frame operator.
+            frame_op_idx: the label specifying the frame operator to use. The frame operator is
+                labeled by a tuple of integers (possibly multiple integers for one local frame).
+
+        Returns:
+            The trace of the product of the input operator with the specified frame operator.
+        """
+        p_idx = 0.0 + 0.0j
+
+        index_processed = self._ravel_index(frame_op_idx)
+
+        # pauli_decomp has shape (n_qubits, n_outcomes, 4)
+
+        # FILL IN
+
+        if abs(p_idx.imag) > operator.atol:
+            warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
+        return float(p_idx.real)
+    
 
     @override
     def analysis(
