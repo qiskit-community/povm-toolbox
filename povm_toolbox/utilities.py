@@ -122,19 +122,14 @@ def jit_get_omega_samples(
     n_qubits = int(pauli_decomp.shape[0])
     n_samples = int(povm_samples.shape[0])
     n_oplabels = int(op_labels.shape[0])
-
     for sample_ind in prange(n_samples):
         m = povm_samples[sample_ind]
         samp = 0
-        # for j, label in enumerate(op_labels):
         for j in prange(n_oplabels):
             label = op_labels[j]
-            # flip_label = np.flip(label)
             summand = op_coeffs[j]
             for i in range(n_qubits):
                 summand *= pauli_decomp[i, m[i], label[i]] * 2  # factor 2 from Tr(P^2) = 2
             samp += summand
-
         omega_samples[sample_ind] = samp
-
     return omega_samples

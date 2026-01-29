@@ -232,7 +232,9 @@ class POVMPostProcessor:
 
         return exp_val, std
 
-    def get_state_snapshot(self, outcome: tuple[int, ...]) -> dict[tuple[int, ...], Operator]:
+    def get_state_snapshot(
+        self, outcome: tuple[int, ...]
+    ) -> dict[tuple[int, ...], Operator]:
         """Return the snapshot of the state associated with ``outcome``.
 
         Args:
@@ -250,4 +252,6 @@ class POVMPostProcessor:
         """
         if isinstance(self.dual, ProductDual):
             return self.dual.get_operator(outcome)
-        raise NotImplementedError("This method is only implemented for `ProductDual` objects.")
+        raise NotImplementedError(
+            "This method is only implemented for `ProductDual` objects."
+        )
