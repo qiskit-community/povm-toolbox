@@ -102,6 +102,16 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         self._check_validity()
 
+        # Check whether the product frame is a tensor product of single-qubit frames.
+        is_tensor_of_single_qubit_frames = set(
+            len(sub_system) for sub_system in self.sub_systems
+        ) == {1}
+        # Check if each local frame has the same number of outcomes.
+        homogenous_number_of_outcomes = len(set(self.shape)) == 1
+        self._is_homogenous_single_qubit_tensor = (
+            is_tensor_of_single_qubit_frames and homogenous_number_of_outcomes
+        )
+
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.ProductFrame` instance."""
         f_repr = "\n   " + "\n   ".join(f"{name}: {value}" for name, value in self._frames.items())
@@ -398,6 +408,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 p_init[m] = self._trace_of_prod(hermitian_op, m)
             return p_init
         if isinstance(frame_op_idx, set):
+            if self._is_homogenous_single_qubit_tensor:
+                return self._trace_of_prod_single_qubit(hermitian_op, frame_op_idx)
             return {idx: self._trace_of_prod(hermitian_op, idx) for idx in frame_op_idx}
         if isinstance(frame_op_idx, tuple):
             return self._trace_of_prod(hermitian_op, frame_op_idx)
