@@ -22,9 +22,11 @@
 """
 
 from __future__ import annotations
+
 from typing import cast
+
 import numpy as np
-from numba import jit, njit, prange
+from numba import jit, prange
 
 
 def matrix_to_double_ket(op_matrix: np.ndarray) -> np.ndarray:
@@ -99,8 +101,9 @@ def jit_get_omega_samples(
     povm_samples: np.ndarray,
     omega_samples: np.ndarray,
 ):
-    r"""Decompose an operator in Pauli representation into the linear combination of a basis frame
-    (could be dual or actual povm operators).
+    r"""Decompose an operator in Pauli representation into the linear combination of a basis frame.
+
+    The frame can be dual or actual povm operators.
 
     Args:
         op_labels: np.array that contains the labels of the Pauli strings "IXYI" converted to integers
@@ -112,7 +115,6 @@ def jit_get_omega_samples(
             e.g. [[1, 3, 2, 0], [4, 2, 3, 1], ...]
         omega_samples: initial value of omega. should be zeros. This is an argument just to get the
             np.zeros out of the numba function. should be shape(n_samples).
-        qubits: range(nqubits) as integers
 
     Returns:
         coefficients omega_m as a sparse array of shape(n_outcomes)
@@ -130,9 +132,7 @@ def jit_get_omega_samples(
             # flip_label = np.flip(label)
             summand = op_coeffs[j]
             for i in range(n_qubits):
-                summand *= (
-                    pauli_decomp[i, m[i], label[i]] * 2
-                )  # factor 2 from Tr(P^2) = 2
+                summand *= pauli_decomp[i, m[i], label[i]] * 2  # factor 2 from Tr(P^2) = 2
             samp += summand
 
         omega_samples[sample_ind] = samp

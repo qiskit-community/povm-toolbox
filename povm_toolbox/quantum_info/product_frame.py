@@ -30,6 +30,7 @@ else:
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
+
 from povm_toolbox.utilities import jit_get_omega_samples
 
 from .base import BaseFrame
@@ -323,11 +324,13 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         if abs(p_idx.imag) > operator.atol:
             warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
         return float(p_idx.real)
-    
 
-    def _trace_of_prod_single_qubit(self, operator: SparsePauliOp, frame_op_idx: set[tuple[int, ...]]) -> dict[tuple[int, ...], np.ndarray]:
-        """Return the traces of the product of a Hermitian operator with a specific set of frame operators
-        that are a tensor of single-qubit operators.
+    def _trace_of_prod_single_qubit(
+        self, operator: SparsePauliOp, frame_op_idx: set[tuple[int, ...]]
+    ) -> dict[tuple[int, ...], float]:
+        """Return the traces of the product of a Hermitian operator with a specific frame operator.
+
+        The frame operators are assumed to be tensors of single-qubit operators.
 
         Args:
             operator: the input operator to multiply with a frame operator.
@@ -337,27 +340,27 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         Returns:
             The trace of the product of the input operator with the specified frame operator.
         """
-
         n_qubits = operator.num_qubits
         n_outcomes = self.shape[0]
         n_samples = len(frame_op_idx)
-        samples = np.array(list(frame_op_idx))[:, ::-1]
+        list_frame_op_idx = list(frame_op_idx)
+        samples = np.array(list_frame_op_idx)[:, ::-1]
         conversion = {"I": 0, "X": 1, "Y": 2, "Z": 3}
         omega_init = np.zeros(n_samples)
         op_labels = np.array(
-            [[conversion[term] for term in label] for label in operator.paulis.to_labels()], dtype="int8"
+            [[conversion[term] for term in label] for label in operator.paulis.to_labels()],
+            dtype="int8",
         )
         op_coeffs = np.real(operator.coeffs)
         duals_pauli_decomp = np.zeros((n_qubits, n_outcomes, 4))
         for i, (_, sq_povm) in enumerate(self._frames.items()):
             for j, spop in enumerate(sq_povm.pauli_operators):
                 for key, val in conversion.items():
-                    duals_pauli_decomp[i, j][val] = np.real_if_close(spop.get(key, 0.))
+                    duals_pauli_decomp[i, j][val] = np.real_if_close(spop.get(key, 0.0))
         omegas = jit_get_omega_samples(
             op_labels, op_coeffs, duals_pauli_decomp, samples, omega_init
         )
-        return dict(zip(frame_op_idx, omegas))
-    
+        return dict(zip(list_frame_op_idx, omegas, strict=True))
 
     @override
     def analysis(
