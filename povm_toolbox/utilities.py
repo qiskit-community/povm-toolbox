@@ -18,6 +18,7 @@
 
    matrix_to_double_ket
    double_ket_to_matrix
+   jit_get_omega_samples
 """
 
 from __future__ import annotations

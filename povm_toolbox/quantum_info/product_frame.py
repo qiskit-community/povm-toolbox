@@ -30,7 +30,7 @@ else:
 
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
-from utilities import jit_get_omega_samples
+from povm_toolbox.utilities import jit_get_omega_samples
 
 from .base import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
@@ -325,7 +325,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         return float(p_idx.real)
     
 
-    def _trace_of_prod_single_qubit(self, operator: SparsePauliOp, frame_op_idx: set[tuple[int, ...]]) -> np.ndarray:
+    def _trace_of_prod_single_qubit(self, operator: SparsePauliOp, frame_op_idx: set[tuple[int, ...]]) -> dict[tuple[int, ...], np.ndarray]:
         """Return the traces of the product of a Hermitian operator with a specific set of frame operators
         that are a tensor of single-qubit operators.
 
@@ -341,36 +341,22 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         n_qubits = operator.num_qubits
         n_outcomes = self.shape[0]
         n_samples = len(frame_op_idx)
-        samples = np.array(list(frame_op_idx))
-
+        samples = np.array(list(frame_op_idx))[:, ::-1]
         conversion = {"I": 0, "X": 1, "Y": 2, "Z": 3}
-
         omega_init = np.zeros(n_samples)
         op_labels = np.array(
             [[conversion[term] for term in label] for label in operator.paulis.to_labels()], dtype="int8"
         )
         op_coeffs = np.real(operator.coeffs)
-
         duals_pauli_decomp = np.zeros((n_qubits, n_outcomes, 4))
-
         for i, (_, sq_povm) in enumerate(self._frames.items()):
             for j, spop in enumerate(sq_povm.pauli_operators):
                 for key, val in conversion.items():
                     duals_pauli_decomp[i, j][val] = np.real_if_close(spop.get(key, 0.))
-
-        qubits = np.arange(n_qubits, dtype="int8")
-        omega = jit_get_omega_samples(
-            op_labels, op_coeffs, duals_pauli_decomp, samples, omega_init, qubits
+        omegas = jit_get_omega_samples(
+            op_labels, op_coeffs, duals_pauli_decomp, samples, omega_init
         )
-
-
-        # pauli_decomp has shape (n_qubits, n_outcomes, 4)
-
-        # FILL IN
-
-        if abs(p_idx.imag) > operator.atol:
-            warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
-        return float(p_idx.real)
+        return dict(zip(frame_op_idx, omegas))
     
 
     @override
