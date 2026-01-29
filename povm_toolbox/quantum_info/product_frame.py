@@ -358,11 +358,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 for key, val in conversion.items():
                     duals_pauli_decomp[-(i + 1), j][val] = np.real_if_close(spop.get(key, 0.0))
 
-        print(duals_pauli_decomp)
         omegas = jit_get_omega_samples(
             op_labels, op_coeffs, duals_pauli_decomp, samples, omega_init
         )
-        return dict(zip(frame_op_idx, omegas, strict=True))
+        return dict(zip(frame_op_idx, map(float, omegas), strict=True))
 
     @override
     def analysis(
