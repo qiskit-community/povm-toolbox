@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
-from numba import jit, prange
+from numba import njit, prange
 
 
 def matrix_to_double_ket(op_matrix: np.ndarray) -> np.ndarray:
@@ -93,14 +93,14 @@ def n_sphere(angles: np.ndarray) -> np.ndarray:
     return cast(np.ndarray, unit_vector)
 
 
-@jit(nopython=True, parallel=True)
+@njit(parallel=True, fastmath=True)
 def jit_get_omega_samples(
     op_labels: np.ndarray,
     op_coeffs: np.ndarray,
     pauli_decomp: np.ndarray,
     povm_samples: np.ndarray,
     omega_samples: np.ndarray,
-):
+) -> np.ndarray:
     r"""Decompose an operator in Pauli representation into the linear combination of a basis frame.
 
     The frame can be dual or actual povm operators.
