@@ -345,7 +345,7 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         n_samples = len(frame_op_idx)
         list_frame_op_idx = list(frame_op_idx)
         samples = np.array(list_frame_op_idx)[:, ::-1]
-        conversion = {"I": 0, "X": 1, "Y": 2, "Z": 3}
+        conversion = {"I": 0, "Z": 1, "X": 2, "Y": 3}
         omega_init = np.zeros(n_samples)
         op_labels = np.array(
             [[conversion[term] for term in label] for label in operator.paulis.to_labels()],
