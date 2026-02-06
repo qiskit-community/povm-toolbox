@@ -338,35 +338,36 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 are labeled by a tuple of integers (possibly multiple integers for one local frame).
 
         Returns:
-            The trace of the product of the input operator with the specified frame operator.
+            The traces of the product of the input operator with the specified frame operators.
 
         Raises:
-            ValueError: if the frame operators are not all homogenous single-qubit tensors.
+            ValueError: if the frame operators are not homogenous single-qubit tensors.
         """
         if not self._is_homogenous_single_qubit_tensor:
-            raise ValueError("The frame operators are not all homogenous single-qubit tensors.")
+            raise ValueError("The frame operators are not homogenous single-qubit tensors.")
+
         # number of outcomes per single-qubit POVM (homogenous)
         num_outcomes = self.shape[0]
-        # number of frame operators to compute (i.e., number of outcomes to process)
-        num_samples = len(frame_op_idx)
-        samples = np.array(list(frame_op_idx))[:, ::-1]
+
         conversion = {"I": 0, "Z": 1, "X": 2, "Y": 3}
-        omega_init = np.zeros(num_samples)
         op_labels = np.array(
             [[conversion[term] for term in label] for label in operator.paulis.to_labels()],
             dtype="int8",
         )
         op_coeffs = np.real(operator.coeffs)
-        duals_pauli_decomp = np.zeros((operator.num_qubits, num_outcomes, 4))
-        for i, (_, sq_povm) in enumerate(self._frames.items()):
-            for j, spop in enumerate(sq_povm.pauli_operators):
+        ops_pauli_decomp = np.zeros((operator.num_qubits, num_outcomes, 4))
+        for i, (_, sq_frame) in enumerate(self._frames.items()):
+            for j, sqf_op in enumerate(sq_frame.pauli_operators):
                 for key, val in conversion.items():
-                    duals_pauli_decomp[-(i + 1), j][val] = np.real_if_close(spop.get(key, 0.0))
+                    ops_pauli_decomp[-(i + 1), j][val] = np.real_if_close(sqf_op.get(key, 0.0))
 
-        omegas = jit_get_omega_samples(
-            op_labels, op_coeffs, duals_pauli_decomp, samples, omega_init
-        )
-        return dict(zip(frame_op_idx, map(float, omegas), strict=True))
+        # number of frame operators to compute (i.e., number of samples to process)
+        num_samples = len(frame_op_idx)
+        samples = np.array(list(frame_op_idx))[:, ::-1]
+        traces_init = np.zeros(num_samples)
+
+        traces = jit_get_omega_samples(op_labels, op_coeffs, ops_pauli_decomp, samples, traces_init)
+        return dict(zip(frame_op_idx, map(float, traces), strict=True))
 
     @override
     def analysis(
