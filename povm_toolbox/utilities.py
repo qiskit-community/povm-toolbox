@@ -106,11 +106,11 @@ def jit_get_omega_samples(
     The frame can be dual or actual povm operators.
 
     Args:
-        op_labels: np.array that contains the labels of the Pauli strings "IXYI" converted to integers
-            with the following conversion {"I": 0, "X": 1, "Y": 2, "Z": 3}, e.g.[[0, 1, 2, 1], ...]
+        op_labels: np.array that contains the labels of the Pauli strings "IXYZ" converted to integers,
+        e.g.[[0, 2, 3, 1], ...] where 0, 1, 2, 3 label the Paulis according to some arbitrary but fixed convention
         op_coeffs: np.array of the coefficients of the individual pauli strings
         pauli_decomp: np.array of the Pauli decomposition of the duals of the single-qubit povms
-            (should be shape(N_qubits, n_outcomes, 4))
+            (should be shape(N_qubits, n_outcomes, 4)), using the same convention as op_labels
         povm_samples: np.array of the measured POVM samples, should be shape(n_samples, n_qubits),
             e.g. [[1, 3, 2, 0], [4, 2, 3, 1], ...]
         omega_samples: initial value of omega. should be zeros. This is an argument just to get the
