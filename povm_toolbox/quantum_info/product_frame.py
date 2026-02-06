@@ -334,27 +334,30 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
 
         Args:
             operator: the input operator to multiply with a frame operator.
-            frame_op_idx: list of labels specifying the frame operators to use. The frame operators are
-                labeled by a tuple of integers (possibly multiple integers for one local frame).
+            frame_op_idx: list of labels specifying the frame operators to use. The frame operators
+                are labeled by a tuple of integers (possibly multiple integers for one local frame).
 
         Returns:
             The trace of the product of the input operator with the specified frame operator.
+
+        Raises:
+            ValueError: if the frame operators are not all homogenous single-qubit tensors.
         """
         if not self._is_homogenous_single_qubit_tensor:
             raise ValueError("The frame operators are not all homogenous single-qubit tensors.")
-        n_qubits = operator.num_qubits
-        n_outcomes = self.shape[0]
-        n_samples = len(frame_op_idx)
-        list_frame_op_idx = list(frame_op_idx)
-        samples = np.array(list_frame_op_idx)[:, ::-1]
+        # number of outcomes per single-qubit POVM (homogenous)
+        num_outcomes = self.shape[0]
+        # number of frame operators to compute (i.e., number of outcomes to process)
+        num_samples = len(frame_op_idx)
+        samples = np.array(list(frame_op_idx))[:, ::-1]
         conversion = {"I": 0, "Z": 1, "X": 2, "Y": 3}
-        omega_init = np.zeros(n_samples)
+        omega_init = np.zeros(num_samples)
         op_labels = np.array(
             [[conversion[term] for term in label] for label in operator.paulis.to_labels()],
             dtype="int8",
         )
         op_coeffs = np.real(operator.coeffs)
-        duals_pauli_decomp = np.zeros((n_qubits, n_outcomes, 4))
+        duals_pauli_decomp = np.zeros((operator.num_qubits, num_outcomes, 4))
         for i, (_, sq_povm) in enumerate(self._frames.items()):
             for j, spop in enumerate(sq_povm.pauli_operators):
                 for key, val in conversion.items():
