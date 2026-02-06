@@ -340,6 +340,8 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         Returns:
             The trace of the product of the input operator with the specified frame operator.
         """
+        if not self._is_homogenous_single_qubit_tensor:
+            raise ValueError("The frame operators are not all homogenous single-qubit tensors.")
         n_qubits = operator.num_qubits
         n_outcomes = self.shape[0]
         n_samples = len(frame_op_idx)
@@ -398,9 +400,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 p_init[m] = self._trace_of_prod(hermitian_op, m)
             return p_init
         if isinstance(frame_op_idx, set):
-            if self._is_homogenous_single_qubit_tensor:
+            try:
                 return self._trace_of_prod_single_qubit(hermitian_op, frame_op_idx)
-            return {idx: self._trace_of_prod(hermitian_op, idx) for idx in frame_op_idx}
+            except ValueError:
+                return {idx: self._trace_of_prod(hermitian_op, idx) for idx in frame_op_idx}
         if isinstance(frame_op_idx, tuple):
             return self._trace_of_prod(hermitian_op, frame_op_idx)
         raise TypeError("Wrong type for ``frame_op_idx``.")
