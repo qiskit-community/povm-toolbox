@@ -1,0 +1,10 @@
+---
+upgrade:
+  - |
+    The internal methods for post-processing of expectation values based on POVM shots 
+    have been refactored for improved performance. The :class:`.POVMPostProcessor` now uses  
+    Numba's just-in-time compilation and parallelization tools to increase the rate of sample 
+    processing by orders of magnitude. This is enabled automatically in the typical case where
+    the dual operators of the POVM factorize into tensor products of single-qubit duals.
+    In other cases, the implementation falls back on the previous and slower python-only code. 
+
