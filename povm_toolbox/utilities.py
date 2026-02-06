@@ -93,7 +93,7 @@ def n_sphere(angles: np.ndarray) -> np.ndarray:
     return cast(np.ndarray, unit_vector)
 
 
-@njit(parallel=True, fastmath=True)
+@njit(parallel=True, fastmath=True)  # pragma: no cover
 def jit_get_omega_samples(
     op_labels: np.ndarray,
     op_coeffs: np.ndarray,
