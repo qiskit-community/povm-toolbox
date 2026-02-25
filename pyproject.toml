@@ -200,5 +200,7 @@ convention = "google"
 [tool.typos.default.extend-words]
 arange = "arange"
 aer = "aer"
+CPY = "CPY"
 IY = "IY"
+IZ = "IZ"
 ket = "ket"
