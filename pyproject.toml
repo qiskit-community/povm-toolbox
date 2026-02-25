@@ -49,7 +49,7 @@ test = [
 ]
 doctest = [
     "povm_toolbox[basetest]",
-    "pytest-doctestplus>=1.2.1",
+    "pytest-doctestplus>=1.3.0",
 ]
 nbtest = [
     "povm_toolbox[basetest]",
