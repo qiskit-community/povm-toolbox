@@ -30,7 +30,7 @@ dependencies = [
     "numpy>=1.23",
     "numba>=0.59",
     "qiskit>=1.4, <3",
-    "qiskit-ibm-runtime>=0.36",
+    "qiskit-ibm-runtime>=0.36.1",
     "matplotlib!=3.9.1.post1",
 ]
 
