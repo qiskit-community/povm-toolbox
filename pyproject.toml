@@ -33,6 +33,7 @@ dependencies = [
     "qiskit-ibm-runtime>=0.36.1",
     "matplotlib!=3.9.1.post1",
     "ibm-platform-services!=0.74.0",
+    "pyspnego!=0.12.1",
 ]
 
 [project.optional-dependencies]
