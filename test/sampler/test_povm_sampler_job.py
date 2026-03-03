@@ -41,25 +41,18 @@ class TestPOVMSamplerJob:
         self.sampler = StatevectorSampler(seed=rng)
 
     def test_initialization(self):
-        print("TestPOVMSamplerJob.test_initialization 1")
         povm_sampler = POVMSampler(sampler=self.sampler)
         num_qubits = 2
         # Load the circuit that was obtained through:
         #   from qiskit.circuit.random import random_circuit
         #   qc = random_circuit(num_qubits=num_qubits, depth=3, measure=False, seed=10)
         # for qiskit==1.1.1
-        print("TestPOVMSamplerJob.test_initialization 2")
         with open("test/sampler/random_circuits.qpy", "rb") as file:
             qc_random = qpy.load(file)[0]
-        print("TestPOVMSamplerJob.test_initialization 3")
         cs_implementation = ClassicalShadows(num_qubits=num_qubits)
-        print("TestPOVMSamplerJob.test_initialization 4")
         cs_shots = 32
-        print("TestPOVMSamplerJob.test_initialization 5")
         cs_job = povm_sampler.run([qc_random], shots=cs_shots, povm=cs_implementation)
-        print("TestPOVMSamplerJob.test_initialization 6")
         assert isinstance(cs_job, POVMSamplerJob)
-        print("TestPOVMSamplerJob.test_initialization 7")
 
     def test_result(self, subtests):
         povm_sampler = POVMSampler(sampler=self.sampler)
