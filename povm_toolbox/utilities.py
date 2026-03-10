@@ -18,6 +18,7 @@
 
    matrix_to_double_ket
    double_ket_to_matrix
+   jit_get_omega_samples
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
+from numba import njit, prange
 
 
 def matrix_to_double_ket(op_matrix: np.ndarray) -> np.ndarray:
@@ -89,3 +91,45 @@ def n_sphere(angles: np.ndarray) -> np.ndarray:
     unit_vector[-1] *= np.sin(2 * np.pi * angles[-1])
 
     return cast(np.ndarray, unit_vector)
+
+
+@njit(parallel=True, fastmath=True)  # pragma: no cover
+def jit_get_omega_samples(
+    op_labels: np.ndarray,
+    op_coeffs: np.ndarray,
+    pauli_decomp: np.ndarray,
+    povm_samples: np.ndarray,
+    omega_samples: np.ndarray,
+) -> np.ndarray:
+    r"""Decompose an operator in Pauli representation into the linear combination of a basis frame.
+
+    The frame can be dual or actual povm operators.
+
+    Args:
+        op_labels: np.array that contains the labels of the Pauli strings "IXYZ" converted to integers,
+        e.g.[[0, 2, 3, 1], ...] where 0, 1, 2, 3 label the Paulis according to some arbitrary but fixed convention
+        op_coeffs: np.array of the coefficients of the individual pauli strings
+        pauli_decomp: np.array of the Pauli decomposition of the duals of the single-qubit povms
+            (should be shape(N_qubits, n_outcomes, 4)), using the same convention as op_labels
+        povm_samples: np.array of the measured POVM samples, should be shape(n_samples, n_qubits),
+            e.g. [[1, 3, 2, 0], [4, 2, 3, 1], ...]
+        omega_samples: initial value of omega. should be zeros. This is an argument just to get the
+            np.zeros out of the numba function. should be shape(n_samples).
+
+    Returns:
+        coefficients omega_m as a sparse array of shape(n_outcomes)
+    """
+    n_qubits = int(pauli_decomp.shape[0])
+    n_samples = int(povm_samples.shape[0])
+    n_oplabels = int(op_labels.shape[0])
+    for sample_ind in prange(n_samples):
+        m = povm_samples[sample_ind]
+        samp = 0
+        for j in prange(n_oplabels):
+            label = op_labels[j]
+            summand = op_coeffs[j]
+            for i in range(n_qubits):
+                summand *= pauli_decomp[i, m[i], label[i]] * 2  # factor 2 from Tr(P^2) = 2
+            samp += summand
+        omega_samples[sample_ind] = samp
+    return omega_samples

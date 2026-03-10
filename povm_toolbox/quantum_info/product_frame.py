@@ -28,9 +28,10 @@ if sys.version_info < (3, 12):
 else:
     from typing import override  # pragma: no cover
 
-
 import numpy as np
 from qiskit.quantum_info import Operator, SparsePauliOp
+
+from povm_toolbox.utilities import jit_get_omega_samples
 
 from .base import BaseFrame
 from .multi_qubit_frame import MultiQubitFrame
@@ -101,6 +102,16 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
         self._frames = frames
 
         self._check_validity()
+
+        # Check whether the product frame is a tensor product of single-qubit frames.
+        is_tensor_of_single_qubit_frames = set(
+            len(sub_system) for sub_system in self.sub_systems
+        ) == {1}
+        # Check if each local frame has the same number of outcomes.
+        homogenous_number_of_outcomes = len(set(self.shape)) == 1
+        self._is_homogenous_single_qubit_tensor = (
+            is_tensor_of_single_qubit_frames and homogenous_number_of_outcomes
+        )
 
     def __repr__(self) -> str:
         """Return the string representation of a :class:`.ProductFrame` instance."""
@@ -314,6 +325,50 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
             warnings.warn(f"Expected a real number, instead got {p_idx}.", stacklevel=2)
         return float(p_idx.real)
 
+    def _trace_of_prod_single_qubit(
+        self, operator: SparsePauliOp, frame_op_idx: set[tuple[int, ...]]
+    ) -> dict[tuple[int, ...], float]:
+        """Return the traces of the product of a Hermitian operator with specific frame operators.
+
+        The frame operators are assumed to be tensors of single-qubit operators.
+
+        Args:
+            operator: the input operator to multiply with a frame operator.
+            frame_op_idx: list of labels specifying the frame operators to use. The frame operators
+                are labeled by a tuple of integers (possibly multiple integers for one local frame).
+
+        Returns:
+            The traces of the product of the input operator with the specified frame operators.
+
+        Raises:
+            ValueError: if the frame operators are not homogenous single-qubit tensors.
+        """
+        if not self._is_homogenous_single_qubit_tensor:
+            raise ValueError("The frame operators are not homogenous single-qubit tensors.")
+
+        # number of outcomes per single-qubit POVM (homogenous)
+        num_outcomes = self.shape[0]
+
+        conversion = {"I": 0, "Z": 1, "X": 2, "Y": 3}
+        op_labels = np.array(
+            [[conversion[term] for term in label] for label in operator.paulis.to_labels()],
+            dtype="int8",
+        )
+        op_coeffs = np.real(operator.coeffs)
+        ops_pauli_decomp = np.zeros((operator.num_qubits, num_outcomes, 4))
+        for i, (_, sq_frame) in enumerate(self._frames.items()):
+            for j, sqf_op in enumerate(sq_frame.pauli_operators):
+                for key, val in conversion.items():
+                    ops_pauli_decomp[-(i + 1), j][val] = np.real_if_close(sqf_op.get(key, 0.0))
+
+        # number of frame operators to compute (i.e., number of samples to process)
+        num_samples = len(frame_op_idx)
+        samples = np.array(list(frame_op_idx))[:, ::-1]
+        traces_init = np.zeros(num_samples)
+
+        traces = jit_get_omega_samples(op_labels, op_coeffs, ops_pauli_decomp, samples, traces_init)
+        return dict(zip(frame_op_idx, map(float, traces), strict=True))
+
     @override
     def analysis(
         self,
@@ -349,7 +404,10 @@ class ProductFrame(BaseFrame[tuple[int, ...]], Generic[T]):
                 p_init[m] = self._trace_of_prod(hermitian_op, m)
             return p_init
         if isinstance(frame_op_idx, set):
-            return {idx: self._trace_of_prod(hermitian_op, idx) for idx in frame_op_idx}
+            try:
+                return self._trace_of_prod_single_qubit(hermitian_op, frame_op_idx)
+            except ValueError:
+                return {idx: self._trace_of_prod(hermitian_op, idx) for idx in frame_op_idx}
         if isinstance(frame_op_idx, tuple):
             return self._trace_of_prod(hermitian_op, frame_op_idx)
         raise TypeError("Wrong type for ``frame_op_idx``.")
