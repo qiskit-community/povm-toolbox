@@ -75,7 +75,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         self._num_operators: int
         self._dimension: int
         self._operators: list[Operator]
-        self._pauli_operators: list[dict[str, complex]] | None
+        self._pauli_operators: list[dict[str, float]] | None
         self._array: np.ndarray
         self._informationally_complete: bool
 
@@ -148,7 +148,7 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         return self._operators
 
     @property
-    def pauli_operators(self) -> list[dict[str, complex]]:
+    def pauli_operators(self) -> list[dict[str, float]]:
         """Convert the internal frame operators to Pauli form.
 
         .. warning::
@@ -165,7 +165,14 @@ class MultiQubitFrame(BaseFrame[LabelMultiQubitT]):
         if self._pauli_operators is None:
             try:
                 self._pauli_operators = [
-                    dict(SparsePauliOp.from_operator(op).label_iter()) for op in self.operators
+                    dict(
+                        # NOTE: we have already asserted that `self.operators` are Hermitian (cf.
+                        # _check_validity). Therefore, we can safely enforce the coefficients to be
+                        # real rather than complex.
+                        (pauli, coeff.real)
+                        for pauli, coeff in SparsePauliOp.from_operator(op).label_iter()
+                    )
+                    for op in self.operators
                 ]
             except QiskitError as exc:
                 raise QiskitError(
