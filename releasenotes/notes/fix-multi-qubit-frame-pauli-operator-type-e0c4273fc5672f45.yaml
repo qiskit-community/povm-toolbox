@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The coefficients of :attr:`.MultiQubitFrame.pauli_operators` are now guaranteed
+    to be real- rather than complex-valued. This can be enforced because the
+    operators are known to be Hermitian by construction.
