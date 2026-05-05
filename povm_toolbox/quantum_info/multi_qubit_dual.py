@@ -102,7 +102,7 @@ class MultiQubitDual(MultiQubitFrame, BaseDual):
             # Convert dual operators from double-ket to operator representation.
             dual_operators = [Operator(double_ket_to_matrix(op)) for op in dual_operators_array.T]
 
-            return cls(dual_operators)
+            return cls(dual_operators, shape=frame.shape)
 
         # We could build a ``MultiQubitDual`` instance (i.e. joint dual frame) that
         # is a dual frame to a ``ProductFrame``, but we have not implemented this yet.
