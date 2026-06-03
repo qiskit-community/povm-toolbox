@@ -58,7 +58,7 @@ nbtest = [
 style = [
     "ruff==0.15.8",
     "nbqa>=1.9.1",
-    "typos>=1.20.0",
+    "typos>=1.47.0",
 ]
 lint = [
     "povm_toolbox[style]",
